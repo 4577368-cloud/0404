@@ -46,7 +46,7 @@ function translateZhToEn(text) {
   return [...new Set(result)];
 }
 
-export function ProductCard({ product, uiLang, t, onAskAi, onPublish }) {
+export function ProductCard({ product, uiLang, t, onAskAi, onPublish, guestFeatureLocked, onRequireLogin }) {
   const p = product;
   const trendT = (k) => TREND_LABELS[uiLang === 'zh' ? 'zh' : 'en'][k] || k;
 
@@ -162,7 +162,7 @@ export function ProductCard({ product, uiLang, t, onAskAi, onPublish }) {
               <div className="flex gap-1.5 mt-1 shrink-0">
                 <button
                   type="button"
-                  onClick={() => onAskAi?.(p)}
+                  onClick={() => (guestFeatureLocked ? onRequireLogin?.() : onAskAi?.(p))}
                   className="flex-1 text-[10px] text-center py-1.5 rounded-lg transition-all font-semibold flex items-center justify-center gap-1 hover:brightness-105"
                   style={{
                     background: 'var(--brand-primary-fixed)',
@@ -250,7 +250,7 @@ export function ProductCard({ product, uiLang, t, onAskAi, onPublish }) {
           </a>
           <button
             type="button"
-            onClick={() => onAskAi?.(p)}
+            onClick={() => (guestFeatureLocked ? onRequireLogin?.() : onAskAi?.(p))}
             className="flex-1 text-[8px] text-center py-1 rounded bg-gray-100 text-red-600 font-semibold hover:bg-gray-200 transition-colors duration-200"
           >
             {uiLang === 'zh' ? 'AI诊断' : 'AI Diagnose'}

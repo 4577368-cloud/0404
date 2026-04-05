@@ -1,4 +1,4 @@
-import { MAX_FREE_QUOTA } from './quota.js';
+import { MAX_FREE_QUOTA, MAX_GUEST_QUOTA } from './quota.js';
 
 /** @param {import('@supabase/supabase-js').SupabaseClient | null} client */
 export async function fetchUserStats(client) {
@@ -13,11 +13,13 @@ export async function fetchUserStats(client) {
 
 /**
  * Display remaining free credits (VIP still returns a number for bar math; Header hides when is_vip).
+ * @param {boolean} [isAnonymous] Supabase 匿名用户为 true，额度上限为 MAX_GUEST_QUOTA；OAuth 为 false，上限 MAX_FREE_QUOTA。
  */
-export function remainingFromStats(row) {
-  if (!row) return MAX_FREE_QUOTA;
-  if (row.is_vip) return MAX_FREE_QUOTA;
-  return Math.max(0, MAX_FREE_QUOTA - (row.free_quota_used ?? 0));
+export function remainingFromStats(row, isAnonymous = false) {
+  if (row?.is_vip) return MAX_FREE_QUOTA;
+  const cap = isAnonymous ? MAX_GUEST_QUOTA : MAX_FREE_QUOTA;
+  if (!row) return cap;
+  return Math.max(0, cap - (row.free_quota_used ?? 0));
 }
 
 /**

@@ -6,13 +6,13 @@ import SourcingLandingPage from '../components/SourcingLandingPage.jsx';
 import AIReportList from '../components/AIReportList.jsx';
 import AIReportViewer from '../components/AIReportViewer.jsx';
 import GlassCard from '../components/GlassCard.jsx';
-import { getRemainingQuota, MAX_FREE_QUOTA } from '../utils/quota.js';
+import { getRemainingQuota, MAX_FREE_QUOTA, MAX_GUEST_QUOTA } from '../utils/quota.js';
 import { fetchUserStats, remainingFromStats } from '../utils/supabaseUsage.js';
 import { ModuleAIChat } from '../modules/AIChatVite.jsx';
 import { TRANSLATIONS } from '../utils/translations.js';
 import { createAIReport, loadAIReports } from '../utils/aiReports.js';
 import { supabase, isSupabaseConfigured } from '../utils/supabaseClient.js';
-import { ensureAnonymousSession } from '../utils/supabaseAuth.js';
+import { ensureAnonymousSession, isAnonymousUser } from '../utils/supabaseAuth.js';
 import AuthModal from '../components/AuthModal.jsx';
 
 export class ErrorBoundary extends React.Component {
@@ -85,7 +85,7 @@ function loadActiveId(convs) {
 export default function App() {
   const [lang, setLang] = React.useState('en');
   const [theme, setTheme] = React.useState(() => localStorage.getItem('tb_theme') || 'light');
-  const [remainingQuota, setRemainingQuota] = React.useState(getRemainingQuota);
+  const [remainingQuota, setRemainingQuota] = React.useState(MAX_GUEST_QUOTA);
   const [isVip, setIsVip] = React.useState(getIsVipUnlocked);
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
@@ -99,7 +99,11 @@ export default function App() {
   const toastTimerRef = React.useRef(null);
   const [authUser, setAuthUser] = React.useState(null);
   const [authModalOpen, setAuthModalOpen] = React.useState(false);
-  const prevAuthUserRef = React.useRef(null);
+  const prevOAuthSessionRef = React.useRef(false);
+  const [hotProductDiagnosisRequest, setHotProductDiagnosisRequest] = React.useState(null);
+
+  const guestFeatureLocked = !authUser || isAnonymousUser(authUser);
+  const maxFreeQuotaForUser = guestFeatureLocked ? MAX_GUEST_QUOTA : MAX_FREE_QUOTA;
 
   /** 无 OAuth 会话时自动匿名登录，使未「登录」用户也有 auth.uid()，额度与日志进 Supabase */
   React.useEffect(() => {
@@ -118,23 +122,27 @@ export default function App() {
     };
   }, []);
 
-  /** 有 Supabase 会话（含匿名）：额度与 VIP 以 user_stats 为准；无会话或仅本地模式：localStorage */
+  /** 有 Supabase 会话（含匿名）：额度与 VIP 以 user_stats 为准；无 Supabase：本地额度上限 10 */
   React.useEffect(() => {
-    if (!supabase || !authUser) {
-      setRemainingQuota(getRemainingQuota());
+    if (!supabase) {
+      setRemainingQuota(getRemainingQuota(MAX_GUEST_QUOTA));
       setIsVip(getIsVipUnlocked());
       return undefined;
     }
+    if (!authUser) {
+      return undefined;
+    }
+    const anon = isAnonymousUser(authUser);
     let cancelled = false;
     fetchUserStats(supabase).then((row) => {
       if (cancelled) return;
       if (!row) {
         setIsVip(false);
-        setRemainingQuota(MAX_FREE_QUOTA);
+        setRemainingQuota(anon ? MAX_GUEST_QUOTA : MAX_FREE_QUOTA);
         return;
       }
       setIsVip(!!row.is_vip);
-      setRemainingQuota(remainingFromStats(row));
+      setRemainingQuota(remainingFromStats(row, anon));
     });
     return () => { cancelled = true; };
   }, [authUser]);
@@ -178,13 +186,14 @@ export default function App() {
     setAuthModalOpen(true);
   }, []);
 
-  /** 登录成功：关弹窗并回对话首页（OAuth 整页返回时 modal 本为 false） */
+  /** OAuth 登录成功：关弹窗并回对话首页（匿名 session 不算） */
   React.useEffect(() => {
-    if (authUser && !prevAuthUserRef.current) {
+    const oauth = !!(authUser && !isAnonymousUser(authUser));
+    if (oauth && !prevOAuthSessionRef.current) {
       setAuthModalOpen(false);
       setActiveView('chat');
     }
-    prevAuthUserRef.current = authUser;
+    prevOAuthSessionRef.current = oauth;
   }, [authUser]);
 
   const [workflowProgress, setWorkflowProgress] = React.useState({
@@ -212,13 +221,6 @@ export default function App() {
   const clearWorkflowCompleted = React.useCallback(() => {
     setWorkflowProgress(prev => ({ ...prev, justCompleted: false }));
   }, []);
-
-  const handleViewReport = React.useCallback(() => {
-    if (reports.length > 0) {
-      setActiveReportId(reports[0].id);
-      setActiveView('aiReports');
-    }
-  }, [reports]);
 
   const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
 
@@ -310,7 +312,27 @@ export default function App() {
     setActiveView('sourcing');
   }, []);
 
+  const requireOAuthToastAndModal = React.useCallback(() => {
+    showToast(lang === 'zh' ? '请使用左下角 Google / Facebook 登录后使用此功能。' : 'Please sign in with Google or Facebook (bottom left) to use this feature.');
+    setAuthModalOpen(true);
+  }, [lang, showToast]);
+
+  const handleViewReport = React.useCallback(() => {
+    if (guestFeatureLocked) {
+      requireOAuthToastAndModal();
+      return;
+    }
+    if (reports.length > 0) {
+      setActiveReportId(reports[0].id);
+      setActiveView('aiReports');
+    }
+  }, [reports, guestFeatureLocked, requireOAuthToastAndModal]);
+
   const handleAIReports = React.useCallback(() => {
+    if (guestFeatureLocked) {
+      requireOAuthToastAndModal();
+      return;
+    }
     if (activeView === 'aiReports') {
       setReportListVisible(true);
       return;
@@ -322,9 +344,13 @@ export default function App() {
     if (!activeReportId && reports.length > 0) {
       setActiveReportId(reports[0].id);
     }
-  }, [activeView, activeReportId, reports]);
+  }, [activeView, activeReportId, reports, guestFeatureLocked, requireOAuthToastAndModal]);
 
   const handleReportCreated = React.useCallback((newReport) => {
+    if (guestFeatureLocked) {
+      requireOAuthToastAndModal();
+      return;
+    }
     setReports(prev => [newReport, ...prev]);
     setActiveReportId(newReport.id);
     setReportListVisible(false);
@@ -332,7 +358,7 @@ export default function App() {
     setActiveView('aiReports');
     setSidebarCollapsed(true);
     sidebarAutoCollapsedRef.current = true;
-  }, []);
+  }, [guestFeatureLocked, requireOAuthToastAndModal]);
 
   const handleToggleSidebarCollapse = React.useCallback(() => {
     sidebarAutoCollapsedRef.current = false;
@@ -349,18 +375,22 @@ export default function App() {
 
   const refreshQuota = React.useCallback(() => {
     if (supabase && authUser) {
+      const anon = isAnonymousUser(authUser);
       fetchUserStats(supabase).then((row) => {
         if (!row) {
           setIsVip(false);
-          setRemainingQuota(MAX_FREE_QUOTA);
+          setRemainingQuota(anon ? MAX_GUEST_QUOTA : MAX_FREE_QUOTA);
           return;
         }
         setIsVip(!!row.is_vip);
-        setRemainingQuota(remainingFromStats(row));
+        setRemainingQuota(remainingFromStats(row, anon));
       });
-    } else {
-      setRemainingQuota(getRemainingQuota());
+    } else if (!supabase) {
+      setRemainingQuota(getRemainingQuota(MAX_GUEST_QUOTA));
       setIsVip(getIsVipUnlocked());
+    } else {
+      setRemainingQuota(MAX_GUEST_QUOTA);
+      setIsVip(false);
     }
   }, [authUser]);
 
@@ -403,6 +433,10 @@ export default function App() {
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         onHotProducts={() => {
+          if (guestFeatureLocked) {
+            requireOAuthToastAndModal();
+            return;
+          }
           setActiveView('hotProducts');
           if (sidebarCollapsed && sidebarAutoCollapsedRef.current) {
             setSidebarCollapsed(false);
@@ -441,6 +475,8 @@ export default function App() {
             workflowProgress={workflowProgress}
             onClearWorkflowCompleted={clearWorkflowCompleted}
             onViewReport={handleViewReport}
+            maxFreeQuota={maxFreeQuotaForUser}
+            showCreditsHintForAnonymous={!!authUser && isAnonymousUser(authUser)}
           />
         </div>
 
@@ -456,7 +492,15 @@ export default function App() {
         {/* Main content */}
         <div style={{ flex: '1 1 0', minHeight: 0, display: 'flex', flexDirection: activeView === 'aiReports' ? 'row' : 'column', overflow: 'hidden' }}>
           {activeView === 'hotProducts' ? (
-            <HotProducts uiLang={lang} />
+            <HotProducts
+              uiLang={lang}
+              guestFeatureLocked={guestFeatureLocked}
+              onRequireOAuth={requireOAuthToastAndModal}
+              onProductDiagnosis={(product) => {
+                setHotProductDiagnosisRequest({ product, t: Date.now() });
+                setActiveView('chat');
+              }}
+            />
           ) : activeView === 'sourcing' ? (
             <div style={{ flex: '1 1 0', minHeight: 0, overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch' }}>
               <SourcingLandingPage />
@@ -497,6 +541,10 @@ export default function App() {
               authUser={authUser}
               conversationId={activeId}
               isVip={isVip}
+              guestFeatureLocked={guestFeatureLocked}
+              onGuestFeatureBlocked={requireOAuthToastAndModal}
+              hotProductDiagnosisRequest={hotProductDiagnosisRequest}
+              onConsumedHotProductDiagnosisRequest={() => setHotProductDiagnosisRequest(null)}
             />
           )}
         </div>

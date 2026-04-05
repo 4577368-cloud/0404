@@ -129,7 +129,7 @@ function pickHotImg(p, stage) {
   return 'https://via.placeholder.com/300?text=No+Image';
 }
 
-function ProductCard({ p, uiLang }) {
+function ProductCard({ p, uiLang, guestFeatureLocked, onRequireOAuth, onProductDiagnosis }) {
   const [imgStage, setImgStage] = React.useState(0);
   React.useEffect(() => setImgStage(0), [p.id, p.image, p.imageFallback]);
   const displayUrl = imgStage >= 4 ? 'https://via.placeholder.com/300?text=No+Image' : pickHotImg(p, imgStage);
@@ -205,9 +205,16 @@ function ProductCard({ p, uiLang }) {
             <div className="flex-1"></div>
           )}
           <button
+            type="button"
             className="text-[10px] text-center py-1.5 rounded-lg transition-all font-semibold hover:brightness-105 flex items-center justify-center gap-1"
             style={{ background: 'var(--theme-surface)', color: 'var(--theme-text-secondary)', border: '1px solid var(--theme-border)' }}
-            onClick={() => { /* AI诊断事件稍后定义 */ }}
+            onClick={() => {
+              if (guestFeatureLocked) {
+                onRequireOAuth?.();
+                return;
+              }
+              onProductDiagnosis?.(p);
+            }}
           >
             <span className="icon-activity text-[10px]" />
             {uiLang === 'zh' ? 'AI诊断' : 'AI Diagnose'}
@@ -218,7 +225,12 @@ function ProductCard({ p, uiLang }) {
   );
 }
 
-export default function HotProducts({ uiLang }) {
+export default function HotProducts({
+  uiLang,
+  guestFeatureLocked = false,
+  onRequireOAuth,
+  onProductDiagnosis,
+}) {
   const [allProducts, setAllProducts] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [page, setPage] = React.useState(1);
@@ -306,7 +318,16 @@ export default function HotProducts({ uiLang }) {
           </div>
         ) : (
           <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))' }}>
-            {pageItems.map((p) => <ProductCard key={p.id} p={p} uiLang={uiLang} />)}
+            {pageItems.map((p) => (
+              <ProductCard
+                key={p.id}
+                p={p}
+                uiLang={uiLang}
+                guestFeatureLocked={guestFeatureLocked}
+                onRequireOAuth={onRequireOAuth}
+                onProductDiagnosis={onProductDiagnosis}
+              />
+            ))}
           </div>
         )}
       </div>

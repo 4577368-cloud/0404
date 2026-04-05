@@ -1,6 +1,5 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
-import { MAX_FREE_QUOTA } from '../utils/quota.js';
 
 const SHARE_PLATFORMS = [
   {
@@ -130,9 +129,13 @@ function ShareModal({ isOpen, onClose }) {
   );
 }
 
+const CREDITS_HINT_STORAGE = 'tb_credits_hint_autoshown';
+
 export default function Header({
   currentLang, setLang, t, remainingQuota, isVip, theme, onToggleTheme, onMenuClick,
   workflowProgress, onClearWorkflowCompleted, onViewReport,
+  maxFreeQuota = 30,
+  showCreditsHintForAnonymous = false,
 }) {
   const languages = [
     { code: 'en', label: 'English' },
@@ -145,22 +148,56 @@ export default function Header({
 
   const [isLangMenuOpen, setIsLangMenuOpen] = React.useState(false);
   const [isShareOpen, setIsShareOpen] = React.useState(false);
+  const [creditsHintOpen, setCreditsHintOpen] = React.useState(false);
   const langRef = React.useRef(null);
+  const creditsHintRef = React.useRef(null);
 
   React.useEffect(() => {
     const handleClickOutside = (e) => {
       if (langRef.current && !langRef.current.contains(e.target)) {
         setIsLangMenuOpen(false);
       }
+      if (creditsHintRef.current && !creditsHintRef.current.contains(e.target)) {
+        setCreditsHintOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  React.useEffect(() => {
+    if (!showCreditsHintForAnonymous) setCreditsHintOpen(false);
+  }, [showCreditsHintForAnonymous]);
+
+  /** 仅匿名用户：首次进入自动展示约 3 秒；已 OAuth 登录不触发 */
+  React.useEffect(() => {
+    if (!showCreditsHintForAnonymous) return undefined;
+    let cancelled = false;
+    try {
+      if (localStorage.getItem(CREDITS_HINT_STORAGE)) return undefined;
+      localStorage.setItem(CREDITS_HINT_STORAGE, '1');
+    } catch (_) {
+      return undefined;
+    }
+    setCreditsHintOpen(true);
+    const tmr = setTimeout(() => {
+      if (!cancelled) setCreditsHintOpen(false);
+    }, 3000);
+    return () => {
+      cancelled = true;
+      clearTimeout(tmr);
+    };
+  }, [showCreditsHintForAnonymous]);
+
 // (VIP quota rendering is handled below in the same Header component)
   const quotaLabel = currentLang === 'zh' ? '额度' : 'Credits';
-  const pct = Math.min(1, (remainingQuota ?? MAX_FREE_QUOTA) / MAX_FREE_QUOTA);
+  const cap = Math.max(1, maxFreeQuota);
+  const pct = Math.min(1, (remainingQuota ?? cap) / cap);
   const barColor = pct > 0.5 ? 'bg-emerald-400' : pct > 0.2 ? 'bg-amber-400' : 'bg-red-400';
+  const creditsHintText =
+    currentLang === 'zh'
+      ? '未登录（匿名）用户可使用 10 次对话额度。点击左下角使用 Google / Facebook 登录后，额度扩大至 30 次，已使用次数会累计计入。'
+      : 'Anonymous users get 10 free credits. Sign in with Google or Facebook (bottom-left) to unlock 30; used credits carry over after login.';
 
   return (
     <header style={{
@@ -325,13 +362,52 @@ export default function Header({
             </span>
           </div>
         ) : (
-          <div className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-lg" style={{ background: 'transparent', border: 'none' }}>
+          <div
+            ref={creditsHintRef}
+            className="hidden sm:flex relative items-center gap-1"
+            style={{ background: 'transparent', border: 'none', padding: 0 }}
+          >
             <span className="text-[10px] font-semibold" style={{ color: 'var(--brand-primary-fixed)' }}>{quotaLabel}</span>
-            <span className="text-xs font-bold tabular-nums" style={{ color: 'var(--theme-text)' }}>{remainingQuota ?? MAX_FREE_QUOTA}</span>
-            <span className="text-[10px] font-medium" style={{ color: 'var(--theme-text-secondary)' }}>/ {MAX_FREE_QUOTA}</span>
+            <span className="text-xs font-bold tabular-nums" style={{ color: 'var(--theme-text)' }}>{remainingQuota ?? cap}</span>
+            <span className="text-[10px] font-medium" style={{ color: 'var(--theme-text-secondary)' }}>/ {cap}</span>
             <div className="w-8 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--theme-surface)' }}>
               <div className={`h-full rounded-full transition-all duration-500 ${barColor}`} style={{ width: `${pct * 100}%` }} />
             </div>
+            <button
+              type="button"
+              className="text-[12px] font-semibold leading-none cursor-pointer hover:opacity-80"
+              style={{
+                color: 'var(--theme-text-muted)',
+                border: 'none',
+                background: 'transparent',
+                padding: '0 2px',
+                marginLeft: 2,
+              }}
+              aria-label={currentLang === 'zh' ? '额度说明' : 'Credits info'}
+              onClick={(e) => {
+                e.stopPropagation();
+                setCreditsHintOpen((v) => !v);
+              }}
+            >
+              ?
+            </button>
+            {creditsHintOpen && (
+              <div
+                className="absolute top-full right-0 mt-1 z-[60] max-w-[min(280px,calc(100vw-48px))] text-left"
+                style={{
+                  padding: '10px 12px',
+                  fontSize: 11,
+                  lineHeight: 1.45,
+                  color: 'var(--theme-text)',
+                  background: 'var(--theme-dropdown-bg)',
+                  border: '1px solid var(--theme-border)',
+                  borderRadius: 10,
+                  boxShadow: '0 12px 28px rgba(0,0,0,0.12)',
+                }}
+              >
+                {creditsHintText}
+              </div>
+            )}
           </div>
         )}
 

@@ -50,7 +50,7 @@ function pickImageUrlForStage(p, stage) {
 const MAX_STAGE = 4;
 
 /** 与「热销商品」页 Amazon/TikTok 卡片一致的样式（含 Tangbuy 价与跳转） */
-export default function ChatHotProductCard({ p, uiLang, onAskAi }) {
+export default function ChatHotProductCard({ p, uiLang, onAskAi, guestFeatureLocked, onRequireLogin }) {
   const [stage, setStage] = React.useState(0);
 
   React.useEffect(() => {
@@ -175,7 +175,7 @@ export default function ChatHotProductCard({ p, uiLang, onAskAi }) {
             type="button"
             className="text-[10px] text-center py-1.5 px-2 rounded-lg transition-all font-semibold hover:brightness-105 flex items-center justify-center gap-1"
             style={{ background: 'var(--theme-surface)', color: 'var(--theme-text-secondary)', border: '1px solid var(--theme-border)' }}
-            onClick={() => onAskAi?.(p)}
+            onClick={() => (guestFeatureLocked ? onRequireLogin?.() : onAskAi?.(p))}
           >
             <span className="icon-activity text-[10px]" />
             {uiLang === 'zh' ? 'AI诊断' : 'AI'}

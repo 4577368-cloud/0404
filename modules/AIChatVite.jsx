@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
-import { incrementQuota, getRemainingQuota } from '../utils/quota.js';
+import { incrementQuota, getRemainingQuota, MAX_GUEST_QUOTA } from '../utils/quota.js';
 import { supabase } from '../utils/supabaseClient.js';
 import { consumeChatTurn, claimVipRemote } from '../utils/supabaseUsage.js';
 import { extractUrlsFromText } from '../utils/urlExtract.js';
@@ -824,6 +824,10 @@ const WHATSAPP_NUMBER = '+86 13409738176';
 export function ModuleAIChat({
   t, uiLang, theme, messages: propMessages, setMessages: propSetMessages, draft, setDraft, onPublish, onQuotaChange, onReportCreated, onWorkflowProgressChange, onOpenSourcing,
   authUser = null, conversationId = '', isVip = false,
+  guestFeatureLocked = false,
+  onGuestFeatureBlocked,
+  hotProductDiagnosisRequest = null,
+  onConsumedHotProductDiagnosisRequest,
 }) {
   const [localMessages, localSetMessages] = React.useState([]);
   const messages = propMessages || localMessages;
@@ -1355,7 +1359,7 @@ export function ModuleAIChat({
       }
       onQuotaChange?.();
     } else {
-      if (!isVip && getRemainingQuota() <= 0) {
+      if (!isVip && getRemainingQuota(MAX_GUEST_QUOTA) <= 0) {
         setShowVipModal(true);
         setVipKeyInput('');
         setVipKeyError('');
@@ -1538,13 +1542,31 @@ export function ModuleAIChat({
   }, [onOpenSourcing]);
 
   const handleProductAskAi = React.useCallback((product) => {
+    if (guestFeatureLocked) {
+      onGuestFeatureBlocked?.();
+      return;
+    }
     const u = product?.tangbuyUrl || product?.url;
     if (!u || !/^https?:\/\//i.test(u)) return;
     // Store pending product and show country modal
     setPendingProductForDiagnosis(product);
     setSelectedCountries([]);
     setShowCountryModal(true);
-  }, []);
+  }, [guestFeatureLocked, onGuestFeatureBlocked]);
+
+  const lastHotDiagTRef = React.useRef(null);
+  React.useEffect(() => {
+    const t0 = hotProductDiagnosisRequest?.t;
+    const prod = hotProductDiagnosisRequest?.product;
+    if (!t0 || !prod) {
+      lastHotDiagTRef.current = null;
+      return;
+    }
+    if (lastHotDiagTRef.current === t0) return;
+    lastHotDiagTRef.current = t0;
+    handleProductAskAi(prod);
+    onConsumedHotProductDiagnosisRequest?.();
+  }, [hotProductDiagnosisRequest, handleProductAskAi, onConsumedHotProductDiagnosisRequest]);
 
   const confirmCountryAndProceed = React.useCallback(() => {
     if (selectedCountries.length === 0 || !pendingProductForDiagnosis) return;
@@ -1990,7 +2012,13 @@ export function ModuleAIChat({
                         <div className="flex flex-row gap-3 items-stretch" style={{ width: 'max-content', minWidth: '100%' }}>
                           {hotData.map((p, idx) => (
                             <div key={`${i}-${idx}-${p.id}`} className="flex-shrink-0 w-[min(288px,calc(100vw-4rem))] max-w-[288px]">
-                              <ChatHotProductCard p={p} uiLang={uiLang} onAskAi={handleProductAskAi} />
+                              <ChatHotProductCard
+                                p={p}
+                                uiLang={uiLang}
+                                onAskAi={handleProductAskAi}
+                                guestFeatureLocked={guestFeatureLocked}
+                                onRequireLogin={onGuestFeatureBlocked}
+                              />
                             </div>
                           ))}
                         </div>
@@ -2006,6 +2034,8 @@ export function ModuleAIChat({
                             t={t}
                             onAskAi={handleProductAskAi}
                             onPublish={onPublish}
+                            guestFeatureLocked={guestFeatureLocked}
+                            onRequireLogin={onGuestFeatureBlocked}
                           />
                         ))}
                       </div>
@@ -2032,6 +2062,8 @@ export function ModuleAIChat({
                           t={t}
                           onAskAi={handleProductAskAi}
                           onPublish={onPublish}
+                          guestFeatureLocked={guestFeatureLocked}
+                          onRequireLogin={onGuestFeatureBlocked}
                         />
                       ))}
                     </div>
