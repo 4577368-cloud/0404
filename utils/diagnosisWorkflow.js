@@ -175,6 +175,16 @@ export function compressStepOutput(stepNumber, fullOutput) {
 /**
  * Build context message for a specific step including compressed previous states
  */
+/**
+ * 让模型以「当前日历年」为运营与营销节点基准，避免输出已过时的年份（如把 2024 当作即将到来的节点）。
+ * 不要求在报告里向用户强调年份，仅供模型内部推理。
+ */
+function analysisTemporalContextBlock() {
+  const y = Math.max(2026, new Date().getFullYear());
+  const yNext = y + 1;
+  return `\n\n## Analysis time anchor (internal reasoning only)\n- Use **${y}–${yNext}** as the default operational planning horizon for marketing calendars, holiday peaks, seasonal demand, campaign timing, launch windows, and country-specific retail events. All **forward-looking** timing must be consistent with **${y}** and later — never treat **2024 or earlier** as upcoming opportunities.\n- Do **not** recommend “next” holiday or season using years that have already passed. If training data mentions old years, reinterpret into **${y}+** context.\n- You do **not** need to repeatedly state “${y}” in user-facing prose; apply this rule silently unless a specific year is naturally useful for clarity.\n`;
+}
+
 function outputLanguageBlock(uiLang = 'en') {
   const map = {
     zh: '\n\n## CRITICAL — Output Language Rule\nJSON keys MUST stay in English. ALL human-readable text (analysis paragraphs, list items, table cells, descriptions) MUST be written entirely in **Simplified Chinese (简体中文)**. Do NOT mix English words into Chinese sentences except for proper nouns, brand names, and standard acronyms (ROI, CAC, SKU, etc.).',
@@ -223,7 +233,7 @@ export function buildStepContext(stepNumber, productData, targetMarket, previous
     filledPrompt += `\n\n## Previous Steps — Key Insights Summary\n\n${stateContext}\n\nBased on the above prior analysis, proceed with the current step.`;
   }
 
-  return `${filledPrompt}${outputLanguageBlock(uiLang)}`;
+  return `${filledPrompt}${analysisTemporalContextBlock()}${outputLanguageBlock(uiLang)}`;
 }
 
 /**

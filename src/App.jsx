@@ -94,6 +94,7 @@ export default function App() {
   const [activeView, setActiveView] = React.useState('chat');
   const [activeReportId, setActiveReportId] = React.useState(null);
   const [reports, setReports] = React.useState(() => loadAIReports());
+  const [reportListVisible, setReportListVisible] = React.useState(true);
   const [toast, setToast] = React.useState({ open: false, message: '' });
   const toastTimerRef = React.useRef(null);
   const [authUser, setAuthUser] = React.useState(null);
@@ -310,18 +311,23 @@ export default function App() {
   }, []);
 
   const handleAIReports = React.useCallback(() => {
-    console.log('[AI Reports] Clicked, navigating to aiReports view');
+    if (activeView === 'aiReports') {
+      setReportListVisible(true);
+      return;
+    }
     setActiveView('aiReports');
-    setSidebarCollapsed(true); // Auto-collapse sidebar when entering AI Reports
+    setReportListVisible(true);
+    setSidebarCollapsed(true);
     sidebarAutoCollapsedRef.current = true;
     if (!activeReportId && reports.length > 0) {
-      setActiveReportId(reports[0].id); // Auto-select first report if none selected
+      setActiveReportId(reports[0].id);
     }
-  }, [activeReportId, reports]);
+  }, [activeView, activeReportId, reports]);
 
   const handleReportCreated = React.useCallback((newReport) => {
     setReports(prev => [newReport, ...prev]);
     setActiveReportId(newReport.id);
+    setReportListVisible(false);
     setWorkflowProgress({ isRunning: false, stepName: '', percent: 100, step: 9, justCompleted: true });
     setActiveView('aiReports');
     setSidebarCollapsed(true);
@@ -376,14 +382,40 @@ export default function App() {
       <Sidebar
         conversations={conversations}
         activeId={activeId}
-        onSelect={(id) => { setActiveId(id); setActiveView('chat'); }}
-        onNew={() => { handleNewConv(); setActiveView('chat'); }}
+        onSelect={(id) => {
+          setActiveId(id);
+          setActiveView('chat');
+          if (sidebarCollapsed && sidebarAutoCollapsedRef.current) {
+            setSidebarCollapsed(false);
+            sidebarAutoCollapsedRef.current = false;
+          }
+        }}
+        onNew={() => {
+          handleNewConv();
+          setActiveView('chat');
+          if (sidebarCollapsed && sidebarAutoCollapsedRef.current) {
+            setSidebarCollapsed(false);
+            sidebarAutoCollapsedRef.current = false;
+          }
+        }}
         onDelete={handleDeleteConv}
         onRename={handleRenameConv}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        onHotProducts={() => setActiveView('hotProducts')}
-        onSourcing={handleSourcing}
+        onHotProducts={() => {
+          setActiveView('hotProducts');
+          if (sidebarCollapsed && sidebarAutoCollapsedRef.current) {
+            setSidebarCollapsed(false);
+            sidebarAutoCollapsedRef.current = false;
+          }
+        }}
+        onSourcing={() => {
+          handleSourcing();
+          if (sidebarCollapsed && sidebarAutoCollapsedRef.current) {
+            setSidebarCollapsed(false);
+            sidebarAutoCollapsedRef.current = false;
+          }
+        }}
         onAIReports={handleAIReports}
         activeView={activeView}
         uiLang={lang}
@@ -431,13 +463,18 @@ export default function App() {
             </div>
           ) : activeView === 'aiReports' ? (
             <>
-              <AIReportList 
-                activeReportId={activeReportId}
-                onSelectReport={setActiveReportId}
-                uiLang={lang}
-                reports={reports}
-                onDeleteReport={(id) => setReports(prev => prev.filter(r => r.id !== id))}
-              />
+              {reportListVisible && (
+                <AIReportList 
+                  activeReportId={activeReportId}
+                  onSelectReport={(id) => {
+                    setActiveReportId(id);
+                    setReportListVisible(false);
+                  }}
+                  uiLang={lang}
+                  reports={reports}
+                  onDeleteReport={(id) => setReports(prev => prev.filter(r => r.id !== id))}
+                />
+              )}
               <AIReportViewer 
                 reportId={activeReportId} 
                 uiLang={lang} 

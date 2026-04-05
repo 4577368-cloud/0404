@@ -11,6 +11,9 @@ export const supabase =
           persistSession: true,
           autoRefreshToken: true,
           detectSessionInUrl: true,
+          // 会话存在浏览器 localStorage（按 origin），与 Vercel 部署包无关。
+          // 换域名 / 清缓存 / 无痕 / 另一浏览器 = 新匿名用户 = 新 user_id = 额度从 0 计。
+          // Preview 与 Production 若域名不同，也是不同 localStorage → 不同身份。
         },
       })
     : null;

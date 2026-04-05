@@ -79,7 +79,8 @@ function renderUserMarkdown(text) {
 // ── Constants ──
 const DROPSHIPPING_PREFIX = 'https://dropshipping.tangbuy.com/zh-CN/product/';
 const TANGBUY_DISPLAY_MULT = 1.7;
-const ANALYSIS_YEAR = 2026;
+/** 运营/营销分析时间锚点：至少 2026，随日历年自动上移 */
+const ANALYSIS_YEAR = Math.max(2026, new Date().getFullYear());
 const HTML_SPLIT_DELIM = '===HTML===';
 const PROXY_URL = 'https://proxy-api.trickle-app.host/';
 
@@ -1195,7 +1196,7 @@ export function ModuleAIChat({
     }
 
     const langConstraint = `\n\n【输出语言强约束】\n- 用户使用什么语言输入，你就用什么语言回复。\n- 本次检测到用户输入语言为：${outLang.label}，你必须全程使用 ${outLang.label} 回复。\n- 如果用户输入语言不属于中文、英文、西班牙语、法语，则统一使用英文（English）回复。\n- 严禁在同一回复中混用多种语言（例如一段中文一段英文），除非用户明确要求双语输出。\n- 如果用户明确要求用某种语言回复，必须按照用户指定的语言输出。`;
-    const yearConstraint = `\n\n【时间与年份强约束】\n- 当前分析年份固定为 ${ANALYSIS_YEAR} 年。\n- 严禁出现其他年份。`;
+    const yearConstraint = `\n\n【时间与年份强约束】\n- 运营、营销排期、节日/大促/季节节点默认以 **${ANALYSIS_YEAR} 年及以后**为规划时间轴。\n- **不得**将 2024 或更早的年份当作「即将到来」的节点；面向未来的建议必须落在 ${ANALYSIS_YEAR}+。\n- 引用历史数据时可出现过去年份；勿向用户重复强调「基于 ${ANALYSIS_YEAR}」类元话术，除非用户追问。`;
     const siteCtx = knownSite ? `\n\n【已知站点上下文】\n- 站点：${knownSite}\n- 同域名复用之前诊断，不同域名重新建模。` : '';
     const normalizedLang = normalizeKnowledgeLang(outLang.lang || uiLang);
     const tangbuyBaseGuidance = TANGBUY_GUIDANCE[normalizedLang] || TANGBUY_GUIDANCE.en;

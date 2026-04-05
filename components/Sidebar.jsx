@@ -274,7 +274,7 @@ export default function Sidebar({
 
         <div style={{ padding: collapsed ? '8px 8px 12px' : '8px 14px 12px', borderBottom: '1px solid var(--theme-border)', flexShrink: 0 }}>
           <button onClick={() => { onNew(); onClose?.(); }}
-            title={collapsed ? 'New Chat' : undefined}
+            title="New Chat"
             style={{
               width: '100%', display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start',
               gap: 8, padding: collapsed ? '10px 0' : '10px 12px', borderRadius: 10,
@@ -288,7 +288,7 @@ export default function Sidebar({
             {!collapsed && <span>New Chat</span>}
           </button>
           <button onClick={() => { onHotProducts?.(); onClose?.(); }}
-            title={collapsed ? (uiLang === 'zh' ? '爆款商品' : 'Hot Products') : undefined}
+            title={uiLang === 'zh' ? '爆款商品' : 'Hot Products'}
             style={{
               width: '100%', display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start',
               gap: 8, padding: '10px 12px', borderRadius: activeView === 'hotProducts' ? 10 : 0, marginTop: 8,
@@ -304,7 +304,7 @@ export default function Sidebar({
             {!collapsed && <span>{uiLang === 'zh' ? '爆款商品' : 'Hot Products'}</span>}
           </button>
           <button onClick={() => { onSourcing?.(); onClose?.(); }}
-            title={collapsed ? (uiLang === 'zh' ? '寻源采购' : 'Sourcing') : undefined}
+            title={uiLang === 'zh' ? '寻源采购' : 'Sourcing'}
             style={{
               width: '100%', display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start',
               gap: 8, padding: collapsed ? '10px 0' : '10px 12px', borderRadius: activeView === 'sourcing' ? 10 : 0, marginTop: 8,
@@ -320,7 +320,7 @@ export default function Sidebar({
             {!collapsed && <span>{uiLang === 'zh' ? '寻源采购' : 'Sourcing'}</span>}
           </button>
           <button onClick={() => { onAIReports?.(); onClose?.(); }}
-            title={collapsed ? (uiLang === 'zh' ? 'AI报告' : 'AI Reports') : undefined}
+            title={uiLang === 'zh' ? 'AI报告' : 'AI Reports'}
             style={{
               width: '100%', display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start',
               gap: 8, padding: '10px 12px', borderRadius: activeView === 'aiReports' ? 10 : 0, marginTop: 8,
