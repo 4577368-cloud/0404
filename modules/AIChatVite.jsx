@@ -3,6 +3,9 @@ import { createPortal } from 'react-dom';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { incrementQuota, getRemainingQuota } from '../utils/quota.js';
+import { supabase } from '../utils/supabaseClient.js';
+import { consumeChatTurn, claimVipRemote } from '../utils/supabaseUsage.js';
+import { extractUrlsFromText } from '../utils/urlExtract.js';
 import { DIAGNOSIS_PROMPTS, fillPrompt } from '../utils/diagnosisPrompts.js';
 import { DiagnosisWorkflow } from '../utils/diagnosisWorkflow.js';
 import { createAIReport } from '../utils/aiReports.js';
@@ -817,7 +820,10 @@ const VIP_FLAG_KEY = 'tb_ai_vip_unlocked_v1';
 const WHATSAPP_URL = 'https://wa.me/8613409738176';
 const WHATSAPP_NUMBER = '+86 13409738176';
 
-export function ModuleAIChat({ t, uiLang, theme, messages: propMessages, setMessages: propSetMessages, draft, setDraft, onPublish, onQuotaChange, onReportCreated, onWorkflowProgressChange, onOpenSourcing }) {
+export function ModuleAIChat({
+  t, uiLang, theme, messages: propMessages, setMessages: propSetMessages, draft, setDraft, onPublish, onQuotaChange, onReportCreated, onWorkflowProgressChange, onOpenSourcing,
+  authUser = null, conversationId = '', isVip = false,
+}) {
   const [localMessages, localSetMessages] = React.useState([]);
   const messages = propMessages || localMessages;
   const setMessages = propSetMessages || localSetMessages;
@@ -838,9 +844,6 @@ export function ModuleAIChat({ t, uiLang, theme, messages: propMessages, setMess
   const [showVipModal, setShowVipModal] = React.useState(false);
   const [vipKeyInput, setVipKeyInput] = React.useState('');
   const [vipKeyError, setVipKeyError] = React.useState('');
-  const [isVip, setIsVip] = React.useState(() => {
-    try { return localStorage.getItem(VIP_FLAG_KEY) === '1'; } catch { return false; }
-  });
 
   // Country selection modal for AI Diagnose
   const [showCountryModal, setShowCountryModal] = React.useState(false);
@@ -948,10 +951,20 @@ export function ModuleAIChat({ t, uiLang, theme, messages: propMessages, setMess
   };
   const countryFlag = (code) => COUNTRY_FLAGS[code] || '';
 
-  const tryUnlockVip = React.useCallback(() => {
+  const tryUnlockVip = React.useCallback(async () => {
     const key = vipKeyInput.trim();
+    if (supabase && authUser) {
+      const res = await claimVipRemote(supabase, key);
+      if (res?.ok) {
+        setShowVipModal(false);
+        setVipKeyError('');
+        onQuotaChange?.();
+      } else {
+        setVipKeyError(uiLang === 'zh' ? '密钥无效，请重试。' : 'Invalid key, please try again.');
+      }
+      return;
+    }
     if (key === VIP_KEY) {
-      setIsVip(true);
       setShowVipModal(false);
       setVipKeyError('');
       try { localStorage.setItem(VIP_FLAG_KEY, '1'); } catch {}
@@ -959,7 +972,7 @@ export function ModuleAIChat({ t, uiLang, theme, messages: propMessages, setMess
     } else {
       setVipKeyError(uiLang === 'zh' ? '密钥无效，请重试。' : 'Invalid key, please try again.');
     }
-  }, [vipKeyInput, uiLang, onQuotaChange]);
+  }, [vipKeyInput, uiLang, onQuotaChange, authUser]);
 
   const isFirstRender = React.useRef(true);
   const prevMessagesRef = React.useRef(propMessages);
@@ -1323,17 +1336,36 @@ export function ModuleAIChat({ t, uiLang, theme, messages: propMessages, setMess
     shownIdsRef.current.clear();
     console.log('[DEBUG] shownIdsRef cleared on new message, was tracking', beforeSize, 'products');
 
-    if (!isVip && getRemainingQuota() <= 0) {
-      setShowVipModal(true);
-      setVipKeyInput('');
-      setVipKeyError('');
-      return;
+    const urls = extractUrlsFromText(txt);
+
+    if (supabase && authUser) {
+      const res = await consumeChatTurn(supabase, {
+        conversationId,
+        content: txt,
+        extractedUrls: urls,
+      });
+      if (!res?.allowed) {
+        if (res?.reason === 'quota_exhausted') {
+          setShowVipModal(true);
+          setVipKeyInput('');
+          setVipKeyError('');
+        }
+        return;
+      }
+      onQuotaChange?.();
+    } else {
+      if (!isVip && getRemainingQuota() <= 0) {
+        setShowVipModal(true);
+        setVipKeyInput('');
+        setVipKeyError('');
+        return;
+      }
+      incrementQuota();
+      onQuotaChange?.();
     }
 
     setMessages((p) => [...p, { role: 'user', type: 'text', content: txt }]);
     setIsLoading(true);
-    incrementQuota();
-    onQuotaChange?.();
 
     try {
       await ensureKnowledgeBasesLoaded();
@@ -1462,7 +1494,7 @@ export function ModuleAIChat({ t, uiLang, theme, messages: propMessages, setMess
     } finally {
       setIsLoading(false);
     }
-  }, [isLoading, uiLang, messages, knownSite, knownContentLang, mode, allProducts, buildSystemMessage, smartSearch, onQuotaChange, t, isVip]);
+  }, [isLoading, uiLang, messages, knownSite, knownContentLang, mode, allProducts, buildSystemMessage, smartSearch, onQuotaChange, t, isVip, authUser, conversationId]);
 
   // ── Mode switch ──
   const switchMode = (newMode) => {

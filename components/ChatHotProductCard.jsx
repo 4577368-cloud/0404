@@ -1,4 +1,6 @@
 import React from 'react';
+import { supabase } from '../utils/supabaseClient.js';
+import { logTangbuyClick } from '../utils/supabaseUsage.js';
 
 const PLACEHOLDER = 'https://via.placeholder.com/300?text=No+Image';
 
@@ -140,6 +142,7 @@ export default function ChatHotProductCard({ p, uiLang, onAskAi }) {
               href={p.tangbuyUrl}
               target="_blank"
               rel="noreferrer"
+              onClick={() => logTangbuyClick(supabase, 'chat_hot_tangbuy', p.tangbuyUrl, { productId: p.id, name: p.name })}
               className="flex-1 text-[10px] text-center py-1.5 rounded-lg transition-all font-semibold hover:brightness-105 flex items-center justify-center gap-1"
               style={{
                 background: 'var(--brand-primary-fixed)',
@@ -156,6 +159,7 @@ export default function ChatHotProductCard({ p, uiLang, onAskAi }) {
               href={p.url}
               target="_blank"
               rel="noreferrer"
+              onClick={() => logTangbuyClick(supabase, 'chat_hot_source', p.url, { productId: p.id, name: p.name })}
               className="flex-1 text-[10px] text-center py-1.5 rounded-lg transition-all font-semibold hover:brightness-105 flex items-center justify-center gap-1"
               style={{
                 background: 'var(--brand-primary-fixed)',

@@ -1,4 +1,5 @@
 import React from 'react';
+import { isAnonymousUser } from '../utils/supabaseAuth.js';
 import { createPortal } from 'react-dom';
 
 const INTENT_RULES = [
@@ -103,7 +104,7 @@ const ABOUT_URL = 'https://dropshipping.tangbuy.com';
 
 export default function Sidebar({
   conversations, activeId, onSelect, onNew, onDelete, onRename, isOpen, onClose, onHotProducts, onSourcing, onAIReports, activeView, uiLang, collapsed, onToggleCollapse,
-  supabaseReady, authUser, onOpenAuthModal, onSignOut, onSwitchAccount,
+  supabaseReady, authUser, onOpenAuthModal, onLinkGoogle, onSignOut, onSwitchAccount,
 }) {
   const [editingId, setEditingId] = React.useState(null);
   const [editValue, setEditValue] = React.useState('');
@@ -115,12 +116,15 @@ export default function Sidebar({
   const userChipRef = React.useRef(null);
   const [userMenuPos, setUserMenuPos] = React.useState({ bottom: 80, left: 16, width: 240 });
 
-  const userDisplayName = authUser?.user_metadata?.full_name
-    || authUser?.user_metadata?.name
-    || authUser?.email?.split('@')[0]
-    || '';
-  const avatarUrl = authUser?.user_metadata?.avatar_url || authUser?.user_metadata?.picture;
-  const userInitial = (userDisplayName || '?').slice(0, 1).toUpperCase();
+  const isGuest = authUser && isAnonymousUser(authUser);
+  const userDisplayName = isGuest
+    ? (uiLang === 'zh' ? '访客' : 'Guest')
+    : (authUser?.user_metadata?.full_name
+      || authUser?.user_metadata?.name
+      || authUser?.email?.split('@')[0]
+      || '');
+  const avatarUrl = !isGuest && (authUser?.user_metadata?.avatar_url || authUser?.user_metadata?.picture);
+  const userInitial = isGuest ? 'G' : (userDisplayName || '?').slice(0, 1).toUpperCase();
 
   const updateUserMenuPos = React.useCallback(() => {
     const el = userChipRef.current;
@@ -544,7 +548,7 @@ export default function Sidebar({
                   cursor: 'pointer',
                   textAlign: 'left',
                 }}
-                title={authUser.email || ''}
+                title={isGuest ? (uiLang === 'zh' ? '访客（额度与用量记录在云端）' : 'Guest (usage synced to cloud)') : (authUser.email || '')}
               >
                 {avatarUrl ? (
                   <img src={avatarUrl} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
@@ -612,8 +616,19 @@ export default function Sidebar({
           }}
         >
           <div style={{ padding: '8px 14px 10px', borderBottom: '1px solid var(--theme-border)', fontSize: 11, color: 'var(--theme-text-muted)', wordBreak: 'break-all' }}>
-            {authUser.email}
+            {isGuest
+              ? (uiLang === 'zh' ? '访客会话 · 使用 Google 登录可保存账号' : 'Guest session · Sign in with Google to keep your account')
+              : authUser.email}
           </div>
+          {isGuest && onLinkGoogle && (
+            <button
+              type="button"
+              onClick={() => { setUserMenuOpen(false); onLinkGoogle(); }}
+              style={{ width: '100%', textAlign: 'left', padding: '10px 14px', fontSize: 13, border: 'none', background: 'transparent', color: 'var(--brand-primary-fixed)', fontWeight: 600, cursor: 'pointer' }}
+            >
+              {uiLang === 'zh' ? '使用 Google 登录' : 'Sign in with Google'}
+            </button>
+          )}
           <a
             href={ABOUT_URL}
             target="_blank"
@@ -623,13 +638,15 @@ export default function Sidebar({
           >
             {uiLang === 'zh' ? '关于我们' : 'About us'}
           </a>
-          <button
-            type="button"
-            onClick={() => { setUserMenuOpen(false); onSwitchAccount?.(); }}
-            style={{ width: '100%', textAlign: 'left', padding: '10px 14px', fontSize: 13, border: 'none', background: 'transparent', color: 'var(--theme-text)', cursor: 'pointer' }}
-          >
-            {uiLang === 'zh' ? '切换账号' : 'Switch account'}
-          </button>
+          {!isGuest && (
+            <button
+              type="button"
+              onClick={() => { setUserMenuOpen(false); onSwitchAccount?.(); }}
+              style={{ width: '100%', textAlign: 'left', padding: '10px 14px', fontSize: 13, border: 'none', background: 'transparent', color: 'var(--theme-text)', cursor: 'pointer' }}
+            >
+              {uiLang === 'zh' ? '切换账号' : 'Switch account'}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => { setUserMenuOpen(false); onSignOut?.(); }}

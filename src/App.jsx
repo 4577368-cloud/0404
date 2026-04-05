@@ -6,11 +6,13 @@ import SourcingLandingPage from '../components/SourcingLandingPage.jsx';
 import AIReportList from '../components/AIReportList.jsx';
 import AIReportViewer from '../components/AIReportViewer.jsx';
 import GlassCard from '../components/GlassCard.jsx';
-import { getRemainingQuota } from '../utils/quota.js';
+import { getRemainingQuota, MAX_FREE_QUOTA } from '../utils/quota.js';
+import { fetchUserStats, remainingFromStats } from '../utils/supabaseUsage.js';
 import { ModuleAIChat } from '../modules/AIChatVite.jsx';
 import { TRANSLATIONS } from '../utils/translations.js';
 import { createAIReport, loadAIReports } from '../utils/aiReports.js';
 import { supabase, isSupabaseConfigured } from '../utils/supabaseClient.js';
+import { ensureAnonymousSession } from '../utils/supabaseAuth.js';
 import AuthModal from '../components/AuthModal.jsx';
 
 export class ErrorBoundary extends React.Component {
@@ -98,12 +100,14 @@ export default function App() {
   const [authModalOpen, setAuthModalOpen] = React.useState(false);
   const prevAuthUserRef = React.useRef(null);
 
+  /** 无 OAuth 会话时自动匿名登录，使未「登录」用户也有 auth.uid()，额度与日志进 Supabase */
   React.useEffect(() => {
     if (!supabase) return undefined;
     let cancelled = false;
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    (async () => {
+      const session = await ensureAnonymousSession(supabase);
       if (!cancelled) setAuthUser(session?.user ?? null);
-    });
+    })();
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       setAuthUser(session?.user ?? null);
     });
@@ -112,6 +116,27 @@ export default function App() {
       sub.subscription.unsubscribe();
     };
   }, []);
+
+  /** 有 Supabase 会话（含匿名）：额度与 VIP 以 user_stats 为准；无会话或仅本地模式：localStorage */
+  React.useEffect(() => {
+    if (!supabase || !authUser) {
+      setRemainingQuota(getRemainingQuota());
+      setIsVip(getIsVipUnlocked());
+      return undefined;
+    }
+    let cancelled = false;
+    fetchUserStats(supabase).then((row) => {
+      if (cancelled) return;
+      if (!row) {
+        setIsVip(false);
+        setRemainingQuota(MAX_FREE_QUOTA);
+        return;
+      }
+      setIsVip(!!row.is_vip);
+      setRemainingQuota(remainingFromStats(row));
+    });
+    return () => { cancelled = true; };
+  }, [authUser]);
 
   const handleSignInGoogle = React.useCallback(async () => {
     if (!supabase) return;
@@ -126,6 +151,8 @@ export default function App() {
   const handleSignOut = React.useCallback(async () => {
     if (!supabase) return;
     await supabase.auth.signOut();
+    const session = await ensureAnonymousSession(supabase);
+    setAuthUser(session?.user ?? null);
   }, []);
 
   const handleSwitchAccount = React.useCallback(async () => {
@@ -299,9 +326,21 @@ export default function App() {
   }, [activeView, sidebarCollapsed]);
 
   const refreshQuota = React.useCallback(() => {
-    setRemainingQuota(getRemainingQuota());
-    setIsVip(getIsVipUnlocked());
-  }, []);
+    if (supabase && authUser) {
+      fetchUserStats(supabase).then((row) => {
+        if (!row) {
+          setIsVip(false);
+          setRemainingQuota(MAX_FREE_QUOTA);
+          return;
+        }
+        setIsVip(!!row.is_vip);
+        setRemainingQuota(remainingFromStats(row));
+      });
+    } else {
+      setRemainingQuota(getRemainingQuota());
+      setIsVip(getIsVipUnlocked());
+    }
+  }, [authUser]);
 
   React.useEffect(() => () => { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); }, []);
 
@@ -337,6 +376,7 @@ export default function App() {
         supabaseReady={isSupabaseConfigured()}
         authUser={authUser}
         onOpenAuthModal={() => setAuthModalOpen(true)}
+        onLinkGoogle={handleSignInGoogle}
         onSignOut={handleSignOut}
         onSwitchAccount={handleSwitchAccount}
       />
@@ -400,6 +440,9 @@ export default function App() {
               onReportCreated={handleReportCreated}
               onWorkflowProgressChange={handleWorkflowProgressChange}
               onOpenSourcing={handleSourcing}
+              authUser={authUser}
+              conversationId={activeId}
+              isVip={isVip}
             />
           )}
         </div>

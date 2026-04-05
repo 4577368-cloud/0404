@@ -1,5 +1,7 @@
 import React from 'react';
 import { tryFetchJson } from '../utils/productSearch.js';
+import { supabase } from '../utils/supabaseClient.js';
+import { logTangbuyClick } from '../utils/supabaseUsage.js';
 
 const PAGE_SIZE = 20;
 const TANGBUY_DISPLAY_MULT = 1.7;
@@ -187,6 +189,7 @@ function ProductCard({ p, uiLang }) {
         <div className="flex gap-1.5 mt-0.5">
           {p.tangbuyUrl ? (
             <a href={p.tangbuyUrl} target="_blank" rel="noreferrer"
+              onClick={() => logTangbuyClick(supabase, 'hot_page_tangbuy', p.tangbuyUrl, { productId: p.id, name: p.name })}
               className="flex-1 text-[10px] text-center py-1.5 rounded-lg transition-all font-semibold hover:brightness-105 flex items-center justify-center gap-1"
               style={{ background: 'var(--brand-primary-fixed)', color: '#fff', border: '1px solid rgba(255,255,255,0.12)', boxShadow: '0 6px 14px rgba(255,59,48,0.14)' }}>
               <span className="icon-external-link text-[10px]" />
@@ -194,6 +197,7 @@ function ProductCard({ p, uiLang }) {
             </a>
           ) : p.url && p.url !== '#' ? (
             <a href={p.url} target="_blank" rel="noreferrer"
+              onClick={() => logTangbuyClick(supabase, 'hot_page_source', p.url, { productId: p.id, name: p.name })}
               className="flex-1 text-[10px] text-center py-1.5 rounded-lg transition-all font-semibold hover:brightness-105 flex items-center justify-center gap-1"
               style={{ background: 'var(--theme-surface)', color: 'var(--theme-text-secondary)', border: '1px solid var(--theme-border)' }}>
               <span className="icon-external-link text-[10px]" />

@@ -1,4 +1,6 @@
 import React from 'react';
+import { supabase } from '../utils/supabaseClient.js';
+import { logTangbuyClick } from '../utils/supabaseUsage.js';
 
 const TREND_LABELS = {
   zh: {
@@ -254,6 +256,7 @@ export function ProductCard({ product, uiLang, t, onAskAi, onPublish }) {
             href={p.tangbuyUrl || p.url}
             target="_blank"
             rel="noreferrer"
+            onClick={() => logTangbuyClick(supabase, 'chat_carousel_view', p.tangbuyUrl || p.url, { productId: p.id, name: p.name })}
             className="flex-1 text-[8px] text-center py-1 rounded bg-red-600 text-white font-semibold hover:bg-red-700 transition-colors duration-200"
           >
             {uiLang === 'zh' ? '查看' : 'View'}
