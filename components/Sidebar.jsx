@@ -117,14 +117,17 @@ export default function Sidebar({
   const [userMenuPos, setUserMenuPos] = React.useState({ bottom: 80, left: 16, width: 240 });
 
   const isGuest = authUser && isAnonymousUser(authUser);
+  const notSignedInLabel = uiLang === 'zh' ? '未登录' : 'Not signed in';
   const userDisplayName = isGuest
-    ? (uiLang === 'zh' ? '访客' : 'Guest')
+    ? notSignedInLabel
     : (authUser?.user_metadata?.full_name
       || authUser?.user_metadata?.name
       || authUser?.email?.split('@')[0]
       || '');
   const avatarUrl = !isGuest && (authUser?.user_metadata?.avatar_url || authUser?.user_metadata?.picture);
-  const userInitial = isGuest ? 'G' : (userDisplayName || '?').slice(0, 1).toUpperCase();
+  const userInitial = isGuest
+    ? (uiLang === 'zh' ? '未' : 'N')
+    : (userDisplayName || '?').slice(0, 1).toUpperCase();
 
   const updateUserMenuPos = React.useCallback(() => {
     const el = userChipRef.current;
@@ -548,7 +551,7 @@ export default function Sidebar({
                   cursor: 'pointer',
                   textAlign: 'left',
                 }}
-                title={isGuest ? (uiLang === 'zh' ? '访客（额度与用量记录在云端）' : 'Guest (usage synced to cloud)') : (authUser.email || '')}
+                title={isGuest ? notSignedInLabel : (authUser.email || '')}
               >
                 {avatarUrl ? (
                   <img src={avatarUrl} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
@@ -615,11 +618,11 @@ export default function Sidebar({
             overflow: 'auto',
           }}
         >
-          <div style={{ padding: '8px 14px 10px', borderBottom: '1px solid var(--theme-border)', fontSize: 11, color: 'var(--theme-text-muted)', wordBreak: 'break-all' }}>
-            {isGuest
-              ? (uiLang === 'zh' ? '访客会话 · 使用 Google 登录可保存账号' : 'Guest session · Sign in with Google to keep your account')
-              : authUser.email}
-          </div>
+          {!isGuest && (
+            <div style={{ padding: '8px 14px 10px', borderBottom: '1px solid var(--theme-border)', fontSize: 11, color: 'var(--theme-text-muted)', wordBreak: 'break-all' }}>
+              {authUser.email}
+            </div>
+          )}
           {isGuest && onLinkGoogle && (
             <button
               type="button"
