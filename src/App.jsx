@@ -16,12 +16,20 @@ import AuthModal from '../components/AuthModal.jsx';
 import { track, AnalyticsEvent } from '../utils/analytics.js';
 
 const HotProducts = React.lazy(() => import('../components/HotProducts.jsx'));
+const MyLists = React.lazy(() => import('../components/MyLists.jsx'));
 const SourcingLandingPage = React.lazy(() => import('../components/SourcingLandingPage.jsx'));
 const AIReportList = React.lazy(() => import('../components/AIReportList.jsx'));
 const AIReportViewer = React.lazy(() => import('../components/AIReportViewer.jsx'));
 const ModuleAIChat = React.lazy(() =>
   import('../modules/AIChatVite.jsx').then((m) => ({ default: m.ModuleAIChat }))
 );
+
+/** 本地 `vite` 开发服，或 `.env` 中 `VITE_ALLOW_GUEST_PRODUCT_SEARCH=true`：未 OAuth 也可从侧栏进入「商品搜索」浏览；页内 AI 诊断等仍走 guest 拦截。 */
+function allowGuestProductSearchNav() {
+  if (import.meta.env.DEV) return true;
+  const v = import.meta.env.VITE_ALLOW_GUEST_PRODUCT_SEARCH;
+  return v === 'true' || v === '1';
+}
 
 export class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -131,8 +139,28 @@ export default function App() {
   const [authUser, setAuthUser] = React.useState(null);
   const [authSessionReady, setAuthSessionReady] = React.useState(() => !isSupabaseConfigured());
   const [authModalOpen, setAuthModalOpen] = React.useState(false);
+  /** `feature_gate`：因未登录使用功能而弹出，默认强调 Google 登录文案；`default`：用户主动打开 */
+  const [authModalReason, setAuthModalReason] = React.useState('default');
   const prevOAuthSessionRef = React.useRef(false);
   const [hotProductDiagnosisRequest, setHotProductDiagnosisRequest] = React.useState(null);
+
+  const MY_LISTS_KEY = 'tb_my_lists';
+  const [myListItems, setMyListItems] = React.useState(() => {
+    try { const raw = localStorage.getItem(MY_LISTS_KEY); return raw ? JSON.parse(raw) : []; } catch { return []; }
+  });
+  React.useEffect(() => {
+    try { localStorage.setItem(MY_LISTS_KEY, JSON.stringify(myListItems)); } catch {}
+  }, [myListItems]);
+  const handleAddToMyList = React.useCallback((product) => {
+    if (!product) return;
+    setMyListItems((prev) => {
+      const key = `${product.id}_${Date.now()}`;
+      return [{ ...product, _listKey: key }, ...prev];
+    });
+  }, []);
+  const handleRemoveFromMyList = React.useCallback((listKey) => {
+    setMyListItems((prev) => prev.filter((p) => (p._listKey || p.id) !== listKey));
+  }, []);
 
   /** 会话未从 Supabase 恢复完成前不拦截侧栏，避免误挡已登录用户 */
   const guestFeatureLocked =
@@ -231,6 +259,7 @@ export default function App() {
     if (!supabase) return;
     await supabase.auth.signOut();
     track(AnalyticsEvent.AUTH_MODAL_OPEN, { via: 'switch_account' });
+    setAuthModalReason('default');
     setAuthModalOpen(true);
   }, []);
 
@@ -240,6 +269,7 @@ export default function App() {
     if (oauth && !prevOAuthSessionRef.current) {
       if (authModalOpen) track(AnalyticsEvent.AUTH_MODAL_CLOSE, { reason: 'oauth_success' });
       setAuthModalOpen(false);
+      setAuthModalReason('default');
       setActiveView('chat');
     }
     prevOAuthSessionRef.current = oauth;
@@ -364,10 +394,12 @@ export default function App() {
   const closeAuthModal = React.useCallback(() => {
     track(AnalyticsEvent.AUTH_MODAL_CLOSE, { reason: 'user_dismiss' });
     setAuthModalOpen(false);
+    setAuthModalReason('default');
   }, []);
 
   const openAuthModal = React.useCallback((via = 'explicit') => {
     track(AnalyticsEvent.AUTH_MODAL_OPEN, { via });
+    setAuthModalReason('default');
     setAuthModalOpen(true);
   }, []);
 
@@ -375,6 +407,7 @@ export default function App() {
     track(AnalyticsEvent.FEATURE_GATE_BLOCKED, { feature });
     showToast(t.auth?.signInToUse || '');
     track(AnalyticsEvent.AUTH_MODAL_OPEN, { via: 'feature_gate', feature });
+    setAuthModalReason('feature_gate');
     setAuthModalOpen(true);
   }, [showToast, t]);
 
@@ -494,7 +527,7 @@ export default function App() {
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         onHotProducts={() => {
-          if (guestFeatureLocked) {
+          if (guestFeatureLocked && !allowGuestProductSearchNav()) {
             requireOAuthToastAndModal('nav_hot_products');
             return;
           }
@@ -512,6 +545,14 @@ export default function App() {
           }
         }}
         onAIReports={handleAIReports}
+        onMyLists={() => {
+          setActiveView('myLists');
+          if (sidebarCollapsed && sidebarAutoCollapsedRef.current) {
+            setSidebarCollapsed(false);
+            sidebarAutoCollapsedRef.current = false;
+          }
+        }}
+        myListsCount={myListItems.length}
         activeView={activeView}
         uiLang={lang}
         collapsed={sidebarCollapsed}
@@ -555,13 +596,28 @@ export default function App() {
           <React.Suspense fallback={<ViewLoadingFallback uiLang={lang} />}>
           {activeView === 'hotProducts' ? (
             <HotProducts
+              t={t}
               uiLang={lang}
               guestFeatureLocked={guestFeatureLocked}
               onRequireOAuth={() => requireOAuthToastAndModal('hot_page_ai_diagnose')}
+              onPublish={handlePublishProduct}
               onProductDiagnosis={(product) => {
                 setHotProductDiagnosisRequest({ product, t: Date.now() });
                 setActiveView('chat');
               }}
+              onAddToMyList={handleAddToMyList}
+            />
+          ) : activeView === 'myLists' ? (
+            <MyLists
+              uiLang={lang}
+              items={myListItems}
+              onRemove={handleRemoveFromMyList}
+              onProductDiagnosis={(product) => {
+                setHotProductDiagnosisRequest({ product, t: Date.now() });
+                setActiveView('chat');
+              }}
+              guestFeatureLocked={guestFeatureLocked}
+              onRequireLogin={() => requireOAuthToastAndModal('mylist_ai_diagnose')}
             />
           ) : activeView === 'sourcing' ? (
             <div style={{ flex: '1 1 0', minHeight: 0, overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch' }}>
@@ -620,6 +676,7 @@ export default function App() {
         onClose={closeAuthModal}
         uiLang={lang}
         t={t}
+        openReason={authModalReason}
         onGoogleSignIn={handleSignInGoogle}
         onFacebookSignIn={handleSignInFacebook}
         supabaseReady={isSupabaseConfigured()}

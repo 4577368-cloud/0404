@@ -3,9 +3,30 @@
  * Handles knowledge base parsing, indexing, and context building
  */
 
-import { tryFetchJson } from './productSearch.js';
+import { tryFetchJson, translateZhToEn } from './productSearch.js';
 
 const TANGBUY_SEARCH_URL_TEMPLATE = 'https://dropshipping.tangbuy.com/en-US/search?keyword=<keyword>&type=text';
+
+/** Tangbuy Dropshipping 文本搜索（与知识库约定一致） */
+export function buildTangbuyDropshippingSearchUrl(keyword) {
+  const q = String(keyword ?? '').trim();
+  return `https://dropshipping.tangbuy.com/en-US/search?keyword=${encodeURIComponent(q)}&type=text`;
+}
+
+/**
+ * 趋势/榜单：优先 JSON 英文类目，否则取「类目」路径最后一段并尝试中译英，再生成搜索链接
+ */
+export function tangbuySearchUrlForTrendCategory(product) {
+  const p = product || {};
+  const explicit = String(p.categorySearchEn || '').trim();
+  if (explicit) return buildTangbuyDropshippingSearchUrl(explicit);
+  const cn = String(p.categoryCn || '');
+  const segments = cn.split(/[/|>／]/).map((s) => s.trim()).filter(Boolean);
+  const leafCn = segments[segments.length - 1] || cn;
+  const en = translateZhToEn(leafCn).join(' ').trim();
+  const kw = en || String(p.categoryEn || '').trim() || leafCn;
+  return buildTangbuyDropshippingSearchUrl(kw);
+}
 
 const KB_FILES = {
   zh: 'knowledgeBase_CN.json',

@@ -124,8 +124,9 @@ Structure the answer strictly under these five dimensions. Apply MECE-style thin
 
 ## Dimension 3: Technical GEO & multimodal “occupancy”
 1. **JSON-LD:** Output a **copy-pasteable** \`\`\`json\`\`\` block with **Product**, **FAQ**, and **AggregateRating** (use realistic placeholders only where data is unknown; label them clearly). Include **physical/spec attributes** AI models use in comparison tables (dimensions, weight, materials, certifications).
-2. **Multimodal:** Recommend **Shopify image** alt text, on-image text overlays, and **video transcript** tactics optimized for **vision + text** models.
-3. **LLM-bait content brief:** One **authority blog post** outline: **H1**, full **H2** structure, and a list of **statistics / data tables** to include that maximize **citation likelihood**.
+2. **GEO-ready FAQ (5 Q&A pairs, human-readable):** Immediately after the JSON-LD block, add a subsection \`### GEO-ready FAQ (5 Q&A pairs)\` with **exactly five** pairs in plain Markdown. Each answer must be **short (about 2–4 sentences), specific, and quotable**—optimized for AI overviews, answer engines, and PDP/FAQ sections. **Align questions and facts** with the FAQ entities in the JSON-LD above (same topics, no contradiction). This mirrors the SEO mode deliverable but tuned for **generative citation**, not only keywords.
+3. **Multimodal:** Recommend **Shopify image** alt text, on-image text overlays, and **video transcript** tactics optimized for **vision + text** models.
+4. **LLM-bait content brief:** One **authority blog post** outline: **H1**, full **H2** structure, and a list of **statistics / data tables** to include that maximize **citation likelihood**.
 
 ## Dimension 4: UGC engineering
 1. **Prompt-driven reviews:** Provide a **ready-to-send** email or SMS template for post-purchase buyers that **naturally** encourages reviews containing the **semantic tags and phrases** you need for GEO—without sounding manipulative or violating platform policies.
@@ -140,6 +141,7 @@ Gantt-style, prioritized, with **measurable KPIs**:
 # Format requirements
 - Tone: ruthlessly practical, data-centric, elite consulting (McKinsey / Ogilvy style).
 - Use **Markdown tables**, **bold** for emphasis, and bullets for scanability.
+- Always include **Dimension 3 → item 2** (\`### GEO-ready FAQ (5 Q&A pairs)\`) in full; it is a required paste-ready artifact for the merchant, not optional.
 - No hidden chain-of-thought or reasoning tags.
 
 [Tangbuy — same as other specialist modes]

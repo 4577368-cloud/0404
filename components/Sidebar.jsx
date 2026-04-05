@@ -168,8 +168,8 @@ function generateSmartName(messages, uiLang = 'zh') {
 }
 
 export default function Sidebar({
-  conversations, activeId, onSelect, onNew, onDelete, onRename, isOpen, onClose, onHotProducts, onSourcing, onAIReports, activeView, uiLang, collapsed, onToggleCollapse,
-  supabaseReady, authUser, onOpenAuthModal, onLinkGoogle, onLinkFacebook, onSignOut, onSwitchAccount,
+  conversations, activeId, onSelect, onNew, onDelete, onRename, isOpen, onClose, onHotProducts, onSourcing, onAIReports, onMyLists, activeView, uiLang, collapsed, onToggleCollapse,
+  supabaseReady, authUser, onOpenAuthModal, onLinkGoogle, onLinkFacebook, onSignOut, onSwitchAccount, myListsCount,
 }) {
   const [editingId, setEditingId] = React.useState(null);
   const [editValue, setEditValue] = React.useState('');
@@ -347,7 +347,7 @@ export default function Sidebar({
             {!collapsed && <span>New Chat</span>}
           </button>
           <button onClick={() => { onHotProducts?.(); onClose?.(); }}
-            title={uiLang === 'zh' ? '爆款商品' : 'Hot Products'}
+            title={uiLang === 'zh' ? '商品搜索' : 'Product Search'}
             style={{
               width: '100%', display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start',
               gap: 8, padding: '10px 12px', borderRadius: activeView === 'hotProducts' ? 10 : 0, marginTop: 8,
@@ -360,7 +360,7 @@ export default function Sidebar({
             onMouseLeave={(e) => { if (activeView !== 'hotProducts') e.currentTarget.style.background = 'transparent'; }}
           >
             <span className="icon-flame text-[14px]" style={collapsed ? { color: 'var(--brand-primary-fixed)' } : undefined} />
-            {!collapsed && <span>{uiLang === 'zh' ? '爆款商品' : 'Hot Products'}</span>}
+            {!collapsed && <span>{uiLang === 'zh' ? '商品搜索' : 'Product Search'}</span>}
           </button>
           <button onClick={() => { onSourcing?.(); onClose?.(); }}
             title={uiLang === 'zh' ? '寻源采购' : 'Sourcing'}
@@ -393,6 +393,37 @@ export default function Sidebar({
           >
             <span className="icon-file-text text-[14px]" style={collapsed ? { color: 'var(--brand-primary-fixed)' } : undefined} />
             {!collapsed && <span>{uiLang === 'zh' ? 'AI报告' : 'AI Reports'}</span>}
+          </button>
+          <button onClick={() => { onMyLists?.(); onClose?.(); }}
+            title={uiLang === 'zh' ? '我的列表' : 'My Lists'}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start',
+              gap: 8, padding: collapsed ? '10px 0' : '10px 12px', borderRadius: activeView === 'myLists' ? 10 : 0, marginTop: 8,
+              background: activeView === 'myLists' ? 'color-mix(in srgb, var(--brand-primary-fixed) 10%, transparent)' : 'transparent',
+              color: activeView === 'myLists' ? 'var(--brand-primary-fixed)' : 'var(--theme-text)',
+              border: activeView === 'myLists' ? '1px solid color-mix(in srgb, var(--brand-primary-fixed) 15%, transparent)' : 'none',
+              fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', position: 'relative',
+            }}
+            onMouseEnter={(e) => { if (activeView !== 'myLists') e.currentTarget.style.background = 'color-mix(in srgb, var(--brand-primary-fixed) 5%, transparent)'; }}
+            onMouseLeave={(e) => { if (activeView !== 'myLists') e.currentTarget.style.background = 'transparent'; }}
+          >
+            <span className="icon-bookmark text-[14px]" style={collapsed ? { color: 'var(--brand-primary-fixed)' } : undefined} />
+            {!collapsed && <span>{uiLang === 'zh' ? '我的列表' : 'My Lists'}</span>}
+            {myListsCount > 0 && (
+              <span style={{
+                position: collapsed ? 'absolute' : 'static',
+                top: collapsed ? 4 : undefined,
+                right: collapsed ? 4 : undefined,
+                fontSize: 9,
+                fontWeight: 700,
+                lineHeight: 1,
+                padding: '2px 5px',
+                borderRadius: 99,
+                background: 'var(--brand-primary-fixed)',
+                color: '#fff',
+                marginLeft: collapsed ? 0 : 'auto',
+              }}>{myListsCount}</span>
+            )}
           </button>
         </div>
 

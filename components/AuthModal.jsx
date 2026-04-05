@@ -48,11 +48,14 @@ export default function AuthModal({
   onClose,
   uiLang: _uiLang,
   t,
+  /** `feature_gate`：因使用需登录功能而打开，默认聚焦 Google、不显示「上次使用」角标 */
+  openReason = 'default',
   onGoogleSignIn,
   onFacebookSignIn,
   supabaseReady,
 }) {
   const googleBtnRef = React.useRef(null);
+  const isFeatureGate = openReason === 'feature_gate';
 
   React.useEffect(() => {
     if (!open) return undefined;
@@ -60,7 +63,7 @@ export default function AuthModal({
       googleBtnRef.current?.focus({ preventScroll: true });
     });
     return () => cancelAnimationFrame(id);
-  }, [open]);
+  }, [open, openReason]);
 
   React.useEffect(() => {
     if (!open) return undefined;
@@ -132,9 +135,28 @@ export default function AuthModal({
             <span className="icon-x text-[16px]" />
           </button>
         </div>
-        <p style={{ margin: '0 0 12px', fontSize: 13, lineHeight: 1.5, color: 'var(--theme-text-secondary)' }}>
-          {auth.modalSubtitle}
-        </p>
+        {isFeatureGate && (auth.featureGateNotice || auth.modalSubtitle) ? (
+          <div
+            role="status"
+            style={{
+              margin: '0 0 16px',
+              padding: '12px 14px',
+              borderRadius: 10,
+              fontSize: 13,
+              lineHeight: 1.55,
+              fontWeight: 600,
+              color: 'var(--theme-text)',
+              background: 'color-mix(in srgb, var(--brand-primary-fixed, #ee1d36) 10%, var(--theme-surface))',
+              border: '1px solid color-mix(in srgb, var(--brand-primary-fixed, #ee1d36) 28%, var(--theme-border))',
+            }}
+          >
+            {auth.featureGateNotice || auth.modalSubtitle}
+          </div>
+        ) : (
+          <p style={{ margin: '0 0 12px', fontSize: 13, lineHeight: 1.5, color: 'var(--theme-text-secondary)' }}>
+            {auth.modalSubtitle}
+          </p>
+        )}
         <p style={{ margin: '0 0 20px', fontSize: 11, lineHeight: 1.45, color: 'var(--theme-text-muted)' }}>
           {auth.modalLegal}
         </p>
@@ -168,9 +190,9 @@ export default function AuthModal({
               opacity: supabaseReady ? 1 : 0.5,
             }}
           >
-            {lastUsed === 'google' && <LastUsedRibbon label={lastLabel} variant="google" />}
+            {!isFeatureGate && lastUsed === 'google' && <LastUsedRibbon label={lastLabel} variant="google" />}
             <GoogleGIcon size={18} />
-            {auth.continueGoogle}
+            {auth.signInGoogle || auth.continueGoogle}
           </button>
           <button
             type="button"
@@ -186,32 +208,18 @@ export default function AuthModal({
               gap: 10,
               padding: '12px 16px',
               borderRadius: 10,
-              border: '1px solid rgba(24, 119, 242, 0.35)',
-              background: '#1877F2',
-              color: '#fff',
+              border: '1px solid var(--theme-border)',
+              background: '#fff',
+              color: 'var(--theme-text)',
               fontSize: 14,
               fontWeight: 600,
               cursor: supabaseReady ? 'pointer' : 'not-allowed',
               opacity: supabaseReady ? 1 : 0.5,
             }}
           >
-            {lastUsed === 'facebook' && <LastUsedRibbon label={lastLabel} variant="facebook" />}
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 22,
-                height: 22,
-                borderRadius: 5,
-                background: '#fff',
-                flexShrink: 0,
-              }}
-              aria-hidden
-            >
-              <FacebookIcon size={14} />
-            </span>
-            {auth.continueFacebook}
+            {!isFeatureGate && lastUsed === 'facebook' && <LastUsedRibbon label={lastLabel} variant="facebook" />}
+            <FacebookIcon size={18} />
+            {auth.signInFacebook || auth.continueFacebook}
           </button>
         </div>
       </div>

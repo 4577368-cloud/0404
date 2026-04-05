@@ -15,7 +15,7 @@ export function rmbToUsd(rmb) {
 export function listPriceUsdForCard(p) {
   const v = Number(p?.priceRmb);
   if (!Number.isFinite(v) || v <= 0) return NaN;
-  if (p?.variant === 'trend' || p?.platform === 'Trend') return v;
+  if (p?.variant === 'trend' || p?.variant === 'bestseller' || p?.platform === 'Trend' || p?.platform === 'MonthlyTop') return v;
   return rmbToUsd(v);
 }
 

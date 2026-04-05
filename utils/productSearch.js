@@ -28,12 +28,20 @@ function getDataRemoteBase() {
   return DEFAULT_DATA_REMOTE_BASE;
 }
 
-/** `data/foo.json` / `./data/foo.json` → `foo.json`（与 GitHub 仓库根目录文件名一致） */
+/** `data/foo.json` / `./data/foo.json` / `/data/foo.json` → `foo.json`（与 GitHub 仓库根目录文件名一致） */
 function pathToDataFilename(p) {
   return String(p || '')
     .trim()
     .replace(/^\.\//, '')
-    .replace(/^data\//, '');
+    .replace(/^\/?data\//i, '');
+}
+
+/** 本地优先顺序：带 Vite BASE_URL、相对路径（供 tryFetchJson / 远程回退文件名解析） */
+export function getDataJsonFetchPaths(filename) {
+  const safe = String(filename || '').replace(/^\/+/, '');
+  const base = typeof import.meta !== 'undefined' && import.meta.env?.BASE_URL != null ? String(import.meta.env.BASE_URL) : '/';
+  const prefix = base.endsWith('/') ? `${base}data/` : `${base}/data/`;
+  return [`${prefix}${safe}`, `data/${safe}`, `./data/${safe}`, `/data/${safe}`];
 }
 
 function buildTryFetchUrlOrder(paths) {
@@ -197,35 +205,97 @@ export function pickField(obj, keys) {
   return undefined;
 }
 
+/** JSON 根节点可能是数组或 { items|products|data: [] } */
+export function ensureJsonArray(raw) {
+  if (Array.isArray(raw)) return raw;
+  if (!raw || typeof raw !== 'object') return [];
+  if (Array.isArray(raw.items)) return raw.items;
+  if (Array.isArray(raw.products)) return raw.products;
+  if (Array.isArray(raw.data)) return raw.data;
+  return [];
+}
+
+/**
+ * 合并手工拼接的多个顶层 JSON 数组：`[...]\n[...]`（整文件否则无法 JSON.parse）
+ */
+export function parseConcatenatedTopLevelJsonArrays(text) {
+  const trimmed = String(text || '').replace(/^\uFEFF/, '').trim().replace(/\bNaN\b/g, 'null');
+  if (!trimmed || !/\]\s*\[/.test(trimmed)) return null;
+  const parts = trimmed.split(/\]\s*\[/);
+  if (parts.length < 2) return null;
+  const out = [];
+  for (let i = 0; i < parts.length; i++) {
+    let s = parts[i].trim();
+    if (!s.startsWith('[')) s = `[${s}`;
+    if (!s.endsWith(']')) s = `${s}]`;
+    try {
+      const v = JSON.parse(s);
+      if (Array.isArray(v)) out.push(...v);
+    } catch {
+      return null;
+    }
+  }
+  return out;
+}
+
 /** Single row → unified product shape (Amazon / TikTok / Trend `Product.json`). */
 export function normalizeCatalogItem(item, i, platform) {
+  /** tangbuy-product.json：含 1688/Tangbuy 链接 + 外链，必须与趋势行区分，避免误进 isTrend（趋势分支不读 product_title） */
+  const looksLikeTangbuyProductJsonRow =
+    item &&
+    pickField(item, ['product_url', 'url', 'link']) != null &&
+    (pickField(item, ['1688_price', 'tangbuy_price']) != null ||
+      pickField(item, ['tangbuy_product_url', 'tangbuy_url']) != null);
+
   const isTrend =
     item &&
+    !looksLikeTangbuyProductJsonRow &&
     (item['日期范围'] !== undefined ||
       item['商品名称'] !== undefined ||
       item['图片链接'] !== undefined ||
       item['类目'] !== undefined);
 
   if (isTrend) {
-    const titleCn = String(pickField(item, ['商品名称', 'title', 'title_cn']) || 'Unknown Product');
+    const titleCn = String(
+      pickField(item, ['商品名称', 'product_title', 'product_name', 'title', 'title_cn']) || 'Unknown Product'
+    );
     const categoryCn = String(pickField(item, ['类目', 'category']) || '');
     const dateRangeCn = String(pickField(item, ['日期范围', 'dateRange']) || '');
     const image = String(
       pickField(item, ['图片链接', 'product_image_url', '图像链接', 'image', 'img']) ||
       'https://via.placeholder.com/300?text=No+Image'
     );
-    const priceUsd = Number(pickField(item, ['价格($)', '价格', 'price']) || 0);
+    /** Trend / 榜单：Product.json 多为 $；Best-selling.json 等为 ¥ 口径字段，统一折成美元口径供 fmtUsd */
+    const RMB_PER_USD = 7.2;
+    const trendPricesAreRmb =
+      item['价格(¥)'] !== undefined ||
+      item['成交金额(¥)'] !== undefined ||
+      item['平均销售价(¥)'] !== undefined;
+    const trendMoneyUsd = (yuanKeys, usdKeys) => {
+      if (trendPricesAreRmb) {
+        const yv = pickField(item, yuanKeys);
+        if (yv !== undefined && yv !== null && String(yv).trim() !== '') {
+          const n = Number(yv);
+          return Number.isFinite(n) ? n / RMB_PER_USD : 0;
+        }
+      }
+      return Number(pickField(item, usdKeys) || 0);
+    };
+    const priceUsd = trendMoneyUsd(['价格(¥)'], ['价格($)', '价格', 'price']);
     const rating = Number(pickField(item, ['商品评分', '评分', 'rating']) || 0);
     const sold = Number(pickField(item, ['销量', 'sold', 'month_sold']) || 0);
-    const avgSellingPriceUsd = Number(pickField(item, ['平均销售价($)', '平均售价($)', '平均销售价', 'avg_price']) || 0);
-    const amountUsd = Number(pickField(item, ['成交金额($)', '成交金额', 'amount']) || 0);
+    const avgSellingPriceUsd = trendMoneyUsd(['平均销售价(¥)'], ['平均销售价($)', '平均售价($)', '平均销售价', 'avg_price']);
+    const amountUsd = trendMoneyUsd(['成交金额(¥)'], ['成交金额($)', '成交金额', 'amount']);
     const amountGrowth = String(pickField(item, ['成交金额增长率', '金额增长率', 'growth']) || '');
-    const videoSalesUsd = Number(pickField(item, ['视频成交金额($)', '视频成交金额', 'video_sales']) || 0);
-    const cardAmountUsd = Number(pickField(item, ['商品卡成交金额', '商品卡成交', 'card_amount']) || 0);
+    const videoSalesUsd = trendMoneyUsd(['视频成交金额(¥)'], ['视频成交金额($)', '视频成交金额', 'video_sales']);
+    const cardAmountUsd = trendMoneyUsd(['商品卡成交金额'], ['商品卡成交金额', '商品卡成交', 'card_amount']);
     const influencerCount = Number(pickField(item, ['达人数量', '带货达人数', 'influencer_count']) || 0);
     const influencerOrderRate = String(pickField(item, ['达人出单率', '出单率', 'influencer_rate']) || '');
     const tiktokUrl = String(pickField(item, ['TikTok链接', 'tiktok_url', 'product_url']) || '');
     const categoryEnTokens = translateZhToEn(categoryCn).join(' ').trim();
+    const categorySearchEn = String(
+      pickField(item, ['category_en', 'category_l3_en', '三级类目_en', 'l3_category_en', 'category_l3']) || ''
+    ).trim();
     const searchLower = `${titleCn} ${categoryCn} ${categoryEnTokens}`.toLowerCase();
     return {
       id: `trend_${i}_${titleCn}`,
@@ -235,6 +305,7 @@ export function normalizeCatalogItem(item, i, platform) {
       nameLower: titleCn.toLowerCase(),
       categoryCn,
       categoryEn: categoryEnTokens,
+      categorySearchEn,
       searchLower,
       image,
       url: tiktokUrl,
@@ -287,6 +358,13 @@ export function normalizeCatalogItem(item, i, platform) {
   };
 }
 
+/** Amazon / TikTok 热销行合并进 `data/tangbuy-product.json` 后，按 `product_url` 推断平台（供 normalizeCatalogItem 第三参）。 */
+export function inferHotCatalogPlatform(productUrl) {
+  const u = String(productUrl || '').toLowerCase();
+  if (u.includes('tiktok.com')) return 'TikTok';
+  return 'Amazon';
+}
+
 /** 依次尝试：本地路径（如 `data/*.json`）→ GitHub Raw（`VITE_DATA_REMOTE_BASE` 或默认 agent/main） */
 export async function tryFetchJson(paths) {
   const urls = buildTryFetchUrlOrder(paths);
@@ -304,7 +382,14 @@ export async function tryFetchJson(paths) {
         );
         continue;
       }
-      return JSON.parse(trimmed.replace(/\bNaN\b/g, 'null'));
+      const sanitized = trimmed.replace(/\bNaN\b/g, 'null');
+      try {
+        return JSON.parse(sanitized);
+      } catch {
+        const mergedArrays = parseConcatenatedTopLevelJsonArrays(sanitized);
+        if (mergedArrays && mergedArrays.length) return mergedArrays;
+        throw new Error('invalid JSON');
+      }
     } catch (e) {
       console.warn('[catalog] fetch/parse failed', p, e?.message || e);
     }
@@ -312,14 +397,22 @@ export async function tryFetchJson(paths) {
   return [];
 }
 
-/** Load Amazon + TikTok + `data/Product.json` (trend). Safe to call multiple times. */
+/** Load `data/tangbuy-product.json` (Amazon + TikTok 合并热销) + `data/Product.json` (trend). Safe to call multiple times. */
 export async function loadProductCatalog() {
-  const [amz, tt, trend] = await Promise.all([
-    tryFetchJson(['data/amazon.202512.1k.json', './data/amazon.202512.1k.json']),
-    tryFetchJson(['data/tiktok.202512.1k.json', './data/tiktok.202512.1k.json']),
-    tryFetchJson(['data/Product.json', './data/Product.json']),
+  const [mergedRaw, trendRaw] = await Promise.all([
+    tryFetchJson(getDataJsonFetchPaths('tangbuy-product.json')),
+    tryFetchJson(getDataJsonFetchPaths('Product.json')),
   ]);
-  const nTrend = Array.isArray(trend) ? trend.length : 0;
+  const merged = ensureJsonArray(mergedRaw);
+  const trend = ensureJsonArray(trendRaw);
+  const nHot = merged.length;
+  if (nHot) console.log('[catalog] tangbuy-product.json rows:', nHot);
+  else {
+    console.warn(
+      '[catalog] tangbuy-product.json: no rows loaded. Ensure public/data/tangbuy-product.json exists and is valid JSON, or set VITE_DATA_REMOTE_BASE for Raw fallback.'
+    );
+  }
+  const nTrend = trend.length;
   if (nTrend) console.log('[catalog] Product.json (trend) rows:', nTrend);
   else {
     console.warn(
@@ -327,26 +420,40 @@ export async function loadProductCatalog() {
     );
   }
   return [
-    ...(Array.isArray(amz) ? amz.map((x, i) => normalizeCatalogItem(x, i, 'Amazon')) : []),
-    ...(Array.isArray(tt) ? tt.map((x, i) => normalizeCatalogItem(x, i, 'TikTok')) : []),
-    ...(Array.isArray(trend) ? trend.map((x, i) => normalizeCatalogItem(x, i, 'Trend')) : []),
+    ...merged.map((x, i) =>
+      normalizeCatalogItem(x, i, inferHotCatalogPlatform(pickField(x, ['product_url', 'url', 'link'])))
+    ),
+    ...trend.map((x, i) => normalizeCatalogItem(x, i, 'Trend')),
   ];
 }
 
-/** 仅 `data/Product.json` 趋势库（供分析参考列表） */
+/** Product.json + Best-selling.json 合并趋势/Top1000 库 */
 export async function loadTrendCatalogOnly() {
-  const trend = await tryFetchJson(['data/Product.json', './data/Product.json']);
-  return Array.isArray(trend) ? trend.map((x, i) => normalizeCatalogItem(x, i, 'Trend')) : [];
+  const [trendRaw, bestRaw] = await Promise.all([
+    tryFetchJson(getDataJsonFetchPaths('Product.json')),
+    tryFetchJson(getDataJsonFetchPaths('Best-selling.json')),
+  ]);
+  const trend = ensureJsonArray(trendRaw);
+  const best = ensureJsonArray(bestRaw);
+  const trendItems = trend.map((x, i) => normalizeCatalogItem(x, i, 'Trend'));
+  const bestItems = best.map((x, i) => {
+    const row = normalizeCatalogItem(x, i, 'Trend');
+    const safeId = `best_${i}_${String(row.name || '').slice(0, 40)}`.replace(/\s+/g, '_');
+    return { ...row, id: safeId, variant: 'bestseller', platform: 'MonthlyTop' };
+  });
+  return [...trendItems, ...bestItems];
 }
 
 export function partitionHotAndTrendMatches(matched) {
   const arr = Array.isArray(matched) ? matched : [];
-  const hot = arr.filter((p) => p && p.platform !== 'Trend' && p.variant !== 'trend');
-  const trend = arr.filter((p) => p && (p.platform === 'Trend' || p.variant === 'trend'));
+  const isTrendLike = (p) =>
+    p.platform === 'Trend' || p.platform === 'MonthlyTop' || p.variant === 'trend' || p.variant === 'bestseller';
+  const hot = arr.filter((p) => p && !isTrendLike(p));
+  const trend = arr.filter((p) => p && isTrendLike(p));
   return { hot, trend };
 }
 
-/** 用于把 AI 卡片与本地 amazon/tiktok 目录对齐（忽略 query、www、尾斜杠；Amazon 按 ASIN） */
+/** 用于把 AI 卡片与本地 tangbuy-product（Amazon/TikTok）目录对齐（忽略 query、www、尾斜杠；Amazon 按 ASIN） */
 function catalogUrlKey(u) {
   const s = String(u || '').trim();
   if (!s || s === '#') return '';

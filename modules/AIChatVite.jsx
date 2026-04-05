@@ -16,6 +16,7 @@ import {
   WORKFLOW_TOTAL_STEPS,
 } from '../utils/workflowProgress.js';
 import OverlayModal from '../components/OverlayModal.jsx';
+import GEOIntakePanel, { buildGeoIntakeUserMessage } from '../components/GEOIntakePanel.jsx';
 import ChatHotProductCard from '../components/ChatHotProductCard.jsx';
 import { ProductCard } from '../components/ProductCard.jsx';
 import {
@@ -738,7 +739,7 @@ const ProgressiveProductList = React.memo(function ProgressiveProductList({ item
   );
 });
 
-const WelcomePortal = React.memo(function WelcomePortal({ uiLang, t, isLoading, mode, onModeChange, modeIcons, modeLabels, modeColors, modeMenuRef, inputRef, onSend, onOpenSourcing }) {
+const WelcomePortal = React.memo(function WelcomePortal({ uiLang, t, isLoading, mode, onModeChange, modeIcons, modeLabels, modeColors, modeMenuRef, inputRef, onSend, onOpenSourcing, geoIntakeSlot }) {
   const cards = React.useMemo(() => getShortcutCards(uiLang), [uiLang]);
 
   const handleCardClick = React.useCallback((card) => {
@@ -763,6 +764,10 @@ const WelcomePortal = React.memo(function WelcomePortal({ uiLang, t, isLoading, 
         <div className="text-[20px] md:text-[28px] font-light tracking-[-0.02em] mb-8" style={{ color: 'var(--theme-text-secondary)' }}>
           Built for Brands That Want to Scale
         </div>
+
+        {geoIntakeSlot ? (
+          <div className="w-full max-w-4xl mb-5 text-left">{geoIntakeSlot}</div>
+        ) : null}
 
         <div className="w-full max-w-2xl mb-6 transition-all duration-300">
           <ChatInput
@@ -853,6 +858,27 @@ export function ModuleAIChat({
   const stickToBottomRef = React.useRef(true);
   const modeMenuRef = React.useRef(null);
   const chatInputRef = React.useRef(null);
+
+  const emptyGeoIntake = React.useMemo(
+    () => ({
+      storeUrl: '',
+      coreProduct: '',
+      pricePositioning: '',
+      targetAudience: '',
+      usp: '',
+      objections: '',
+      competitors: '',
+      marketingStatus: '',
+    }),
+    []
+  );
+  const [geoIntake, setGeoIntake] = React.useState(() => ({ ...emptyGeoIntake }));
+  const [geoIntakeSubmitted, setGeoIntakeSubmitted] = React.useState(false);
+
+  React.useEffect(() => {
+    setGeoIntake({ ...emptyGeoIntake });
+    setGeoIntakeSubmitted(false);
+  }, [conversationId, emptyGeoIntake]);
 
   const [showVipModal, setShowVipModal] = React.useState(false);
   const [vipKeyInput, setVipKeyInput] = React.useState('');
@@ -1100,7 +1126,7 @@ export function ModuleAIChat({
   const smartSearch = React.useCallback((query, extraContext, catalogOverride) => {
     // Note: shownIdsRef is now cleared only when user sends a new message, not on every search
     // This prevents showing duplicate products within the same conversation session
-    const isTrendProduct = (p) => p?.variant === 'trend' || p?.platform === 'Trend';
+    const isTrendProduct = (p) => p?.variant === 'trend' || p?.variant === 'bestseller' || p?.platform === 'Trend' || p?.platform === 'MonthlyTop';
 
     const combined = [query, extraContext].filter(Boolean).join(' ');
     const baseList = catalogOverride?.length ? catalogOverride : allProducts;
@@ -1322,13 +1348,13 @@ export function ModuleAIChat({
 
     if (catalogFromAi?.products?.length) {
       const textWithoutJson = (catalogFromAi.strippedText || '').trim();
-      /** 卡片数据：解析自 AI 输出的热销 JSON（字段对齐 data/amazon.202512.1k.json + data/tiktok.202512.1k.json，不含 Product.json 趋势库） */
       const picksHeading =
         uiLang === 'zh'
-          ? '### 📦 推荐商品（Amazon / TikTok）\n'
-          : '### 📦 Picks (Amazon / TikTok)\n';
+          ? '### 📦 Tangbuy 同款推荐\n'
+          : '### 📦 Tangbuy Picks\n';
       const combinedContent =
         textWithoutJson.length > 0 ? `${textWithoutJson}\n\n${picksHeading}` : picksHeading.trimEnd();
+      const hotSliceFromAi = catalogFromAi.products.slice(0, 5);
       setMessages((prev) => {
         const without = prev.filter((m) => m._streamId !== streamId);
         const messages = [
@@ -1337,7 +1363,7 @@ export function ModuleAIChat({
             role: 'ai',
             type: 'products_hot',
             content: combinedContent,
-            data: catalogFromAi.products,
+            data: hotSliceFromAi,
           },
         ];
         if (htmlPart) messages.push({ role: 'ai', type: 'html', content: htmlPart });
@@ -1368,8 +1394,9 @@ export function ModuleAIChat({
   };
 
   // ── Send message ──
+  /** @returns {Promise<boolean>} true if the message was accepted (quota OK) and sent to the model */
   const send = React.useCallback(async (txt) => {
-    if (!txt || isLoading) return;
+    if (!txt || isLoading) return false;
 
     // Clear shown product IDs when user sends a new message
     // This ensures fresh results for new queries while preventing duplicates within a session
@@ -1391,7 +1418,7 @@ export function ModuleAIChat({
           setVipKeyInput('');
           setVipKeyError('');
         }
-        return;
+        return false;
       }
       onQuotaChange?.();
     } else {
@@ -1399,7 +1426,7 @@ export function ModuleAIChat({
         setShowVipModal(true);
         setVipKeyInput('');
         setVipKeyError('');
-        return;
+        return false;
       }
       incrementQuota();
       onQuotaChange?.();
@@ -1460,11 +1487,15 @@ export function ModuleAIChat({
         parseCatalogProductJsonFromMarkdown(streamResult?.finalText || '')?.products?.length > 0
       );
 
+      const likelyProductRelated =
+        hasAiHotProducts ||
+        shouldRecommendProducts(txt, messages, streamResult?.finalText) ||
+        detectedIntent === 'product' ||
+        /https?:\/\//i.test(txt) ||
+        /(分析|推荐|选品|找|look.*for|search.*for|sourcing|采购|商品|产品|类目|category)/i.test(txt);
+
       let catalog = allProducts;
-      if (
-        catalog.length === 0 &&
-        (shouldRecommendProducts(txt, messages, streamResult?.finalText) || hasAiHotProducts)
-      ) {
+      if (catalog.length === 0 && likelyProductRelated) {
         try {
           catalog = await loadProductCatalog();
           if (catalog.length) setAllProducts(catalog);
@@ -1487,7 +1518,13 @@ export function ModuleAIChat({
         });
       }
       const userWantsProductContext = shouldRecommendProducts(txt, messages, streamResult?.finalText);
-      const wantTrendOrSearchExtras = userWantsProductContext || hasAiHotProducts;
+
+      const userAnalyzingProduct =
+        detectedIntent === 'product' ||
+        /https?:\/\//i.test(txt) ||
+        /(分析|推荐|选品|找|look.*for|search.*for|sourcing|采购|商品|产品|类目|category)/i.test(txt);
+      const wantTangbuyMatch = userWantsProductContext || userAnalyzingProduct || hasAiHotProducts;
+      const wantTrendOrSearchExtras = userWantsProductContext || userAnalyzingProduct || hasAiHotProducts;
 
       const extraCtx = snapshot || '';
       const isImageInput = /\[Image\]\(/i.test(txt) || isImageUrl;
@@ -1497,20 +1534,21 @@ export function ModuleAIChat({
         searchQuery = isImageInput ? (streamResult?.finalSearchText || txt) : `${txt} ${aiResponse}`;
       }
 
-      if (userWantsProductContext && catalog.length) {
-        /** catalog 含 amazon.202512.1k + tiktok.202512.1k + Product.json；hotMatched 仅 Amazon/TikTok 热销行 */
+      if (wantTangbuyMatch && catalog.length) {
         const { matched, isExact } = smartSearch(searchQuery, extraCtx, catalog);
         const { hot: hotMatched } = partitionHotAndTrendMatches(matched);
+        const hotWithRealImage = hotMatched.filter((p) => p.image && /^https?:\/\//i.test(p.image) && !/placeholder/i.test(p.image));
+        const hotSlice = hotWithRealImage.slice(0, 5);
 
-        if (!hasAiHotProducts && hotMatched.length > 0) {
+        if (!hasAiHotProducts && hotSlice.length > 0) {
           const hotLabel = isExact
             ? uiLang === 'zh'
-              ? '### 📦 根据您的需求，为您匹配到以下商品（Amazon / TikTok）'
-              : '### 📦 Matching picks (Amazon / TikTok)'
+              ? '### 📦 根据您的需求，为您匹配到以下 Tangbuy 同款商品'
+              : '### 📦 Tangbuy matching picks'
             : uiLang === 'zh'
-              ? '### 📦 暂未完全匹配，为您推荐以下热门商品（Amazon / TikTok）\n\n更精准选品可前往 [Tangbuy Dropshipping](https://dropshipping.tangbuy.com)。'
-              : '### 📦 Closest hot picks (Amazon / TikTok)\n\nFor precise sourcing: [Tangbuy Dropshipping](https://dropshipping.tangbuy.com).';
-          setMessages((p) => [...p, { role: 'ai', type: 'products_hot', content: hotLabel, data: hotMatched }]);
+              ? '### 📦 为您推荐以下 Tangbuy 同款热门商品\n\n更精准选品可前往 [Tangbuy Dropshipping](https://dropshipping.tangbuy.com)。'
+              : '### 📦 Tangbuy similar picks\n\nFor precise sourcing: [Tangbuy Dropshipping](https://dropshipping.tangbuy.com).';
+          setMessages((p) => [...p, { role: 'ai', type: 'products_hot', content: hotLabel, data: hotSlice }]);
         }
       }
 
@@ -1536,6 +1574,7 @@ export function ModuleAIChat({
     } finally {
       setIsLoading(false);
     }
+    return true;
   }, [isLoading, uiLang, messages, knownSite, knownContentLang, mode, allProducts, buildSystemMessage, smartSearch, onQuotaChange, t, isVip, authUser, conversationId]);
 
   // ── Mode switch ──
@@ -1564,6 +1603,31 @@ export function ModuleAIChat({
   };
   const modeIcons = { auto: 'icon-sparkles', diagnosis: 'icon-activity', seo: 'icon-search-check', page: 'icon-globe' };
   const isPortalView = messages.length === 0;
+  const geoIntakeLabels = t.chat?.geoIntake;
+  const showGeoIntakePanel = mode === 'page' && !geoIntakeSubmitted && !!geoIntakeLabels;
+
+  const handleGeoField = React.useCallback((key, value) => {
+    setGeoIntake((prev) => ({ ...prev, [key]: value }));
+  }, []);
+
+  const handleGeoSubmit = React.useCallback(async () => {
+    if (!geoIntakeLabels || isLoading) return;
+    const msg = buildGeoIntakeUserMessage(geoIntake, geoIntakeLabels.payloadHeader, geoIntakeLabels.payloadFooter);
+    const ok = await send(msg);
+    if (ok) setGeoIntakeSubmitted(true);
+  }, [geoIntake, geoIntakeLabels, isLoading, send]);
+
+  const geoIntakePortalSlot =
+    showGeoIntakePanel && isPortalView ? (
+      <GEOIntakePanel
+        labels={geoIntakeLabels}
+        values={geoIntake}
+        onFieldChange={handleGeoField}
+        onSubmit={handleGeoSubmit}
+        disabled={isLoading}
+      />
+    ) : null;
+
   const shortcutCards = React.useMemo(() => getShortcutCards(uiLang), [uiLang]);
   const restoredReplayMsg = React.useMemo(() => {
     if (!initialMessageCountRef.current || !messages.length) return null;
@@ -2047,6 +2111,7 @@ export function ModuleAIChat({
             inputRef={chatInputRef}
             onSend={send}
             onOpenSourcing={onOpenSourcing}
+            geoIntakeSlot={geoIntakePortalSlot}
           />
         ) : (
         <div className="max-w-5xl mx-auto px-4 md:px-6 pt-2 pb-4 space-y-5 transition-all duration-300">
@@ -2057,7 +2122,7 @@ export function ModuleAIChat({
               const raw = msg.data || [];
               const { hot, trend } =
                 msg.type === 'products' ? partitionHotAndTrendMatches(raw) : { hot: raw, trend: [] };
-              const hotData = msg.type === 'products_hot' ? raw : hot;
+              const hotData = (msg.type === 'products_hot' ? raw : hot).slice(0, 5);
               return (
                 <div key={i} className="flex justify-start w-full min-w-0">
                   <div className="rounded-2xl p-3 max-w-full w-full min-w-0" style={{ background: 'var(--theme-bubble-ai)', border: '1px solid var(--theme-border)' }}>
@@ -2093,6 +2158,7 @@ export function ModuleAIChat({
                             onPublish={onPublish}
                             guestFeatureLocked={guestFeatureLocked}
                             onRequireLogin={onGuestFeatureBlocked}
+                            knowledgeStyle
                           />
                         ))}
                       </div>
@@ -2121,6 +2187,7 @@ export function ModuleAIChat({
                           onPublish={onPublish}
                           guestFeatureLocked={guestFeatureLocked}
                           onRequireLogin={onGuestFeatureBlocked}
+                          knowledgeStyle
                         />
                       ))}
                     </div>
@@ -2190,6 +2257,43 @@ export function ModuleAIChat({
         </div>
         )}
       </div>
+
+      {/* GEO: dock above input so the form stays visible (not lost above scroll) */}
+      {!isPortalView && mode === 'page' && geoIntakeSubmitted && geoIntakeLabels ? (
+        <div
+          className="flex-shrink-0 flex justify-end max-w-5xl w-full mx-auto px-4 md:px-6 pt-1.5 pb-0"
+          style={{ borderTop: '1px solid var(--theme-border)', background: 'var(--theme-card-bg, var(--theme-surface))' }}
+        >
+          <button
+            type="button"
+            onClick={() => setGeoIntakeSubmitted(false)}
+            className="text-[11px] font-medium underline-offset-2 hover:underline py-1"
+            style={{ color: 'var(--chip-geo)', background: 'none', border: 'none', cursor: 'pointer' }}
+          >
+            {geoIntakeLabels.refillBtn}
+          </button>
+        </div>
+      ) : null}
+      {!isPortalView && showGeoIntakePanel ? (
+        <div
+          className="flex-shrink-0 max-w-5xl w-full mx-auto px-4 md:px-6 py-2 overflow-y-auto min-h-0"
+          style={{
+            borderTop: '1px solid var(--theme-border)',
+            background: 'var(--theme-card-bg, var(--theme-surface))',
+            maxHeight: 'min(40vh, 340px)',
+          }}
+        >
+          <GEOIntakePanel
+            labels={geoIntakeLabels}
+            values={geoIntake}
+            onFieldChange={handleGeoField}
+            onSubmit={handleGeoSubmit}
+            disabled={isLoading}
+            compact
+            rootClassName="!mb-0"
+          />
+        </div>
+      ) : null}
 
       {/* Input bar — isolated component, no re-render on messages change */}
       {!isPortalView && (

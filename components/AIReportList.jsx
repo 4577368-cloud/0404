@@ -95,9 +95,9 @@ export default function AIReportList({
           <div style={{ padding: 40, textAlign: 'center', color: 'var(--theme-text-muted)' }}>
             <span className="icon-inbox" style={{ fontSize: 32, opacity: 0.5 }} />
             <p style={{ marginTop: 12, fontSize: 13 }}>
-              {uiLang === 'zh' 
-                ? '点击"爆款商品"中的 AI 诊断按钮生成报告' 
-                : 'Click AI Diagnose on Hot Products to generate reports'}
+              {uiLang === 'zh'
+                ? '在「商品搜索」趋势页点击「AI 诊断」可生成报告'
+                : 'Use AI Diagnose on the Product Search → Trend tab to generate reports'}
             </p>
           </div>
         ) : (
