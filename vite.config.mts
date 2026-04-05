@@ -15,7 +15,10 @@ function viteDevHtml() {
       result = result.replace(/<script\s+src="[^"]*react\.production\.min\.js[^"]*"[^>]*><\/script>/gi, '');
       result = result.replace(/<script\s+src="[^"]*react-dom\.production\.min\.js[^"]*"[^>]*><\/script>/gi, '');
       result = result.replace(/<script\s+src="[^"]*babel\.min\.js[^"]*"[^>]*><\/script>/gi, '');
-      result = result.replace('</body>', '  <script type="module" src="/src/main.jsx"></script>\n</body>');
+      // 入口已在 index.html 中声明；仅当缺失时再注入（避免旧 HTML）
+      if (!/src\/main\.jsx/.test(result)) {
+        result = result.replace('</body>', '  <script type="module" src="/src/main.jsx"></script>\n</body>');
+      }
       return result;
     },
   };
@@ -248,6 +251,19 @@ function fixReactDomTExport() {
   };
 }
 
+/** 构建后去掉仍指向源码的 script（Vite 会在 head 注入 /assets/*.js，偶发 body 里残留 /src/main.jsx） */
+function stripDuplicateMainScript() {
+  return {
+    name: 'strip-duplicate-main-script',
+    transformIndexHtml: {
+      order: 'post',
+      handler(html: string) {
+        return html.replace(/<script[^>]*src=["']\/src\/main\.jsx["'][^>]*>\s*<\/script>\s*/gi, '');
+      },
+    },
+  };
+}
+
 /** 开发/预览构建时复制 `data/`；生产构建不复制，运行时走 GitHub Raw（见 `tryFetchJson` + `VITE_DATA_REMOTE_BASE`） */
 function copyDataToDist(mode: string) {
   return {
@@ -284,6 +300,7 @@ export default defineConfig(({ mode }) => {
       apiChatMiddleware(),
       apiOssUploadMiddleware(),
       react({ include: ['**/*.{js,jsx,ts,tsx}'] }),
+      stripDuplicateMainScript(),
       copyDataToDist(mode),
     ],
     /** 固定预构建入口，减少刷新后出现「504 Outdated Optimize Dep」与黑屏 */

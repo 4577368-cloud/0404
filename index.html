@@ -440,7 +440,8 @@
 
 <body>
     <div id="root"></div>
-    <!-- 应用入口：npm run dev（Vite 会注入 src/main.jsx；不再使用 Babel 直链脚本） -->
+    <!-- 入口须写在本文件内，以便 vite build 扫描依赖并打包；勿仅靠插件注入 -->
+    <script type="module" src="/src/main.jsx"></script>
 </body>
 
 </html>
