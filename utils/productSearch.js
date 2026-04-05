@@ -54,7 +54,9 @@ function buildTryFetchUrlOrder(paths) {
     const name = pathToDataFilename(p);
     if (!name || seenRemote.has(name)) continue;
     seenRemote.add(name);
+    // 与常见 GitHub 布局一致：仓库根目录 或 仓库下 data/ 子目录
     out.push(`${base}/${name}`);
+    out.push(`${base}/data/${name}`);
   }
   return out;
 }
@@ -321,7 +323,7 @@ export async function loadProductCatalog() {
   if (nTrend) console.log('[catalog] Product.json (trend) rows:', nTrend);
   else {
     console.warn(
-      '[catalog] Product.json: no rows loaded. Common causes: (1) file on disk is 0 bytes — save Product.json in the editor; (2) invalid/truncated JSON; (3) wrong path under chajian/data/.'
+      '[catalog] Product.json: no rows loaded. Common causes: (1) file on disk is 0 bytes — save Product.json in the editor; (2) invalid/truncated JSON; (3) JSON should live in public/data/ (deployed as /data/*) or on GitHub Raw per VITE_DATA_REMOTE_BASE.'
     );
   }
   return [

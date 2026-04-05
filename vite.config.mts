@@ -251,48 +251,35 @@ function fixReactDomTExport() {
   };
 }
 
-/** 构建后去掉仍指向源码的 script（Vite 会在 head 注入 /assets/*.js，偶发 body 里残留 /src/main.jsx） */
+/** 仅生产构建：去掉 body 里仍指向源码的 script（Vite 已在 head 注入 /assets/*.js）。开发环境绝不能删，否则无入口 → 白屏。 */
 function stripDuplicateMainScript() {
   return {
     name: 'strip-duplicate-main-script',
     transformIndexHtml: {
       order: 'post',
-      handler(html: string) {
+      handler(html: string, ctx: { server?: unknown }) {
+        if (ctx.server) return html;
         return html.replace(/<script[^>]*src=["']\/src\/main\.jsx["'][^>]*>\s*<\/script>\s*/gi, '');
       },
     },
   };
 }
 
-/** 开发/预览构建时复制 `data/`；生产构建不复制，运行时走 GitHub Raw（见 `tryFetchJson` + `VITE_DATA_REMOTE_BASE`） */
-function copyDataToDist(mode: string) {
-  return {
-    name: 'copy-data-to-dist',
-    closeBundle() {
-      const to = path.resolve(process.cwd(), 'dist', 'data');
-      if (mode === 'production') {
-        try {
-          if (fs.existsSync(to)) fs.rmSync(to, { recursive: true });
-        } catch (e) {
-          console.warn('[vite] remove dist/data failed:', e);
-        }
-        return;
-      }
-      const from = path.resolve(process.cwd(), 'data');
-      try {
-        if (fs.existsSync(from)) fs.cpSync(from, to, { recursive: true });
-      } catch (e) {
-        console.warn('[vite] copy data → dist failed:', e);
-      }
-    },
-  };
+function normalizeViteBase(raw: string | undefined): string {
+  if (raw == null || String(raw).trim() === '' || String(raw).trim() === '/') return '/';
+  let s = String(raw).trim();
+  if (!s.startsWith('/')) s = `/${s}`;
+  if (!s.endsWith('/')) s = `${s}/`;
+  return s;
 }
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   Object.assign(process.env, env);
+  const base = normalizeViteBase(env.VITE_BASE_PATH);
 
   return {
+    base,
     plugins: [
       relaxDevServerTimeouts(),
       fixReactDomTExport(),
@@ -301,7 +288,6 @@ export default defineConfig(({ mode }) => {
       apiOssUploadMiddleware(),
       react({ include: ['**/*.{js,jsx,ts,tsx}'] }),
       stripDuplicateMainScript(),
-      copyDataToDist(mode),
     ],
     /** 固定预构建入口，减少刷新后出现「504 Outdated Optimize Dep」与黑屏 */
     optimizeDeps: {

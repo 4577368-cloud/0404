@@ -6,9 +6,20 @@ import App, { ErrorBoundary } from './App.jsx';
 window.React = React;
 
 const { createRoot } = ReactDOMClient;
-createRoot(document.getElementById('root')).render(
-  <ErrorBoundary>
-    <App />
-  </ErrorBoundary>
-);
+
+const rootEl = document.getElementById('root');
+if (!rootEl) {
+  document.body.innerHTML = '<p style="padding:24px;font-family:system-ui">Missing #root.</p>';
+} else {
+  try {
+    createRoot(rootEl).render(
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    );
+  } catch (err) {
+    console.error('[main] render failed', err);
+    rootEl.innerHTML = `<pre style="padding:16px;color:#b91c1c;white-space:pre-wrap;font-size:12px;font-family:system-ui,monospace">${String(err?.stack || err)}</pre>`;
+  }
+}
 

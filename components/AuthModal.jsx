@@ -61,10 +61,15 @@ export default function AuthModal({ open, onClose, uiLang, onGoogleSignIn, supab
             <span className="icon-x text-[16px]" />
           </button>
         </div>
-        <p style={{ margin: '0 0 20px', fontSize: 13, lineHeight: 1.5, color: 'var(--theme-text-secondary)' }}>
+        <p style={{ margin: '0 0 12px', fontSize: 13, lineHeight: 1.5, color: 'var(--theme-text-secondary)' }}>
           {zh
             ? '使用 Google 账号登录，以同步你的偏好与后续云端数据。'
             : 'Sign in with Google to sync preferences and future cloud data.'}
+        </p>
+        <p style={{ margin: '0 0 20px', fontSize: 11, lineHeight: 1.45, color: 'var(--theme-text-muted)' }}>
+          {zh
+            ? '授权页由 Google 显示；应用名称与徽标在 Google Cloud → OAuth 同意屏幕 中修改。'
+            : 'Google hosts the consent screen; set app name and logo under Google Cloud → OAuth consent screen.'}
         </p>
         {!supabaseReady && (
           <p style={{ fontSize: 12, color: '#b45309', marginBottom: 12 }}>
