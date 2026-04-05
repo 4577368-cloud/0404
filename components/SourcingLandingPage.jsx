@@ -9,6 +9,11 @@ const cardShell =
   'rounded-lg border text-center flex flex-col items-center h-full min-h-[120px] md:min-h-[128px] ' +
   'px-3 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] bg-[var(--theme-card-bg,#fff)]';
 
+/** How It Works：区块用淡色底，卡片略抬升，避免与页面底同色糊成一片 */
+const howCardShell =
+  'rounded-lg border text-center flex flex-col items-center h-full min-h-[120px] md:min-h-[128px] ' +
+  'px-3 py-3 bg-[var(--theme-card-bg,#fff)] shadow-[0_2px_12px_rgba(15,23,42,0.08)]';
+
 const cardBorder = { borderColor: 'var(--theme-border)' };
 
 function SectionTitle({ children }) {
@@ -143,8 +148,8 @@ export function SourcingLandingPage() {
         </div>
       </section>
 
-      {/* How — 同一 5 列模板，缝内放箭头 */}
-      <section className="px-4 py-4 md:py-5 bg-[var(--theme-card-bg,#fff)]">
+      {/* How — 与 Why 相同淡色区底 + 白卡片，层次更清晰 */}
+      <section className="px-4 py-4 md:py-5" style={sectionTint}>
         <div className="max-w-[min(100%,1040px)] mx-auto">
           <SectionTitle>How It Works</SectionTitle>
           <FiveSlotRow>
@@ -162,7 +167,7 @@ export function SourcingLandingPage() {
                     </div>
                   </>
                 ) : null}
-                <div className={`${cardShell} min-w-0`} style={cardBorder}>
+                <div className={`${howCardShell} min-w-0`} style={cardBorder}>
                   <div
                     className="w-9 h-9 rounded-full mb-2 flex items-center justify-center text-sm font-bold flex-shrink-0"
                     style={{ ...iconCircle, color: 'var(--brand-primary-fixed)' }}

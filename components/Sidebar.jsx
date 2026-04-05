@@ -476,7 +476,7 @@ export default function Sidebar({
           )}
         </div>
 
-        {/* Footer: 登录 / 用户 + Powered by + 收起 */}
+        {/* Footer: 登录 / 用户头像昵称 + 侧栏折叠（同高、无 Powered by、无边框） */}
         <div style={{
           padding: collapsed ? '10px 6px' : '10px 12px',
           borderTop: '1px solid var(--theme-border)',
@@ -487,30 +487,38 @@ export default function Sidebar({
           justifyContent: collapsed ? 'center' : 'space-between',
           gap: collapsed ? 8 : 8,
         }}>
-          <div style={{ flex: collapsed ? '0 0 auto' : '1 1 0', minWidth: 0, width: collapsed ? '100%' : undefined, display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{
+            flex: collapsed ? '0 0 auto' : '1 1 0',
+            minWidth: 0,
+            width: collapsed ? '100%' : undefined,
+            display: 'flex',
+            alignItems: 'center',
+            minHeight: 36,
+          }}>
             {supabaseReady && !authUser && (
               <button
                 type="button"
                 onClick={onOpenAuthModal}
                 style={{
-                  width: '100%',
+                  width: collapsed ? '100%' : '100%',
+                  minHeight: 36,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: collapsed ? 'center' : 'flex-start',
                   gap: 8,
-                  padding: collapsed ? '8px 0' : '8px 10px',
-                  borderRadius: 10,
-                  border: '1px dashed color-mix(in srgb, var(--theme-text-muted) 35%, transparent)',
-                  background: 'color-mix(in srgb, var(--brand-primary-fixed) 6%, transparent)',
+                  padding: collapsed ? 0 : '0 4px 0 0',
+                  border: 'none',
+                  borderRadius: 0,
+                  background: 'transparent',
                   color: 'var(--theme-text-secondary)',
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: 600,
                   cursor: 'pointer',
-                  transition: 'background 0.15s',
+                  transition: 'opacity 0.15s',
                 }}
                 title={uiLang === 'zh' ? '登录' : 'Sign in'}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden style={{ flexShrink: 0, opacity: 0.85 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden style={{ flexShrink: 0, opacity: 0.85 }}>
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                   <circle cx="12" cy="7" r="4" />
                 </svg>
@@ -524,14 +532,15 @@ export default function Sidebar({
                 onClick={() => { updateUserMenuPos(); setUserMenuOpen((v) => !v); }}
                 style={{
                   width: '100%',
+                  minHeight: 36,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: collapsed ? 'center' : 'flex-start',
                   gap: 8,
-                  padding: collapsed ? 6 : '6px 8px',
-                  borderRadius: 10,
-                  border: '1px solid var(--theme-border)',
-                  background: 'var(--theme-surface)',
+                  padding: 0,
+                  border: 'none',
+                  borderRadius: 0,
+                  background: 'transparent',
                   cursor: 'pointer',
                   textAlign: 'left',
                 }}
@@ -554,21 +563,24 @@ export default function Sidebar({
                 )}
               </button>
             )}
-            {!collapsed && (
-              <div style={{ fontSize: 9, color: 'var(--theme-text-muted)', lineHeight: 1.3, paddingLeft: 2 }}>
-                Powered by Tangbuy AI
-              </div>
-            )}
           </div>
 
           <button
             onClick={onToggleCollapse}
             title={collapsed ? (uiLang === 'zh' ? '展开侧边栏' : 'Expand sidebar') : (uiLang === 'zh' ? '收起侧边栏' : 'Collapse sidebar')}
             style={{
-              width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              borderRadius: 6, border: 'none', flexShrink: 0,
-              background: 'transparent', color: 'var(--theme-text-muted)',
-              cursor: 'pointer', transition: 'all 0.15s',
+              width: 36,
+              height: 36,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 0,
+              border: 'none',
+              flexShrink: 0,
+              background: 'transparent',
+              color: 'var(--theme-text-muted)',
+              cursor: 'pointer',
+              transition: 'color 0.15s',
             }}
             onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--theme-text-secondary)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--theme-text-muted)'; }}
