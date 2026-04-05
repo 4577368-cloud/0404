@@ -75,7 +75,34 @@ export const TRANSLATIONS = {
             copyright: "© 2026 Tangbuy Dropshipping. All rights reserved.",
             register: "Register Member",
             privacy: "Privacy & Terms"
-        }
+        },
+        header: {
+            credits: "Credits",
+            creditsHint: "Anonymous users get 10 free credits. Sign in with Google or Facebook (bottom-left) to unlock 30; used credits carry over after login.",
+            creditsAbout: "About credits",
+            vipUnlimited: "Unlimited",
+        },
+        auth: {
+            signInToUse: "Please sign in with Google or Facebook (bottom left) to use this feature.",
+            modalTitle: "Sign in to Tangbuy AI",
+            modalSubtitle: "Sign in with Google or Facebook to sync preferences and cloud data.",
+            modalLegal: "Consent screens are hosted by Google / Meta; configure app name and policies in each developer console.",
+            supabaseMissing: "Supabase env vars missing (VITE_SUPABASE_URL / ANON_KEY).",
+            continueGoogle: "Continue with Google",
+            continueFacebook: "Continue with Facebook",
+            lastUsed: "Last used",
+        },
+        vip: {
+            quotaExhausted: "Free quota exhausted",
+            guestBody: "You've used all 10 anonymous free credits. Sign in with Google or Facebook (bottom-left) to unlock 30 total; used credits still count toward your limit.",
+            oauthBody: "You've used all {{n}} free credits. Enter the key to unlock VIP permanently. Tangbuy merchants can contact WhatsApp for a key.",
+            signInForMore: "Sign in for more credits",
+            enterKeyPlaceholder: "Enter key",
+            later: "Later",
+            unlockVip: "Unlock VIP",
+            contactForKey: "Contact us for the key",
+            merchantKeyHint: "Tangbuy merchant? You can still unlock with a key below.",
+        },
     },
     zh: {
         slogan: "AI 驱动的跨境电商独立站解决方案",
@@ -153,7 +180,34 @@ export const TRANSLATIONS = {
             copyright: "© 2026 Tangbuy Dropshipping. 保留所有权利。",
             register: "注册会员",
             privacy: "隐私与条款"
-        }
+        },
+        header: {
+            credits: "额度",
+            creditsHint: "未登录（匿名）用户可使用 10 次对话额度。点击左下角使用 Google / Facebook 登录后，额度扩大至 30 次，已使用次数会累计计入。",
+            creditsAbout: "额度说明",
+            vipUnlimited: "无限",
+        },
+        auth: {
+            signInToUse: "请使用左下角 Google / Facebook 登录后使用此功能。",
+            modalTitle: "登录 Tangbuy AI",
+            modalSubtitle: "使用 Google 或 Facebook 登录，以同步你的偏好与后续云端数据。",
+            modalLegal: "授权由 Google / Meta 页面完成；应用名称与隐私政策请在对应开发者后台配置。",
+            supabaseMissing: "未配置 Supabase 环境变量（VITE_SUPABASE_URL / ANON_KEY）。",
+            continueGoogle: "使用 Google 继续",
+            continueFacebook: "使用 Facebook 继续",
+            lastUsed: "上次使用",
+        },
+        vip: {
+            quotaExhausted: "额度已用完",
+            guestBody: "你已用完匿名免费额度（10 次）。使用左下角 Google / Facebook 登录后，免费额度可提升至 30 次，已用次数会累计计入。",
+            oauthBody: "你的免费次数已用完（{{n}} 次）。输入密钥可永久解锁 VIP 无限使用。若你是 Tangbuy 商家用户，请联系 WhatsApp 获取密钥。",
+            signInForMore: "登录获取更多次数",
+            enterKeyPlaceholder: "请输入密钥",
+            later: "稍后",
+            unlockVip: "解锁 VIP",
+            contactForKey: "联系我们获取密钥",
+            merchantKeyHint: "已是 Tangbuy 商家？仍可在下方输入密钥解锁 VIP。",
+        },
     },
     es: {
         slogan: "Solución de comercio electrónico transfronterizo impulsada por IA",
@@ -231,7 +285,34 @@ export const TRANSLATIONS = {
             copyright: "© 2026 Tangbuy Dropshipping. Todos los derechos reservados.",
             register: "Registrar Miembro",
             privacy: "Privacidad y Términos"
-        }
+        },
+        header: {
+            credits: "Créditos",
+            creditsHint: "Los usuarios anónimos tienen 10 créditos gratis. Inicia sesión con Google o Facebook (abajo a la izquierda) para llegar a 30; los usados se conservan.",
+            creditsAbout: "Información de créditos",
+            vipUnlimited: "Ilimitado",
+        },
+        auth: {
+            signInToUse: "Inicia sesión con Google o Facebook (abajo a la izquierda) para usar esta función.",
+            modalTitle: "Iniciar sesión en Tangbuy AI",
+            modalSubtitle: "Usa Google o Facebook para sincronizar preferencias y datos en la nube.",
+            modalLegal: "Las pantallas de consentimiento las alojan Google / Meta; configura el nombre y las políticas en cada consola de desarrollador.",
+            supabaseMissing: "Faltan variables de entorno de Supabase (VITE_SUPABASE_URL / ANON_KEY).",
+            continueGoogle: "Continuar con Google",
+            continueFacebook: "Continuar con Facebook",
+            lastUsed: "Usado antes",
+        },
+        vip: {
+            quotaExhausted: "Cuota gratuita agotada",
+            guestBody: "Has usado los 10 créditos gratuitos como invitado. Inicia sesión con Google o Facebook (abajo a la izquierda) para llegar a 30 en total; los usos ya contados se mantienen.",
+            oauthBody: "Has usado los {{n}} créditos gratuitos. Introduce la clave para desbloquear VIP de forma permanente. Los comerciantes Tangbuy pueden pedir la clave por WhatsApp.",
+            signInForMore: "Iniciar sesión para más créditos",
+            enterKeyPlaceholder: "Introduce la clave",
+            later: "Más tarde",
+            unlockVip: "Desbloquear VIP",
+            contactForKey: "Contáctanos por la clave",
+            merchantKeyHint: "¿Comerciante Tangbuy? También puedes desbloquear con una clave abajo.",
+        },
     },
     fr: {
         slogan: "Solution E-commerce Transfrontalier Propulsée par l'IA",
@@ -309,6 +390,33 @@ export const TRANSLATIONS = {
             copyright: "© 2026 Tangbuy Dropshipping. Tous droits réservés.",
             register: "Devenir Membre",
             privacy: "Confidentialité & Conditions"
-        }
+        },
+        header: {
+            credits: "Crédits",
+            creditsHint: "Les utilisateurs anonymes ont 10 crédits gratuits. Connectez-vous avec Google ou Facebook (en bas à gauche) pour passer à 30 ; les utilisations déjà faites sont conservées.",
+            creditsAbout: "À propos des crédits",
+            vipUnlimited: "Illimité",
+        },
+        auth: {
+            signInToUse: "Connectez-vous avec Google ou Facebook (en bas à gauche) pour utiliser cette fonction.",
+            modalTitle: "Connexion à Tangbuy AI",
+            modalSubtitle: "Connectez-vous avec Google ou Facebook pour synchroniser vos préférences et vos données cloud.",
+            modalLegal: "Les écrans de consentement sont hébergés par Google / Meta ; configurez le nom de l’app et les politiques dans chaque console développeur.",
+            supabaseMissing: "Variables d’environnement Supabase manquantes (VITE_SUPABASE_URL / ANON_KEY).",
+            continueGoogle: "Continuer avec Google",
+            continueFacebook: "Continuer avec Facebook",
+            lastUsed: "Utilisé récemment",
+        },
+        vip: {
+            quotaExhausted: "Quota gratuit épuisé",
+            guestBody: "Vous avez utilisé les 10 crédits gratuits en mode invité. Connectez-vous avec Google ou Facebook (en bas à gauche) pour monter à 30 au total ; les utilisations déjà comptées sont conservées.",
+            oauthBody: "Vous avez utilisé vos {{n}} crédits gratuits. Entrez la clé pour débloquer le VIP en permanence. Les marchands Tangbuy peuvent demander la clé via WhatsApp.",
+            signInForMore: "Se connecter pour plus de crédits",
+            enterKeyPlaceholder: "Entrez la clé",
+            later: "Plus tard",
+            unlockVip: "Débloquer VIP",
+            contactForKey: "Nous contacter pour la clé",
+            merchantKeyHint: "Marchand Tangbuy ? Vous pouvez aussi débloquer avec une clé ci-dessous.",
+        },
     }
 };

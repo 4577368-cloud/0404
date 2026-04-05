@@ -12,8 +12,13 @@ import { ModuleAIChat } from '../modules/AIChatVite.jsx';
 import { TRANSLATIONS } from '../utils/translations.js';
 import { createAIReport, loadAIReports } from '../utils/aiReports.js';
 import { supabase, isSupabaseConfigured } from '../utils/supabaseClient.js';
-import { ensureAnonymousSession, isAnonymousUser, persistLastOAuthProviderIfSocial } from '../utils/supabaseAuth.js';
+import {
+  ensureAnonymousSession,
+  isAnonymousUser,
+  persistLastOAuthProviderIfSocial,
+} from '../utils/supabaseAuth.js';
 import AuthModal from '../components/AuthModal.jsx';
+import { track, AnalyticsEvent } from '../utils/analytics.js';
 
 export class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -98,20 +103,32 @@ export default function App() {
   const [toast, setToast] = React.useState({ open: false, message: '' });
   const toastTimerRef = React.useRef(null);
   const [authUser, setAuthUser] = React.useState(null);
+  const [authSessionReady, setAuthSessionReady] = React.useState(() => !isSupabaseConfigured());
   const [authModalOpen, setAuthModalOpen] = React.useState(false);
   const prevOAuthSessionRef = React.useRef(false);
   const [hotProductDiagnosisRequest, setHotProductDiagnosisRequest] = React.useState(null);
 
-  const guestFeatureLocked = !authUser || isAnonymousUser(authUser);
+  /** 会话未从 Supabase 恢复完成前不拦截侧栏，避免误挡已登录用户 */
+  const guestFeatureLocked =
+    authSessionReady && (!authUser || isAnonymousUser(authUser));
   const maxFreeQuotaForUser = guestFeatureLocked ? MAX_GUEST_QUOTA : MAX_FREE_QUOTA;
 
   /** 无 OAuth 会话时自动匿名登录，使未「登录」用户也有 auth.uid()，额度与日志进 Supabase */
   React.useEffect(() => {
-    if (!supabase) return undefined;
+    if (!supabase) {
+      setAuthSessionReady(true);
+      return undefined;
+    }
     let cancelled = false;
     (async () => {
-      const session = await ensureAnonymousSession(supabase);
-      if (!cancelled) setAuthUser(session?.user ?? null);
+      try {
+        const session = await ensureAnonymousSession(supabase);
+        if (cancelled) return;
+        setAuthUser(session?.user ?? null);
+        if (session?.user) persistLastOAuthProviderIfSocial(session.user);
+      } finally {
+        if (!cancelled) setAuthSessionReady(true);
+      }
     })();
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       const user = session?.user ?? null;
@@ -156,6 +173,7 @@ export default function App() {
 
   const handleSignInGoogle = React.useCallback(async () => {
     if (!supabase) return;
+    track(AnalyticsEvent.OAUTH_PROVIDER_CLICK, { provider: 'google' });
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: oauthRedirectTo() },
@@ -165,6 +183,7 @@ export default function App() {
 
   const handleSignInFacebook = React.useCallback(async () => {
     if (!supabase) return;
+    track(AnalyticsEvent.OAUTH_PROVIDER_CLICK, { provider: 'facebook' });
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'facebook',
       options: {
@@ -185,6 +204,7 @@ export default function App() {
   const handleSwitchAccount = React.useCallback(async () => {
     if (!supabase) return;
     await supabase.auth.signOut();
+    track(AnalyticsEvent.AUTH_MODAL_OPEN, { via: 'switch_account' });
     setAuthModalOpen(true);
   }, []);
 
@@ -192,11 +212,12 @@ export default function App() {
   React.useEffect(() => {
     const oauth = !!(authUser && !isAnonymousUser(authUser));
     if (oauth && !prevOAuthSessionRef.current) {
+      if (authModalOpen) track(AnalyticsEvent.AUTH_MODAL_CLOSE, { reason: 'oauth_success' });
       setAuthModalOpen(false);
       setActiveView('chat');
     }
     prevOAuthSessionRef.current = oauth;
-  }, [authUser]);
+  }, [authUser, authModalOpen]);
 
   const [workflowProgress, setWorkflowProgress] = React.useState({
     isRunning: false,
@@ -314,14 +335,26 @@ export default function App() {
     setActiveView('sourcing');
   }, []);
 
-  const requireOAuthToastAndModal = React.useCallback(() => {
-    showToast(lang === 'zh' ? '请使用左下角 Google / Facebook 登录后使用此功能。' : 'Please sign in with Google or Facebook (bottom left) to use this feature.');
+  const closeAuthModal = React.useCallback(() => {
+    track(AnalyticsEvent.AUTH_MODAL_CLOSE, { reason: 'user_dismiss' });
+    setAuthModalOpen(false);
+  }, []);
+
+  const openAuthModal = React.useCallback((via = 'explicit') => {
+    track(AnalyticsEvent.AUTH_MODAL_OPEN, { via });
     setAuthModalOpen(true);
-  }, [lang, showToast]);
+  }, []);
+
+  const requireOAuthToastAndModal = React.useCallback((feature = 'unknown') => {
+    track(AnalyticsEvent.FEATURE_GATE_BLOCKED, { feature });
+    showToast(t.auth?.signInToUse || '');
+    track(AnalyticsEvent.AUTH_MODAL_OPEN, { via: 'feature_gate', feature });
+    setAuthModalOpen(true);
+  }, [showToast, t]);
 
   const handleViewReport = React.useCallback(() => {
     if (guestFeatureLocked) {
-      requireOAuthToastAndModal();
+      requireOAuthToastAndModal('workflow_view_report');
       return;
     }
     if (reports.length > 0) {
@@ -332,7 +365,7 @@ export default function App() {
 
   const handleAIReports = React.useCallback(() => {
     if (guestFeatureLocked) {
-      requireOAuthToastAndModal();
+      requireOAuthToastAndModal('nav_ai_reports');
       return;
     }
     if (activeView === 'aiReports') {
@@ -350,7 +383,7 @@ export default function App() {
 
   const handleReportCreated = React.useCallback((newReport) => {
     if (guestFeatureLocked) {
-      requireOAuthToastAndModal();
+      requireOAuthToastAndModal('report_created_gate');
       return;
     }
     setReports(prev => [newReport, ...prev]);
@@ -436,7 +469,7 @@ export default function App() {
         onClose={() => setSidebarOpen(false)}
         onHotProducts={() => {
           if (guestFeatureLocked) {
-            requireOAuthToastAndModal();
+            requireOAuthToastAndModal('nav_hot_products');
             return;
           }
           setActiveView('hotProducts');
@@ -459,7 +492,7 @@ export default function App() {
         onToggleCollapse={handleToggleSidebarCollapse}
         supabaseReady={isSupabaseConfigured()}
         authUser={authUser}
-        onOpenAuthModal={() => setAuthModalOpen(true)}
+        onOpenAuthModal={() => openAuthModal('sidebar_sign_in')}
         onLinkGoogle={handleSignInGoogle}
         onLinkFacebook={handleSignInFacebook}
         onSignOut={handleSignOut}
@@ -497,7 +530,7 @@ export default function App() {
             <HotProducts
               uiLang={lang}
               guestFeatureLocked={guestFeatureLocked}
-              onRequireOAuth={requireOAuthToastAndModal}
+              onRequireOAuth={() => requireOAuthToastAndModal('hot_page_ai_diagnose')}
               onProductDiagnosis={(product) => {
                 setHotProductDiagnosisRequest({ product, t: Date.now() });
                 setActiveView('chat');
@@ -544,7 +577,9 @@ export default function App() {
               conversationId={activeId}
               isVip={isVip}
               guestFeatureLocked={guestFeatureLocked}
-              onGuestFeatureBlocked={requireOAuthToastAndModal}
+              onGuestFeatureBlocked={() => requireOAuthToastAndModal('chat_ai_diagnose')}
+              onOpenAuthModal={() => openAuthModal('quota_modal')}
+              oauthMaxFreeQuota={MAX_FREE_QUOTA}
               hotProductDiagnosisRequest={hotProductDiagnosisRequest}
               onConsumedHotProductDiagnosisRequest={() => setHotProductDiagnosisRequest(null)}
             />
@@ -554,8 +589,9 @@ export default function App() {
 
       <AuthModal
         open={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
+        onClose={closeAuthModal}
         uiLang={lang}
+        t={t}
         onGoogleSignIn={handleSignInGoogle}
         onFacebookSignIn={handleSignInFacebook}
         supabaseReady={isSupabaseConfigured()}

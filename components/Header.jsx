@@ -1,5 +1,6 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
+import { track, AnalyticsEvent } from '../utils/analytics.js';
 
 const SHARE_PLATFORMS = [
   {
@@ -151,6 +152,24 @@ export default function Header({
   const [creditsHintOpen, setCreditsHintOpen] = React.useState(false);
   const langRef = React.useRef(null);
   const creditsHintRef = React.useRef(null);
+  const creditsBubbleHoverRef = React.useRef(false);
+  const creditsCloseTimerRef = React.useRef(null);
+  const creditsHintOpenSourceRef = React.useRef('unknown');
+
+  const clearCreditsCloseTimer = React.useCallback(() => {
+    if (creditsCloseTimerRef.current) {
+      clearTimeout(creditsCloseTimerRef.current);
+      creditsCloseTimerRef.current = null;
+    }
+  }, []);
+
+  const scheduleCreditsBubbleClose = React.useCallback(() => {
+    clearCreditsCloseTimer();
+    creditsCloseTimerRef.current = setTimeout(() => {
+      creditsCloseTimerRef.current = null;
+      if (!creditsBubbleHoverRef.current) setCreditsHintOpen(false);
+    }, 3000);
+  }, [clearCreditsCloseTimer]);
 
   React.useEffect(() => {
     const handleClickOutside = (e) => {
@@ -178,25 +197,47 @@ export default function Header({
     } catch (_) {
       return undefined;
     }
+    creditsHintOpenSourceRef.current = 'auto';
     setCreditsHintOpen(true);
   }, [showCreditsHintForAnonymous]);
 
-  /** 额度说明展开后：无操作则 3 秒收起（首次自动弹出与点击 ? 均适用） */
+  React.useEffect(() => {
+    if (!creditsHintOpen) return;
+    track(AnalyticsEvent.CREDITS_HINT_SHOWN, { source: creditsHintOpenSourceRef.current });
+  }, [creditsHintOpen]);
+
+  /** 额度说明展开后：无操作约 3 秒收起；鼠标悬停在气泡上时暂停计时，移出后重新计时 */
+  React.useEffect(() => {
+    if (!creditsHintOpen) {
+      clearCreditsCloseTimer();
+      creditsBubbleHoverRef.current = false;
+      return undefined;
+    }
+    scheduleCreditsBubbleClose();
+    return () => clearCreditsCloseTimer();
+  }, [creditsHintOpen, clearCreditsCloseTimer, scheduleCreditsBubbleClose]);
+
   React.useEffect(() => {
     if (!creditsHintOpen) return undefined;
-    const tmr = setTimeout(() => setCreditsHintOpen(false), 3000);
-    return () => clearTimeout(tmr);
+    const onKey = (e) => {
+      if (e.key === 'Escape') setCreditsHintOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
   }, [creditsHintOpen]);
 
 // (VIP quota rendering is handled below in the same Header component)
-  const quotaLabel = currentLang === 'zh' ? '额度' : 'Credits';
+  const th = t?.header || {};
+  const quotaLabel = th.credits || (currentLang === 'zh' ? '额度' : 'Credits');
   const cap = Math.max(1, maxFreeQuota);
   const pct = Math.min(1, (remainingQuota ?? cap) / cap);
   const barColor = pct > 0.5 ? 'bg-emerald-400' : pct > 0.2 ? 'bg-amber-400' : 'bg-red-400';
   const creditsHintText =
-    currentLang === 'zh'
+    th.creditsHint
+    || (currentLang === 'zh'
       ? '未登录（匿名）用户可使用 10 次对话额度。点击左下角使用 Google / Facebook 登录后，额度扩大至 30 次，已使用次数会累计计入。'
-      : 'Anonymous users get 10 free credits. Sign in with Google or Facebook (bottom-left) to unlock 30; used credits carry over after login.';
+      : 'Anonymous users get 10 free credits. Sign in with Google or Facebook (bottom-left) to unlock 30; used credits carry over after login.');
+  const creditsAboutLabel = th.creditsAbout || (currentLang === 'zh' ? '额度说明' : 'About credits');
 
   return (
     <header style={{
@@ -357,7 +398,7 @@ export default function Header({
           >
             <span className="text-[10px] font-extrabold" style={{ color: 'var(--primary)' }}>VIP</span>
             <span className="text-[10px] font-semibold" style={{ color: 'var(--theme-text-secondary)' }}>
-              {currentLang === 'zh' ? '无限' : 'Unlimited'}
+              {th.vipUnlimited || (currentLang === 'zh' ? '无限' : 'Unlimited')}
             </span>
           </div>
         ) : (
@@ -383,8 +424,8 @@ export default function Header({
                 padding: 1,
                 marginLeft: 3,
               }}
-              title={currentLang === 'zh' ? '额度说明' : 'About credits'}
-              aria-label={currentLang === 'zh' ? '额度说明' : 'Credits info'}
+              title={creditsAboutLabel}
+              aria-label={creditsAboutLabel}
               onMouseEnter={(e) => {
                 e.currentTarget.style.opacity = '0.85';
                 e.currentTarget.style.color = 'var(--theme-text-secondary)';
@@ -395,13 +436,17 @@ export default function Header({
               }}
               onClick={(e) => {
                 e.stopPropagation();
-                setCreditsHintOpen((v) => !v);
+                setCreditsHintOpen((v) => {
+                  if (!v) creditsHintOpenSourceRef.current = 'toggle';
+                  return !v;
+                });
               }}
             >
               <span className="icon-info text-[11px]" aria-hidden />
             </button>
             {creditsHintOpen && (
               <div
+                role="tooltip"
                 className="absolute top-full right-0 mt-1 z-[60] text-left"
                 style={{
                   width: 'max-content',
@@ -415,6 +460,14 @@ export default function Header({
                   border: '1px solid var(--theme-border)',
                   borderRadius: 10,
                   boxShadow: '0 12px 28px rgba(0,0,0,0.12)',
+                }}
+                onMouseEnter={() => {
+                  creditsBubbleHoverRef.current = true;
+                  clearCreditsCloseTimer();
+                }}
+                onMouseLeave={() => {
+                  creditsBubbleHoverRef.current = false;
+                  scheduleCreditsBubbleClose();
                 }}
               >
                 {creditsHintText}

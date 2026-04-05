@@ -2,7 +2,8 @@ import React, { useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
-import { incrementQuota, getRemainingQuota, MAX_GUEST_QUOTA } from '../utils/quota.js';
+import { incrementQuota, getRemainingQuota, MAX_GUEST_QUOTA, MAX_FREE_QUOTA } from '../utils/quota.js';
+import { track, AnalyticsEvent } from '../utils/analytics.js';
 import { supabase } from '../utils/supabaseClient.js';
 import { consumeChatTurn, claimVipRemote } from '../utils/supabaseUsage.js';
 import { extractUrlsFromText } from '../utils/urlExtract.js';
@@ -826,6 +827,8 @@ export function ModuleAIChat({
   authUser = null, conversationId = '', isVip = false,
   guestFeatureLocked = false,
   onGuestFeatureBlocked,
+  onOpenAuthModal,
+  oauthMaxFreeQuota = MAX_FREE_QUOTA,
   hotProductDiagnosisRequest = null,
   onConsumedHotProductDiagnosisRequest,
 }) {
@@ -961,23 +964,32 @@ export function ModuleAIChat({
     if (supabase && authUser) {
       const res = await claimVipRemote(supabase, key);
       if (res?.ok) {
+        track(AnalyticsEvent.VIP_CODE_SUBMIT, { success: true, mode: 'remote' });
         setShowVipModal(false);
         setVipKeyError('');
         onQuotaChange?.();
       } else {
+        track(AnalyticsEvent.VIP_CODE_SUBMIT, { success: false, mode: 'remote' });
         setVipKeyError(uiLang === 'zh' ? '密钥无效，请重试。' : 'Invalid key, please try again.');
       }
       return;
     }
     if (key === VIP_KEY) {
+      track(AnalyticsEvent.VIP_CODE_SUBMIT, { success: true, mode: 'local' });
       setShowVipModal(false);
       setVipKeyError('');
       try { localStorage.setItem(VIP_FLAG_KEY, '1'); } catch {}
       onQuotaChange?.();
     } else {
+      track(AnalyticsEvent.VIP_CODE_SUBMIT, { success: false, mode: 'local' });
       setVipKeyError(uiLang === 'zh' ? '密钥无效，请重试。' : 'Invalid key, please try again.');
     }
-  }, [vipKeyInput, uiLang, onQuotaChange, authUser]);
+  }, [vipKeyInput, uiLang, onQuotaChange, authUser, supabase]);
+
+  React.useEffect(() => {
+    if (!showVipModal) return;
+    track(AnalyticsEvent.QUOTA_MODAL_OPEN, { is_guest_quota: guestFeatureLocked });
+  }, [showVipModal, guestFeatureLocked]);
 
   const isFirstRender = React.useRef(true);
   const prevMessagesRef = React.useRef(propMessages);
@@ -2707,23 +2719,55 @@ export function ModuleAIChat({
       <OverlayModal show={showVipModal} onClose={() => setShowVipModal(false)} width="min(440px, 90vw)" glass={false}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--theme-text)', margin: 0 }}>
-                {uiLang === 'zh' ? '额度已用完' : 'Free Quota Exhausted'}
+                {t?.vip?.quotaExhausted || (uiLang === 'zh' ? '额度已用完' : 'Free quota exhausted')}
               </h2>
-              <button onClick={() => setShowVipModal(false)}
+              <button type="button" onClick={() => setShowVipModal(false)}
                 style={{ width: 32, height: 32, borderRadius: 99, border: 'none', background: 'var(--theme-surface)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--theme-text-secondary)' }}
               ><span className="icon-x text-[16px]" /></button>
             </div>
 
             <p style={{ fontSize: 13, lineHeight: 1.7, color: 'var(--theme-text-secondary)', margin: '0 0 18px' }}>
-              {uiLang === 'zh'
-                ? '你的免费次数已用完（30次）。输入密钥可永久解锁 VIP 无限使用。若你是 Tangbuy 商家用户，请联系 WhatsApp 获取密钥。'
-                : 'Your free quota (30 uses) has run out. Enter the key to unlock VIP permanently. Tangbuy merchants can contact WhatsApp to get the key.'}
+              {guestFeatureLocked
+                ? (t?.vip?.guestBody || '')
+                : (t?.vip?.oauthBody || '').replace(/\{\{n\}\}/g, String(oauthMaxFreeQuota))}
             </p>
+
+            {guestFeatureLocked && typeof onOpenAuthModal === 'function' && (
+              <button
+                type="button"
+                onClick={() => {
+                  track(AnalyticsEvent.QUOTA_MODAL_SIGN_IN_CLICK, {});
+                  setShowVipModal(false);
+                  onOpenAuthModal();
+                }}
+                style={{
+                  width: '100%',
+                  padding: '12px 0',
+                  borderRadius: 12,
+                  fontSize: 14,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  marginBottom: 14,
+                  background: 'linear-gradient(135deg, var(--brand-primary-fixed, #ee1d36) 0%, color-mix(in srgb, var(--brand-primary-fixed, #ee1d36) 88%, black 12%) 100%)',
+                  color: '#fff',
+                  border: 'none',
+                  boxShadow: '0 4px 14px rgba(238, 29, 54, 0.25)',
+                }}
+              >
+                {t?.vip?.signInForMore || (uiLang === 'zh' ? '登录获取更多次数' : 'Sign in for more credits')}
+              </button>
+            )}
+
+            {guestFeatureLocked && (
+              <p style={{ fontSize: 11, lineHeight: 1.5, color: 'var(--theme-text-muted)', margin: '0 0 12px' }}>
+                {t?.vip?.merchantKeyHint || ''}
+              </p>
+            )}
 
             <input type="text" value={vipKeyInput}
               onChange={(e) => { setVipKeyInput(e.target.value); setVipKeyError(''); }}
               onKeyDown={(e) => { if (e.key === 'Enter') tryUnlockVip(); }}
-              placeholder={uiLang === 'zh' ? '请输入密钥' : 'Enter key'}
+              placeholder={t?.vip?.enterKeyPlaceholder || (uiLang === 'zh' ? '请输入密钥' : 'Enter key')}
               style={{
                 width: '100%', padding: '12px 16px', borderRadius: 12, fontSize: 14, outline: 'none',
                 background: 'var(--theme-input-bg)', border: vipKeyError ? '1.5px solid var(--primary)' : '1px solid var(--theme-border)',
@@ -2733,20 +2777,20 @@ export function ModuleAIChat({
             {vipKeyError && <div style={{ fontSize: 12, color: 'var(--primary)', marginTop: 6 }}>{vipKeyError}</div>}
 
             <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-              <button onClick={() => setShowVipModal(false)}
+              <button type="button" onClick={() => setShowVipModal(false)}
                 style={{
                   flex: 1, padding: '11px 0', borderRadius: 12, fontSize: 13, fontWeight: 600, cursor: 'pointer',
                   background: 'var(--theme-surface)', color: 'var(--theme-text-secondary)', border: '1px solid var(--theme-border)',
-                }}>{uiLang === 'zh' ? '稍后' : 'Later'}</button>
-              <button onClick={tryUnlockVip}
+                }}>{t?.vip?.later || (uiLang === 'zh' ? '稍后' : 'Later')}</button>
+              <button type="button" onClick={tryUnlockVip}
                 style={{
                   flex: 1, padding: '11px 0', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer',
                   background: 'var(--primary)', color: '#fff', border: 'none',
-                }}>{uiLang === 'zh' ? '解锁 VIP' : 'Unlock VIP'}</button>
+                }}>{t?.vip?.unlockVip || (uiLang === 'zh' ? '解锁 VIP' : 'Unlock VIP')}</button>
             </div>
 
             <div style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid var(--theme-border)', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 11, color: 'var(--theme-text-muted)' }}>{uiLang === 'zh' ? '联系我们获取密钥' : 'Contact us for the key'}</span>
+              <span style={{ fontSize: 11, color: 'var(--theme-text-muted)' }}>{t?.vip?.contactForKey || (uiLang === 'zh' ? '联系我们获取密钥' : 'Contact us for the key')}</span>
               <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer"
                 style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: '#25D366', textDecoration: 'none' }}>
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="#25D366">

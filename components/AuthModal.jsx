@@ -2,10 +2,10 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { GoogleGIcon, FacebookIcon } from './BrandSocialIcons.jsx';
 import { readLastOAuthProvider } from '../utils/supabaseAuth.js';
+import { TRANSLATIONS } from '../utils/translations.js';
 
 /** 按钮右上角斜向「上次使用」角标 */
-function LastUsedRibbon({ zh, variant }) {
-  const label = zh ? '上次使用' : 'Last used';
+function LastUsedRibbon({ label, variant }) {
   const isGoogle = variant === 'google';
   return (
     <span
@@ -43,11 +43,39 @@ function LastUsedRibbon({ zh, variant }) {
 /**
  * 登录弹窗：Google / Facebook（经 Supabase OAuth，无需嵌入 Facebook JS SDK）
  */
-export default function AuthModal({ open, onClose, uiLang, onGoogleSignIn, onFacebookSignIn, supabaseReady }) {
+export default function AuthModal({
+  open,
+  onClose,
+  uiLang: _uiLang,
+  t,
+  onGoogleSignIn,
+  onFacebookSignIn,
+  supabaseReady,
+}) {
+  const googleBtnRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (!open) return undefined;
+    const id = requestAnimationFrame(() => {
+      googleBtnRef.current?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [open]);
+
+  React.useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') onClose?.();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
+
   if (!open) return null;
 
-  const zh = uiLang === 'zh';
+  const auth = (t && t.auth) ? t.auth : TRANSLATIONS.en.auth;
   const lastUsed = readLastOAuthProvider();
+  const lastLabel = auth.lastUsed || 'Last used';
 
   return createPortal(
     <>
@@ -63,6 +91,9 @@ export default function AuthModal({ open, onClose, uiLang, onGoogleSignIn, onFac
         }}
       />
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="tb-auth-modal-title"
         style={{
           position: 'fixed',
           left: '50%',
@@ -78,8 +109,8 @@ export default function AuthModal({ open, onClose, uiLang, onGoogleSignIn, onFac
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--theme-text)' }}>
-            {zh ? '登录 Tangbuy AI' : 'Sign in to Tangbuy AI'}
+          <h2 id="tb-auth-modal-title" style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--theme-text)' }}>
+            {auth.modalTitle}
           </h2>
           <button
             type="button"
@@ -102,22 +133,19 @@ export default function AuthModal({ open, onClose, uiLang, onGoogleSignIn, onFac
           </button>
         </div>
         <p style={{ margin: '0 0 12px', fontSize: 13, lineHeight: 1.5, color: 'var(--theme-text-secondary)' }}>
-          {zh
-            ? '使用 Google 或 Facebook 登录，以同步你的偏好与后续云端数据。'
-            : 'Sign in with Google or Facebook to sync preferences and cloud data.'}
+          {auth.modalSubtitle}
         </p>
         <p style={{ margin: '0 0 20px', fontSize: 11, lineHeight: 1.45, color: 'var(--theme-text-muted)' }}>
-          {zh
-            ? '授权由 Google / Meta 页面完成；应用名称与隐私政策请在对应开发者后台配置。'
-            : 'Consent screens are hosted by Google / Meta; configure app name and policies in each developer console.'}
+          {auth.modalLegal}
         </p>
         {!supabaseReady && (
           <p style={{ fontSize: 12, color: '#b45309', marginBottom: 12 }}>
-            {zh ? '未配置 Supabase 环境变量（VITE_SUPABASE_URL / ANON_KEY）。' : 'Supabase env vars missing (VITE_SUPABASE_URL / ANON_KEY).'}
+            {auth.supabaseMissing}
           </p>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <button
+            ref={googleBtnRef}
             type="button"
             disabled={!supabaseReady}
             onClick={() => { onGoogleSignIn?.(); }}
@@ -140,9 +168,9 @@ export default function AuthModal({ open, onClose, uiLang, onGoogleSignIn, onFac
               opacity: supabaseReady ? 1 : 0.5,
             }}
           >
-            {lastUsed === 'google' && <LastUsedRibbon zh={zh} variant="google" />}
+            {lastUsed === 'google' && <LastUsedRibbon label={lastLabel} variant="google" />}
             <GoogleGIcon size={18} />
-            {zh ? '使用 Google 继续' : 'Continue with Google'}
+            {auth.continueGoogle}
           </button>
           <button
             type="button"
@@ -167,7 +195,7 @@ export default function AuthModal({ open, onClose, uiLang, onGoogleSignIn, onFac
               opacity: supabaseReady ? 1 : 0.5,
             }}
           >
-            {lastUsed === 'facebook' && <LastUsedRibbon zh={zh} variant="facebook" />}
+            {lastUsed === 'facebook' && <LastUsedRibbon label={lastLabel} variant="facebook" />}
             <span
               style={{
                 display: 'inline-flex',
@@ -183,7 +211,7 @@ export default function AuthModal({ open, onClose, uiLang, onGoogleSignIn, onFac
             >
               <FacebookIcon size={14} />
             </span>
-            {zh ? '使用 Facebook 继续' : 'Continue with Facebook'}
+            {auth.continueFacebook}
           </button>
         </div>
       </div>
