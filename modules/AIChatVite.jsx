@@ -42,7 +42,7 @@ import {
   partitionHotAndTrendMatches,
   enrichHotProductsWithCatalog,
 } from '../utils/productSearch.js';
-import { decodeHtmlEntities } from '../utils/reportFormatter.js';
+import { decodeHtmlEntities, buildAggregatedSupplyChainBackbone } from '../utils/reportFormatter.js';
 import { PROMPTS } from '../utils/systemPrompts.js';
 // ── Markdown renderer ──
 const mdRenderer = new marked.Renderer();
@@ -129,9 +129,9 @@ function detectIntentFromInput(text, snapshot) {
   const isImageUrl = !!(firstUrl && /\.(png|jpe?g|gif|webp|bmp|svg)(\?|#|$)/i.test(firstUrl));
   const isProductUrl = hasUrl && (/\/product[s]?\//i.test(text) || /\/dp\//i.test(text) || /\/item[s]?\//i.test(text) || /[?&]id=\d/i.test(text) || /\/p\/\d/i.test(text));
 
-  if (/(seo|搜索优化|标题重写|meta|关键词|title.*rewrite|keyword|搜索排名|geo)/i.test(text)) return 'seo';
-  if (/(详情页|product page|html.*生成|html.*output|landing page.*gen|文案生成|copy.*write|详情.*优化)/i.test(text)) return 'page';
   if (/(诊断|审计|audit|diagnosis|分析.*网站|分析.*店铺|review.*store|拆解)/i.test(text)) return 'diagnosis';
+  if (/(geo\b|生成式搜索|生成式引擎|generative engine|generative search|answer engine|sge\b|ai overview|ai搜索|chatgpt.*search|perplexity)/i.test(combined)) return 'page';
+  if (/(seo|搜索优化|标题重写|meta|关键词|title.*rewrite|keyword|搜索排名|详情页|product page|html.*生成|html.*output|landing page|pdp\b|文案生成|copy.*write|详情.*优化)/i.test(text)) return 'seo';
 
   if (isProductUrl) return 'product';
   if (isImageUrl) return 'product';
@@ -280,7 +280,7 @@ function extractSuggestions(text) {
 // ════════════════════════════════════════════════════
 const ChatInput = React.memo(function ChatInput({
   onSend, isLoading, placeholder, activeMode, onModeChange,
-  modeIcons, modeLabels, modeMenuRef, inputRef,
+  modeIcons, modeLabels, modeColors, modeMenuRef, inputRef,
   uiLang, layout = 'docked', shortcutCards = [], onShortcutClick,
   draft, setDraft,
 }) {
@@ -563,11 +563,11 @@ const ChatInput = React.memo(function ChatInput({
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); setIsModeDropdownOpen((prev) => !prev); }}
-                    className="inline-flex items-center gap-1 px-0 py-0.5 text-[11px] font-medium transition-all whitespace-nowrap"
+                    className={`inline-flex items-center gap-1 px-0 py-0.5 text-[11px] font-medium transition-all whitespace-nowrap ${activeMode === 'auto' ? '' : (modeColors?.[activeMode] || '')}`}
                     style={{
                       background: 'transparent',
                       border: 'none',
-                      color: activeMode === 'auto' ? 'var(--brand-primary-fixed)' : 'var(--theme-text)',
+                      color: activeMode === 'auto' ? 'var(--brand-primary-fixed)' : undefined,
                     }}
                   >
                     <span className={`${modeIcons[activeMode] || modeIcons.auto} text-[12px]`} />
@@ -593,12 +593,14 @@ const ChatInput = React.memo(function ChatInput({
                             className="w-full flex items-center gap-2 px-3 py-2.5 text-left text-[12px] transition-colors"
                             style={{
                               background: active ? 'var(--theme-surface)' : 'transparent',
-                              color: active ? 'var(--brand-primary-fixed)' : 'var(--theme-text-secondary)',
                               fontWeight: active ? 700 : 500,
                             }}
                           >
-                            <span className={`${modeIcons[m]} text-[12px]`} />
-                            <span className="flex-1">{modeLabels[m]}</span>
+                            <span className={`${modeIcons[m]} text-[12px] shrink-0 ${m === 'auto' ? 'text-[var(--brand-primary-fixed)]' : (modeColors?.[m] || '')}`} />
+                            <span
+                              className="flex-1 min-w-0"
+                              style={{ color: active ? 'var(--theme-text)' : 'var(--theme-text-secondary)' }}
+                            >{modeLabels[m]}</span>
                             {active ? <span className="icon-check text-[12px]" /> : null}
                           </button>
                         );
@@ -736,7 +738,7 @@ const ProgressiveProductList = React.memo(function ProgressiveProductList({ item
   );
 });
 
-const WelcomePortal = React.memo(function WelcomePortal({ uiLang, t, isLoading, mode, onModeChange, modeIcons, modeLabels, modeMenuRef, inputRef, onSend, onOpenSourcing }) {
+const WelcomePortal = React.memo(function WelcomePortal({ uiLang, t, isLoading, mode, onModeChange, modeIcons, modeLabels, modeColors, modeMenuRef, inputRef, onSend, onOpenSourcing }) {
   const cards = React.useMemo(() => getShortcutCards(uiLang), [uiLang]);
 
   const handleCardClick = React.useCallback((card) => {
@@ -771,6 +773,7 @@ const WelcomePortal = React.memo(function WelcomePortal({ uiLang, t, isLoading, 
             onModeChange={onModeChange}
             modeIcons={modeIcons}
             modeLabels={modeLabels}
+            modeColors={modeColors}
             modeMenuRef={modeMenuRef}
             inputRef={inputRef}
             uiLang={uiLang}
@@ -846,6 +849,8 @@ export function ModuleAIChat({
   const [knownSite, setKnownSite] = React.useState(null);
   const [knownContentLang, setKnownContentLang] = React.useState(null);
   const chatContainerRef = React.useRef(null);
+  /** 仅当用户未主动上滑查看历史时为 true；流式输出时才能跟着滚到底 */
+  const stickToBottomRef = React.useRef(true);
   const modeMenuRef = React.useRef(null);
   const chatInputRef = React.useRef(null);
 
@@ -986,9 +991,12 @@ export function ModuleAIChat({
     }
   }, [vipKeyInput, uiLang, onQuotaChange, authUser, supabase]);
 
+  const prevShowVipModalRef = React.useRef(false);
   React.useEffect(() => {
-    if (!showVipModal) return;
-    track(AnalyticsEvent.QUOTA_MODAL_OPEN, { is_guest_quota: guestFeatureLocked });
+    if (showVipModal && !prevShowVipModalRef.current) {
+      track(AnalyticsEvent.QUOTA_MODAL_OPEN, { is_guest_quota: guestFeatureLocked });
+    }
+    prevShowVipModalRef.current = showVipModal;
   }, [showVipModal, guestFeatureLocked]);
 
   const isFirstRender = React.useRef(true);
@@ -998,19 +1006,38 @@ export function ModuleAIChat({
     if (prevMessagesRef.current !== propMessages) {
       prevMessagesRef.current = propMessages;
       isFirstRender.current = true;
+      stickToBottomRef.current = true;
       initialMessageCountRef.current = Array.isArray(propMessages) ? propMessages.length : 0;
     }
   }, [propMessages]);
+
+  const CHAT_SCROLL_PIN_PX = 100;
+  const onChatScroll = React.useCallback(() => {
+    const el = chatContainerRef.current;
+    if (!el) return;
+    const gap = el.scrollHeight - el.scrollTop - el.clientHeight;
+    stickToBottomRef.current = gap <= CHAT_SCROLL_PIN_PX;
+  }, []);
 
   React.useEffect(() => {
     const el = chatContainerRef.current;
     if (!el) return;
     if (isFirstRender.current) {
       isFirstRender.current = false;
-      requestAnimationFrame(() => { el.scrollTop = el.scrollHeight; });
+      requestAnimationFrame(() => {
+        const c = chatContainerRef.current;
+        if (!c) return;
+        c.scrollTop = c.scrollHeight;
+        stickToBottomRef.current = true;
+      });
       return;
     }
-    el.scrollTop = el.scrollHeight;
+    if (!stickToBottomRef.current) return;
+    requestAnimationFrame(() => {
+      const c = chatContainerRef.current;
+      if (!c || !stickToBottomRef.current) return;
+      c.scrollTop = c.scrollHeight;
+    });
   }, [messages, isLoading]);
 
   React.useEffect(() => {
@@ -1198,9 +1225,6 @@ export function ModuleAIChat({
 
   // ── Build system message with auto-intent detection ──
   const buildSystemMessage = React.useCallback((currentInput, snapshot) => {
-    const detected = detectLanguageFromText(currentInput);
-    const outLang = detected?.confidence === 'high' ? detected : (knownContentLang || { lang: uiLang, label: uiLangLabel, rtl: false });
-
     let activePrompt;
     let activeSkill = mode;
     if (mode === 'auto') {
@@ -1211,21 +1235,21 @@ export function ModuleAIChat({
       activePrompt = PROMPTS[mode] || PROMPTS.auto;
     }
 
-    const langConstraint = `\n\n【输出语言强约束】\n- 用户使用什么语言输入，你就用什么语言回复。\n- 本次检测到用户输入语言为：${outLang.label}，你必须全程使用 ${outLang.label} 回复。\n- 如果用户输入语言不属于中文、英文、西班牙语、法语，则统一使用英文（English）回复。\n- 严禁在同一回复中混用多种语言（例如一段中文一段英文），除非用户明确要求双语输出。\n- 如果用户明确要求用某种语言回复，必须按照用户指定的语言输出。`;
-    const yearConstraint = `\n\n【时间与年份强约束】\n- 运营、营销排期、节日/大促/季节节点默认以 **${ANALYSIS_YEAR} 年及以后**为规划时间轴。\n- **不得**将 2024 或更早的年份当作「即将到来」的节点；面向未来的建议必须落在 ${ANALYSIS_YEAR}+。\n- 引用历史数据时可出现过去年份；勿向用户重复强调「基于 ${ANALYSIS_YEAR}」类元话术，除非用户追问。`;
-    const siteCtx = knownSite ? `\n\n【已知站点上下文】\n- 站点：${knownSite}\n- 同域名复用之前诊断，不同域名重新建模。` : '';
-    const normalizedLang = normalizeKnowledgeLang(outLang.lang || uiLang);
+    const langConstraint = `\n\n[Reply language — mandatory]\n- Write the **entire** reply in **${uiLangLabel}**, matching the app language selected in the header (top-right).\n- Do not mix languages in one reply unless the user explicitly asks for bilingual output.\n- If the user explicitly demands a specific reply language, follow that request.\n`;
+    const yearConstraint = `\n\n[Time & year]\n- Treat campaign, seasonal, and holiday planning as **${ANALYSIS_YEAR} and later**.\n- Do not frame 2024 or earlier as “upcoming”; forward-looking advice must sit in ${ANALYSIS_YEAR}+.\n- Past years may appear as historical data; do not keep saying “based on ${ANALYSIS_YEAR}” unless the user asks.\n`;
+    const siteCtx = knownSite ? `\n\n[Known site]\n- Site: ${knownSite}\n- Reuse prior analysis for the same domain; treat a new domain as a fresh model.\n` : '';
+    const normalizedLang = normalizeKnowledgeLang(uiLang);
     const tangbuyBaseGuidance = TANGBUY_GUIDANCE[normalizedLang] || TANGBUY_GUIDANCE.en;
     const tangbuyKnowledgeCtx = shouldInjectTangbuyKnowledge(currentInput, snapshot, activeSkill)
       ? buildTangbuyKnowledgeContext(normalizedLang, currentInput, snapshot, activeSkill).context
       : '';
 
     const diagnosisCtx = diagnosisContext
-      ? `\n\n【AI诊断目标市场上下文】\n${diagnosisContext.prompt}\n\n请重点基于上述目标市场信息进行分析，优先考虑该市场的消费者偏好、购买力和竞争格局。`
+      ? `\n\n[AI diagnosis — target market]\n${diagnosisContext.prompt}\n\nPrioritize that market’s shopper preferences, purchasing power, and competitive landscape.\n`
       : '';
 
     return { role: 'system', content: activePrompt + tangbuyBaseGuidance + tangbuyKnowledgeCtx + langConstraint + yearConstraint + siteCtx + diagnosisCtx };
-  }, [mode, knownSite, knownContentLang, uiLang, uiLangLabel, diagnosisContext]);
+  }, [mode, knownSite, uiLang, uiLangLabel, diagnosisContext]);
 
   // ── SSE streaming response ──
   const streamResponse = async (apiMessages) => {
@@ -1381,6 +1405,7 @@ export function ModuleAIChat({
       onQuotaChange?.();
     }
 
+    stickToBottomRef.current = true;
     setMessages((p) => [...p, { role: 'user', type: 'text', content: txt }]);
     setIsLoading(true);
 
@@ -1531,8 +1556,13 @@ export function ModuleAIChat({
 
   const ALL_MODES = ['auto', 'diagnosis', 'seo', 'page'];
   const modeLabels = { auto: t.chat.modes.auto, diagnosis: t.chat.modes.diagnosis, seo: t.chat.modes.seo, page: t.chat.modes.page };
-  const modeColors = { auto: 'text-[var(--secondary)]', diagnosis: 'text-[var(--primary)]', seo: 'text-[var(--chip-seo)]', page: 'text-[var(--chip-page)]' };
-  const modeIcons = { auto: 'icon-sparkles', diagnosis: 'icon-activity', seo: 'icon-search-check', page: 'icon-file-text' };
+  const modeColors = {
+    auto: 'text-[var(--brand-secondary-fixed)]',
+    diagnosis: 'text-[var(--chip-diagnosis)]',
+    seo: 'text-[var(--chip-seo)]',
+    page: 'text-[var(--chip-geo)]',
+  };
+  const modeIcons = { auto: 'icon-sparkles', diagnosis: 'icon-activity', seo: 'icon-search-check', page: 'icon-globe' };
   const isPortalView = messages.length === 0;
   const shortcutCards = React.useMemo(() => getShortcutCards(uiLang), [uiLang]);
   const restoredReplayMsg = React.useMemo(() => {
@@ -1811,6 +1841,15 @@ export function ModuleAIChat({
             monthly_milestones: (s8?.monthly_milestones || []).join('; '),
             success_checklist: '',
           },
+          supply_chain_backbone: buildAggregatedSupplyChainBackbone(uiLang, {
+            productName: s0?.product_basics?.name || workflow.productData?.name,
+            targetCountries: Array.isArray(s0?.target_market?.countries)
+              ? s0.target_market.countries.join(isZh ? '、' : ', ')
+              : (Array.isArray(workflow.targetMarket?.countries)
+                ? workflow.targetMarket.countries.join(isZh ? '、' : ', ')
+                : ''),
+            executionPlanSummary: s8?.summary || '',
+          }),
           next_step_ready: true,
         };
         
@@ -1988,7 +2027,12 @@ export function ModuleAIChat({
   return (
     <div id="chat-root" className={isPortalView ? '' : 'chat-active-bg'} style={{ flex: '1 1 0', minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative', zIndex: 1 }}>
       {/* Scrollable chat area */}
-      <div id="chat-container" ref={chatContainerRef} style={{ flex: '1 1 0', minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}>
+      <div
+        id="chat-container"
+        ref={chatContainerRef}
+        onScroll={onChatScroll}
+        style={{ flex: '1 1 0', minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}
+      >
         {isPortalView ? (
           <WelcomePortal
             uiLang={uiLang}
@@ -1998,6 +2042,7 @@ export function ModuleAIChat({
             onModeChange={switchMode}
             modeIcons={modeIcons}
             modeLabels={modeLabels}
+            modeColors={modeColors}
             modeMenuRef={modeMenuRef}
             inputRef={chatInputRef}
             onSend={send}

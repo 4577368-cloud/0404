@@ -1,16 +1,11 @@
 import React from 'react';
 import Header from '../components/Header.jsx';
 import Sidebar from '../components/Sidebar.jsx';
-import HotProducts from '../components/HotProducts.jsx';
-import SourcingLandingPage from '../components/SourcingLandingPage.jsx';
-import AIReportList from '../components/AIReportList.jsx';
-import AIReportViewer from '../components/AIReportViewer.jsx';
 import GlassCard from '../components/GlassCard.jsx';
 import { getRemainingQuota, MAX_FREE_QUOTA, MAX_GUEST_QUOTA } from '../utils/quota.js';
 import { fetchUserStats, remainingFromStats } from '../utils/supabaseUsage.js';
-import { ModuleAIChat } from '../modules/AIChatVite.jsx';
 import { TRANSLATIONS } from '../utils/translations.js';
-import { createAIReport, loadAIReports } from '../utils/aiReports.js';
+import { loadAIReports } from '../utils/aiReports.js';
 import { supabase, isSupabaseConfigured } from '../utils/supabaseClient.js';
 import {
   ensureAnonymousSession,
@@ -19,6 +14,14 @@ import {
 } from '../utils/supabaseAuth.js';
 import AuthModal from '../components/AuthModal.jsx';
 import { track, AnalyticsEvent } from '../utils/analytics.js';
+
+const HotProducts = React.lazy(() => import('../components/HotProducts.jsx'));
+const SourcingLandingPage = React.lazy(() => import('../components/SourcingLandingPage.jsx'));
+const AIReportList = React.lazy(() => import('../components/AIReportList.jsx'));
+const AIReportViewer = React.lazy(() => import('../components/AIReportViewer.jsx'));
+const ModuleAIChat = React.lazy(() =>
+  import('../modules/AIChatVite.jsx').then((m) => ({ default: m.ModuleAIChat }))
+);
 
 export class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -50,6 +53,29 @@ export class ErrorBoundary extends React.Component {
     }
     return this.props.children;
   }
+}
+
+function ViewLoadingFallback({ uiLang }) {
+  const text = uiLang === 'zh' ? '加载中…' : 'Loading…';
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      style={{
+        flex: '1 1 0',
+        minHeight: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'var(--theme-text)',
+        opacity: 0.55,
+        fontSize: 14,
+        letterSpacing: '0.02em',
+      }}
+    >
+      {text}
+    </div>
+  );
 }
 
 const CONV_STORAGE_KEY = 'tb_conversations';
@@ -526,6 +552,7 @@ export default function App() {
 
         {/* Main content */}
         <div style={{ flex: '1 1 0', minHeight: 0, display: 'flex', flexDirection: activeView === 'aiReports' ? 'row' : 'column', overflow: 'hidden' }}>
+          <React.Suspense fallback={<ViewLoadingFallback uiLang={lang} />}>
           {activeView === 'hotProducts' ? (
             <HotProducts
               uiLang={lang}
@@ -584,6 +611,7 @@ export default function App() {
               onConsumedHotProductDiagnosisRequest={() => setHotProductDiagnosisRequest(null)}
             />
           )}
+          </React.Suspense>
         </div>
       </div>
 

@@ -46,6 +46,7 @@ const AI_TITLE_RULES = [
   { re: /社媒.*运营|社交.*媒体|TikTok.*运营/i, label: '社媒运营' },
   { re: /邮件.*营销|EDM.*策略|Newsletter/i, label: '邮件营销' },
   { re: /转化率.*优化|CRO.*优化|A\/B.*测试/i, label: '转化率优化' },
+  { re: /GEO|生成式搜索|generative search|answer engine/i, label: 'GEO优化' },
   { re: /多语言|本地化|翻译.*服务/i, label: '本地化' },
   { re: /客服.*方案|售后.*服务|客户.*支持/i, label: '客服方案' },
   { re: /数据.*分析|报表.*分析|归因.*分析/i, label: '数据分析' },
@@ -67,45 +68,103 @@ function conversationHasAiResponse(conv) {
   });
 }
 
-function generateSmartName(messages) {
-  // First, try to extract title from AI's first response
-  const firstAi = messages.find((m) => m.role === 'ai');
-  if (firstAi) {
-    const aiContent = firstAi.content || firstAi.text || '';
-    // Remove markdown and HTML for better matching
-    const cleanAiContent = aiContent.replace(/```[\s\S]*?```/g, '').replace(/<[^>]*>/g, '').slice(0, 500);
-    
-    for (const rule of AI_TITLE_RULES) {
-      if (rule.re.test(cleanAiContent)) {
-        return rule.label;
-      }
+function getUserText(m) {
+  if (!m || m.role !== 'user') return '';
+  const c = m.content ?? m.text ?? '';
+  return typeof c === 'string' ? c : '';
+}
+
+/** 首条仅为寒暄、无实质主题时不拿来命名 */
+function isTrivialUserMessage(text) {
+  const t = String(text || '').trim();
+  if (!t) return true;
+  if (t.length > 100) return false;
+  if (/https?:\/\//i.test(t)) return false;
+  return (
+    /^(你好|您好|嗨|哈喽|在吗|在么|早上好|下午好|晚上好|早安|午安|晚安|hi|hello|hey)(\s*[!！?？。,.，])*$/i.test(t)
+    || /^(ok|okay|thanks|thank you|谢了|谢谢|好的|好滴|嗯|嗯嗯|行|可以)([.!！,，]?)$/i.test(t)
+  );
+}
+
+/** 首轮 AI 客套回复，避免把「有什么可以帮您」当成标题 */
+function isGenericAiGreeting(text) {
+  const raw = String(text || '');
+  const t = raw.replace(/```[\s\S]*?```/g, '').replace(/<[^>]*>/g, '').trim();
+  if (/\bhttps?:\/\//i.test(t)) return false;
+  if (/###\s|店铺|诊断|SEO|选品|爆款|趋势|报告|商品|定价|广告|物流|履约|Shopify|独立站|亚马逊|TikTok/i.test(t)) return false;
+  if (t.length > 220) return false;
+  return (
+    /有什么(可以)?帮助[您你]?/.test(t)
+    || /需要(我)?(帮您)?做什么/.test(t)
+    || /how can i help/i.test(t)
+    || /what can i (do|help)/i.test(t)
+    || /^您好[！!，,。.…\s]*$/.test(t)
+    || /^你好[！!，,。.…\s]*$/.test(t)
+    || /^hello[!,.，。\s]*$/i.test(t)
+    || /^hi[!,.，。\s]*$/i.test(t)
+    || /^hey[!,.，。\s]*$/i.test(t)
+    || /很高兴(为)?您?服务/.test(t)
+    || (t.length < 90 && /^我是.{0,12}(助手|AI|助理)/.test(t))
+  );
+}
+
+function titleFromAiContent(aiContent) {
+  const cleanAiContent = String(aiContent || '').replace(/```[\s\S]*?```/g, '').replace(/<[^>]*>/g, '').slice(0, 800);
+  for (const rule of AI_TITLE_RULES) {
+    if (rule.re.test(cleanAiContent)) return rule.label;
+  }
+  const firstSentence = cleanAiContent.split(/[。！？.!?\n]/)[0].trim();
+  if (firstSentence && firstSentence.length >= 8 && firstSentence.length <= 28) {
+    const cleaned = firstSentence.replace(/^(以下是|这是|根据|关于|针对|基于|根据您|针对您|当然|好的|您好|你好)[，,：:\s]*/, '').trim();
+    if (cleaned.length >= 6 && cleaned.length <= 28 && !isGenericAiGreeting(cleaned)) {
+      return cleaned.length <= 20 ? cleaned : `${cleaned.slice(0, 18)}…`;
     }
-    
-    // Try to extract the first meaningful sentence as title (if under 25 chars)
-    const firstSentence = cleanAiContent.split(/[。！？.!?\n]/)[0].trim();
-    if (firstSentence && firstSentence.length >= 5 && firstSentence.length <= 25) {
-      // Remove common prefixes
-      const cleaned = firstSentence.replace(/^(以下是|这是|根据|关于|针对|针对|基于|根据您|针对您)/, '');
-      if (cleaned.length >= 3 && cleaned.length <= 25) {
-        return cleaned.length <= 20 ? cleaned : cleaned.slice(0, 18) + '…';
+  }
+  return null;
+}
+
+/**
+ * 从新到旧扫描整段对话：优先 URL/意图，再非寒暄的 AI 摘要，再实质用户句；无则中性默认名。
+ * @param {string} uiLang 'zh' | 其他 → 默认标题语言
+ */
+function generateSmartName(messages, uiLang = 'zh') {
+  if (!messages?.length) return null;
+  const defaultLabel = uiLang === 'zh' ? '💬 新对话' : '💬 New chat';
+
+  const users = messages.filter((m) => m.role === 'user');
+  const ais = messages.filter((m) => m.role === 'ai');
+
+  for (let i = users.length - 1; i >= 0; i--) {
+    const txt = getUserText(users[i]);
+    if (isTrivialUserMessage(txt)) continue;
+    for (const rule of INTENT_RULES) {
+      if (rule.re.test(txt)) {
+        return typeof rule.fn === 'function' ? rule.fn(txt) : rule.label;
       }
     }
   }
-  
-  // Fallback to user intent detection
-  const firstUser = messages.find((m) => m.role === 'user');
-  if (!firstUser) return null;
-  const txt = firstUser.content;
 
-  for (const rule of INTENT_RULES) {
-    if (rule.re.test(txt)) {
-      return typeof rule.fn === 'function' ? rule.fn(txt) : rule.label;
+  for (let i = ais.length - 1; i >= 0; i--) {
+    const m = ais[i];
+    const aiContent = m.content || m.text || '';
+    if (isGenericAiGreeting(aiContent)) continue;
+    if (m.type === 'products_hot' || m.type === 'products_trend') {
+      return uiLang === 'zh' ? '🛒 选品推荐' : '🛒 Product picks';
+    }
+    const fromAi = titleFromAiContent(aiContent);
+    if (fromAi) return fromAi;
+  }
+
+  for (let i = users.length - 1; i >= 0; i--) {
+    const txt = getUserText(users[i]);
+    if (isTrivialUserMessage(txt)) continue;
+    const cleaned = txt.replace(/https?:\/\/[^\s]+/g, '').replace(/[^\w\u4e00-\u9fff\s]/g, ' ').trim();
+    if (cleaned.length >= 2 && cleaned.length <= 36) {
+      return cleaned.length <= 20 ? cleaned : `${cleaned.slice(0, 18)}…`;
     }
   }
 
-  const cleaned = txt.replace(/https?:\/\/[^\s]+/g, '').replace(/[^\w\u4e00-\u9fff\s]/g, ' ').trim();
-  if (!cleaned) return '💬 New Chat';
-  return cleaned.length <= 20 ? cleaned : cleaned.slice(0, 18) + '…';
+  return defaultLabel;
 }
 
 export default function Sidebar({
@@ -223,7 +282,7 @@ export default function Sidebar({
   }, [editingId]);
 
   const startEditing = (conv) => {
-    const currentName = conv.customName || generateSmartName(conv.messages) || conv.defaultName || 'New Chat';
+    const currentName = conv.customName || generateSmartName(conv.messages, uiLang) || conv.defaultName || 'New Chat';
     setEditingId(conv.id);
     setEditValue(currentName);
   };
@@ -398,7 +457,7 @@ export default function Sidebar({
                     ) : (
                       listedConversations.map((conv) => {
                         const isActive = activeView === 'chat' && conv.id === activeId;
-                        const displayName = conv.customName || generateSmartName(conv.messages) || conv.defaultName || 'New Chat';
+                        const displayName = conv.customName || generateSmartName(conv.messages, uiLang) || conv.defaultName || 'New Chat';
                         return (
                           <div
                             key={conv.id}
@@ -445,7 +504,7 @@ export default function Sidebar({
           ) : (
             listedConversations.map((conv) => {
               const isActive = activeView === 'chat' && conv.id === activeId;
-              const displayName = conv.customName || generateSmartName(conv.messages) || conv.defaultName || 'New Chat';
+              const displayName = conv.customName || generateSmartName(conv.messages, uiLang) || conv.defaultName || 'New Chat';
               const isEditing = editingId === conv.id;
 
               return (

@@ -33,7 +33,14 @@ Consolidate analysis from all previous 8 steps into a complete strategic diagnos
 
 6. **Implementation roadmap**: Immediate actions, this-week items, monthly milestones, success checklist.
 
-7. **Markdown executive summary**: Also output a concise, human-readable Markdown summary for reporting and decision-making. Place it in the markdown_summary field.
+7. **Supply chain & fulfillment backbone (Tangbuy)** — operational support layer that connects the diagnosis to execution:
+   - Write **supply_chain_backbone** in the **same natural language as the user's diagnosis** (e.g. Chinese if the workflow is Chinese).
+   - **integration_summary**: 1 short paragraph linking Steps 1–8 conclusions (especially Step 8 execution / logistics / inventory) to why stable sourcing and fulfillment matter for this product and market.
+   - **tangbuy_support_points**: exactly 3 bullets — how Tangbuy Dropshipping can back the plan (sourcing/procurement, QC & warehousing, packing/shipping & after-sales coordination). **Do not** claim US/EU local warehouses; Tangbuy ships from China. **Do not** recommend other dropshipping platforms by name.
+   - **seller_next_steps**: exactly 3 numbered-style actions the seller can take next (e.g. product pool browse, sourcing request, shipping estimator) using Markdown links: product pool \`https://dropshipping.tangbuy.com/en-US/productPool\`, sourcing \`https://dropshipping.tangbuy.com/en-US/source/inProgress\`, estimator \`https://shop.tangbuy.com/estimation\`.
+   - Base claims on prior steps and conservative wording; no fabricated discounts, SLAs, or policies beyond what earlier steps implied.
+
+8. **Markdown executive summary**: Also output a concise, human-readable Markdown summary for reporting and decision-making. Place it in the markdown_summary field.
 
 ## Rules
 - All conclusions must be supported by data or logic from previous steps; no new claims without prior mention.
@@ -84,6 +91,11 @@ Consolidate analysis from all previous 8 steps into a complete strategic diagnos
     "this_week": "This-week items",
     "monthly_milestones": "Monthly milestones",
     "success_checklist": "Success checklist"
+  },
+  "supply_chain_backbone": {
+    "integration_summary": "Paragraph linking prior steps to supply chain execution (same language as user)",
+    "tangbuy_support_points": ["Bullet 1", "Bullet 2", "Bullet 3"],
+    "seller_next_steps": ["Step with optional Markdown link", "Step 2", "Step 3"]
   },
   "markdown_summary": "Human-readable Markdown executive summary with headings, bullet points, data tables, action checklists",
   "next_step_ready": true

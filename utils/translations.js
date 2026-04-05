@@ -24,14 +24,14 @@ export const TRANSLATIONS = {
             modes: {
                 auto: "Auto",
                 diagnosis: "Store Diagnosis",
-                seo: "SEO Optimizer",
-                page: "Detail Page Gen"
+                seo: "SEO & PDP",
+                page: "GEO"
             },
             greetings: {
-                auto: "Hi! I'm your cross-border e-commerce AI assistant. I can help with:\n\n- **Store & page diagnosis** — paste a URL and I'll audit it\n- **SEO / GEO optimization** — rewrite titles, meta, FAQ for search\n- **Product page copywriting** — generate high-converting HTML\n- **Ad & social strategy** — Facebook, TikTok, Google Ads advice\n- **Product sourcing** — find trending products across Amazon & TikTok\n\nJust type your question or paste a link to get started.",
+                auto: "Hi! I'm your cross-border e-commerce AI assistant. I can help with:\n\n- **Store diagnosis** — paste a URL for an audit\n- **SEO & product page** — titles, meta, PDP copy, and paste-ready HTML\n- **GEO** — content tuned for AI answers & generative search\n- **Ads & social** — Facebook, TikTok, Google Ads ideas\n- **Sourcing** — trending picks on Amazon & TikTok\n\nType a question or paste a link to start. Replies follow your **top-right language**.",
                 diagnosis: "### 🧭 What I can help you with\n\n- **Audit your homepage / landing page** and highlight conversion bottlenecks.\n- **Suggest concrete changes** to copy, layout, social proof, and offers.\n- **Prioritize actions** into P0 / P1 / P2 so you know what to do first.\n\n### 🚀 How to start\n\n1. Paste your **store URL** (homepage or product page).\n2. Or paste **existing copy** you want to improve.\n3. Optionally describe your target country / audience.\n\nI will return a structured diagnosis + action checklist you can send directly to your designer or operator.",
-                seo: "### 🔍 SEO & GEO engine\n\n- **Rewrite product titles** with high-intent keywords and clear attributes.\n- **Generate SEO deliverables** (Title / Meta / URL handle) ready for Shopify.\n- **Propose FAQ pairs** that rank better in AI search (SGE, ChatGPT, etc.).\n\n### 🚀 How to start\n\n1. Paste a **product URL** or an existing **product title**.\n2. Tell me your **main market** (e.g. US / ES / FR / LATAM).\n3. I will output ready-to-paste SEO content in the right language.",
-                page: "### 🧱 Product page optimizer\n\n- **Analyse your current product page** for narrative, trust, and conversion logic.\n- **Write high-converting copy** and a semantic HTML section for Shopify.\n- **Design structure** (hero, benefit grid, comparison table, FAQ) that sells.\n\n### 🚀 How to start\n\n1. Paste your **product URL** or existing **product copy / bullet points**.\n2. Mention your **ideal customer** and price range if you can.\n3. I will return both a **diagnosis report** and **ready-to-use HTML**."
+                seo: "### 🔍 SEO & product detail (one flow)\n\n- **Search layer:** titles, meta, URL handle, FAQ for Google-style SEO.\n- **PDP layer:** conversion diagnosis + semantic HTML for Shopify (===HTML=== block when you share a URL or copy).\n\n### 🚀 How to start\n\n1. Paste a **product URL**, **store URL**, or **existing title / copy**.\n2. Name your **main market** (e.g. US / EU / LATAM).\n3. I’ll answer in your **UI language** (top-right).",
+                page: "### 🌐 GEO (generative search)\n\n- Make content **clear and quotable** for AI overviews and answer engines.\n- **Placeholder mode** — full rubric will be expanded soon.\n\n### 🚀 How to start\n\n1. Paste a **product URL**, **collection URL**, or key **bullet facts**.\n2. Say which **market** you care about.\n3. Replies use your **UI language** (top-right)."
             }
         },
         finder: {
@@ -129,14 +129,14 @@ export const TRANSLATIONS = {
             modes: {
                 auto: "自动",
                 diagnosis: "独立站诊断",
-                seo: "SEO 优化",
-                page: "详情页生成"
+                seo: "SEO与详情页",
+                page: "GEO优化"
             },
             greetings: {
-                auto: "你好！我是你的跨境电商 AI 助手，可以帮你：\n\n- **独立站诊断** — 贴上网址，帮你拆解转化瓶颈\n- **SEO / GEO 优化** — 重写标题、Meta、FAQ，提升搜索排名\n- **详情页文案生成** — 输出高转化的 HTML 代码\n- **广告与社媒策略** — Facebook、TikTok、Google Ads 投放建议\n- **选品推荐** — 从 Amazon 和 TikTok 热销库中找货\n\n直接输入你的问题，或者贴一个链接开始吧。",
+                auto: "你好！我是你的跨境电商 AI 助手，可以帮你：\n\n- **独立站诊断** — 贴网址做拆解\n- **SEO 与详情页** — 标题、Meta、详情文案与可粘贴 HTML\n- **GEO 优化** — 面向 AI 问答与生成式搜索的内容\n- **广告与社媒** — 投放与内容思路\n- **选品** — Amazon / TikTok 热销参考\n\n输入问题或贴链接即可；**回复语言与右上角界面语言一致**。",
                 diagnosis: "### 🧭 我能帮你做什么\n\n- **全局拆解你的首页 / 落地页**，指出转化瓶颈和信任缺口。\n- **给出可直接落地的改版建议**（文案、结构、信任背书、优惠组合）。\n- **按 P0 / P1 / P2 排优先级**，让你知道今天先改哪几块最划算。\n\n### 🚀 建议这样开始\n\n1. 贴上你的 **独立站网址**（首页或详情页都可以）。\n2. 或者粘贴一段你正在用的 **产品文案 / 模板**。\n3. 也可以简单说明 **目标国家 / 人群**（例如：美国 25–45 岁女性）。\n\n我会输出一份结构化诊断 + 行动清单，你可以直接转给设计 / 运营同事执行。",
-                seo: "### 🔍 SEO & GEO 增长\n\n- **重写商品标题**：补齐高意图关键词 + 关键属性（材质 / 场景）。\n- **生成 SEO 交付物**：Title / Meta Description / URL Handle，长度可控，可直接粘贴到 Shopify。\n- **设计 FAQ**：围绕 AI 搜索（SGE / ChatGPT）常见问法，提升被引用概率。\n\n### 🚀 建议这样开始\n\n1. 粘贴一个 **商品链接** 或 **现有标题**。\n2. 告诉我你的 **主市场**（例如：美国 / 西班牙 / 法国 / 拉美）。\n3. 我会用对应语言输出一整套可直接落地的 SEO 文案。",
-                page: "### 🧱 详情页优化 & HTML 生成\n\n- **诊断当前详情页** 在叙事、信任感、转化逻辑上的问题。\n- **生成高转化文案**：主标题、副标题、卖点分区、对比表、FAQ 等。\n- **输出语义化 HTML 结构**，可直接复制到 Shopify 富文本区域。\n\n### 🚀 建议这样开始\n\n1. 粘贴你的 **商品链接** 或现有 **详情页文案 / 卖点要点**。\n2. 简单描述 **目标客群与价格带**（例如：中高客单，送礼场景）。\n3. 我会先给出一份诊断报告，再给一段可直接使用的 HTML 代码。"
+                seo: "### 🔍 SEO 与详情页（同一模式）\n\n- **搜索侧**：标题、Meta、URL、FAQ 等传统 SEO。\n- **详情页侧**：转化诊断 + 语义化 HTML（提供链接或文案时用 ===HTML=== 分段给出）。\n\n### 🚀 建议这样开始\n\n1. 粘贴 **商品/店铺链接** 或 **现有标题、文案**。\n2. 说明 **主售市场**。\n3. 回复语言与 **右上角界面语言** 一致。",
+                page: "### 🌐 GEO 优化（生成式搜索）\n\n- 让内容更易被 **AI 摘要、问答、推荐** 引用。\n- **占位说明** — 完整规则稍后补充。\n\n### 🚀 建议这样开始\n\n1. 粘贴 **商品/集合页链接** 或 **要点列表**。\n2. 说明目标 **国家/市场**。\n3. 回复语言与 **右上角界面语言** 一致。"
             }
         },
         finder: {
@@ -234,14 +234,14 @@ export const TRANSLATIONS = {
             modes: {
                 auto: "Auto",
                 diagnosis: "Diagnóstico",
-                seo: "Optimizar SEO",
-                page: "Generar Página"
+                seo: "SEO y ficha",
+                page: "GEO"
             },
             greetings: {
-                auto: "¡Hola! Soy tu asistente de IA para e-commerce. Puedo ayudarte con diagnóstico de tienda, SEO, copywriting de páginas de producto, estrategia de anuncios y búsqueda de productos. Escribe tu pregunta o pega un enlace para empezar.",
+                auto: "¡Hola! Puedo ayudarte con diagnóstico de tienda, **SEO + ficha de producto**, **GEO** (búsqueda generativa), anuncios y sourcing. Escribe o pega un enlace. Las respuestas siguen el **idioma de la app** (arriba a la derecha).",
                 diagnosis: "### 🧭 Qué puedo hacer por ti\n\n- **Auditar la home o página de producto** y señalar los cuellos de botella de conversión.\n- **Proponer cambios concretos** en copy, estructura, pruebas sociales y ofertas.\n- **Ordenar acciones por prioridad** (P0 / P1 / P2) para que sepas qué hacer primero.\n\n### 🚀 Cómo empezar\n\n1. Pega la **URL de tu tienda o página de producto**.\n2. O pega el **texto actual** que quieres mejorar.\n3. Si puedes, indica tu **país objetivo y tipo de cliente**.\n\nTe devolveré un informe estructurado y una lista de acciones que tu equipo puede aplicar directamente.",
-                seo: "### 🔍 Motor de SEO & GEO\n\n- **Reescribir títulos de producto** con palabras clave de alta intención y atributos claros.\n- **Generar entregables SEO** (Title / Meta / URL handle) listos para Shopify.\n- **Crear FAQs** pensadas para SEO tradicional y búsquedas de IA.\n\n### 🚀 Cómo empezar\n\n1. Pega un **enlace de producto** o un **título existente**.\n2. Dime tu **mercado principal** (por ejemplo, España / LATAM / Francia / EE. UU.).\n3. Te entregaré contenido SEO en el idioma correcto y en formato copiable.",
-                page: "### 🧱 Optimización de ficha y HTML\n\n- **Analizar tu ficha de producto** a nivel de narrativa, confianza y lógica de conversión.\n- **Escribir copy de alta conversión** (hero, beneficios, comparativa, FAQ, etc.).\n- **Generar HTML semántico** listo para pegar en el editor de Shopify.\n\n### 🚀 Cómo empezar\n\n1. Pega la **URL de la ficha** o el **texto actual** (bullets, descripciones, etc.).\n2. Indica brevemente tu **cliente ideal y rango de precios**.\n3. Te daré un informe + un bloque de HTML listo para usar."
+                seo: "### 🔍 SEO y ficha (un solo flujo)\n\n- **SEO:** título, meta, URL, FAQ.\n- **Ficha:** diagnóstico de conversión + HTML semántico (bloque ===HTML=== si envías URL o texto).\n\n### 🚀 Cómo empezar\n\n1. Pega **URL de producto/tienda** o **título / copy**.\n2. Indica el **mercado principal**.\n3. Idioma = **selector de la app**.",
+                page: "### 🌐 GEO (búsqueda generativa)\n\n- Contenido **claro y citable** para respuestas de IA.\n- **Modo provisional** — ampliaremos la guía pronto.\n\n### 🚀 Cómo empezar\n\n1. Pega **URL** o **hechos clave**.\n2. Indica **mercado**.\n3. Idioma = **selector de la app**."
             }
         },
         finder: {
@@ -339,14 +339,14 @@ export const TRANSLATIONS = {
             modes: {
                 auto: "Auto",
                 diagnosis: "Diagnostic",
-                seo: "Optimisation SEO",
-                page: "Génération de Page"
+                seo: "SEO & fiche",
+                page: "GEO"
             },
             greetings: {
-                auto: "Bonjour ! Je suis votre assistant IA e-commerce. Je peux vous aider avec le diagnostic de boutique, le SEO, le copywriting, la stratégie publicitaire et la recherche de produits. Tapez votre question ou collez un lien pour commencer.",
+                auto: "Bonjour ! Je peux aider au **diagnostic boutique**, **SEO + fiche produit**, **GEO** (recherche générative), pubs et sourcing. Écrivez ou collez un lien. Les réponses suivent la **langue de l’app** (en haut à droite).",
                 diagnosis: "### 🧭 Ce que je peux faire pour vous\n\n- **Auditer votre page d'accueil ou fiche produit** et repérer les freins à la conversion.\n- **Proposer des améliorations concrètes** sur le texte, la structure, la preuve sociale et les offres.\n- **Hiérarchiser les actions** (P0 / P1 / P2) pour un plan d'exécution clair.\n\n### 🚀 Comment démarrer\n\n1. Collez l’**URL de votre boutique ou de la fiche produit**.\n2. Ou collez le **texte actuel** que vous souhaitez améliorer.\n3. Indiquez, si possible, votre **marché cible** (FR / EU / US, etc.).\n\nJe vous renverrai un diagnostic structuré et une liste d’actions prêtes à être appliquées.",
-                seo: "### 🔍 Moteur SEO & GEO\n\n- **Réécrire vos titres produits** avec des mots-clés à forte intention et des attributs clairs.\n- **Générer les contenus SEO** (Title / Meta / URL) prêts à être collés dans Shopify.\n- **Créer des FAQs** adaptées au SEO classique et aux moteurs de recherche IA.\n\n### 🚀 Comment démarrer\n\n1. Collez un **lien de produit** ou un **titre existant**.\n2. Indiquez votre **marché principal** (France, Europe, Amérique du Nord, etc.).\n3. Je vous fournirai un contenu SEO en français, prêt à l'emploi.",
-                page: "### 🧱 Optimisation de fiche produit & HTML\n\n- **Diagnostiquer votre fiche produit** sur la narration, la confiance et la logique de conversion.\n- **Rédiger un copy convaincant** (hero, bénéfices, tableau comparatif, FAQ, etc.).\n- **Générer un bloc HTML sémantique** prêt à être collé dans l’éditeur Shopify.\n\n### 🚀 Comment démarrer\n\n1. Collez l’**URL de votre fiche produit** ou le **texte existant**.\n2. Précisez brièvement votre **client idéal** et la **gamme de prix**.\n3. Je vous fournirai un rapport + un HTML complet prêt à être utilisé."
+                seo: "### 🔍 SEO & fiche (un seul flux)\n\n- **SEO :** titre, meta, URL, FAQ.\n- **Fiche :** diagnostic conversion + HTML sémantique (bloc ===HTML=== si URL ou texte fourni).\n\n### 🚀 Comment démarrer\n\n1. Collez **URL produit/boutique** ou **titre / texte**.\n2. Indiquez le **marché principal**.\n3. Langue = **sélecteur de l’app**.",
+                page: "### 🌐 GEO (recherche générative)\n\n- Contenu **clair et citable** pour les réponses IA.\n- **Mode provisoire** — guide détaillé à venir.\n\n### 🚀 Comment démarrer\n\n1. Collez **URL** ou **faits clés**.\n2. Indiquez le **marché**.\n3. Langue = **sélecteur de l’app**."
             }
         },
         finder: {

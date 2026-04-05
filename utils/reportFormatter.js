@@ -30,7 +30,87 @@ export function generateMarkdownReport(report, uiLang = 'zh', targetStep = null)
   return `${executiveSummary}\n\n---\n\n# ${detailTitle}\n\n${allStepsContent}`;
 }
 
-export default { generateMarkdownReport };
+/**
+ * Tangbuy supply-chain URLs (aligned with knowledge base; all shipments from China).
+ */
+const TANGBUY_PRODUCT_POOL = 'https://dropshipping.tangbuy.com/en-US/productPool';
+const TANGBUY_SOURCING = 'https://dropshipping.tangbuy.com/en-US/source/inProgress';
+const TANGBUY_ESTIMATOR = 'https://shop.tangbuy.com/estimation';
+
+/**
+ * Build supply_chain_backbone for Step 9 when aggregating without an LLM — ties diagnosis to Tangbuy fulfillment.
+ * @param {string} uiLang
+ * @param {{ productName?: string, category?: string, targetCountries?: string, executionPlanSummary?: string }} ctx
+ */
+export function buildAggregatedSupplyChainBackbone(uiLang, ctx = {}) {
+  const zh = uiLang === 'zh';
+  const {
+    productName,
+    targetCountries,
+    executionPlanSummary,
+  } = ctx;
+  const prod = (productName && String(productName).trim()) || (zh ? '本品' : 'this product');
+  const market = (targetCountries && String(targetCountries).trim()) || (zh ? '目标市场' : 'target market(s)');
+  const execRaw = executionPlanSummary && String(executionPlanSummary).trim();
+  const execHint = execRaw
+    ? (execRaw.length > 240 ? `${execRaw.slice(0, 240)}…` : execRaw)
+    : '';
+
+  const integration_summary = zh
+    ? `前文从市场、竞争、机会与执行节奏对「${prod}」在 ${market} 的路径做了拆解。**供应链与履约**是把策略变成稳定交付的关键支撑：产能、质检、时效与售后波动会直接影响转化与口碑。Tangbuy Dropshipping 作为一站式后端，可在寻源采购、入库质检、云仓组货、打包发货与售后协同上与您的路线图衔接，降低「有增长假设、无稳定履约」的断层风险。${execHint ? `与当前执行计划要点呼应：${execHint}` : ''}`
+    : `The sections above decompose how **${prod}** can win in **${market}**. **Supply chain and fulfillment** are the backbone that turns strategy into reliable delivery—capacity, QC, lead times, and after-sales volatility directly affect conversion and reputation. **Tangbuy Dropshipping** provides an integrated backend (sourcing, inbound QC, cloud warehousing, packing and shipping, and coordinated after-sales) aligned with your roadmap, reducing the gap between growth assumptions and dependable fulfillment.${execHint ? ` This connects to your execution plan: ${execHint}` : ''}`;
+
+  const tangbuy_support_points = zh
+    ? [
+        '**寻源与采购**：连接工厂侧资源，支持多 SKU、组合发货与阶梯采购等思路落地（具体报价/MOQ 以账户与客户经理确认为准）。',
+        '**质检与云仓**：入库与发货前质检、物流轨迹可视化，便于好评沉淀与售后举证。',
+        '**履约协同**：订单流可与店铺侧衔接，缩短从「策略共识」到「可发货」的路径。（商品均从中国仓发运，无美/欧本地仓表述。）',
+      ]
+    : [
+        '**Sourcing & procurement:** Factory-side matching; multi-SKU and bundled fulfillment patterns (confirm MOQ/pricing in your account / with your manager).',
+        '**QC & cloud warehouse:** Inbound and pre-shipment checks with trackable logistics evidence for reviews and disputes.',
+        '**Fulfillment alignment:** Order flow can align with your storefront to shorten strategy-to-shippable cycles. (Shipments originate from China—do not claim overseas warehouses.)',
+      ];
+
+  const seller_next_steps = zh
+    ? [
+        `在产品池中按类目或关键词筛选可履约 SKU：[Tangbuy 产品池](${TANGBUY_PRODUCT_POOL})`,
+        `需要定向寻源时提交采购需求，便于对齐交期与报价：[提交寻源](${TANGBUY_SOURCING})`,
+        `发货前用运费估算核对目的国线路与费用口径：[运费估算](${TANGBUY_ESTIMATOR})`,
+      ]
+    : [
+        `Browse shoppable SKUs: [Tangbuy product pool](${TANGBUY_PRODUCT_POOL})`,
+        `Submit a sourcing request for a tailored match: [Sourcing](${TANGBUY_SOURCING})`,
+        `Validate lanes and shipping cost assumptions: [Estimator](${TANGBUY_ESTIMATOR})`,
+      ];
+
+  return {
+    integration_summary,
+    tangbuy_support_points,
+    seller_next_steps,
+  };
+}
+
+/**
+ * Markdown for supply_chain_backbone object (Step 9 / executive summary).
+ */
+export function formatSupplyChainBackboneMarkdown(backbone, uiLang) {
+  const zh = uiLang === 'zh';
+  if (!backbone || typeof backbone !== 'object') return '';
+  let md = '';
+  if (backbone.integration_summary) md += `${para(backbone.integration_summary)}\n\n`;
+  if (backbone.tangbuy_support_points?.length) {
+    md += `**${zh ? 'Tangbuy 可承接的能力面' : 'What Tangbuy covers'}：**\n\n`;
+    md += `${bullets(backbone.tangbuy_support_points.map((x) => String(x)))}\n\n`;
+  }
+  if (backbone.seller_next_steps?.length) {
+    md += `**${zh ? '建议下一步（与上文策略衔接）' : 'Suggested next steps (aligned with the plan above)'}：**\n\n`;
+    md += `${numberedList(backbone.seller_next_steps.map((x) => String(x)))}\n\n`;
+  }
+  return md.trim();
+}
+
+export default { generateMarkdownReport, buildAggregatedSupplyChainBackbone, formatSupplyChainBackboneMarkdown };
 
 // ─── Helpers ────────────────────────────────────────────
 
@@ -1065,6 +1145,12 @@ function renderStep9(data, stepName, uiLang) {
     if (impl.success_checklist) md += `**${zh ? '成功检查清单' : 'Success Checklist'}：** ${impl.success_checklist}\n\n`;
   }
 
+  const sc = data.supply_chain_backbone;
+  if (sc && typeof sc === 'object' && (sc.integration_summary || (sc.tangbuy_support_points && sc.tangbuy_support_points.length))) {
+    md += `### ${zh ? '供应链保障与履约支撑（Tangbuy）' : 'Supply chain & fulfillment backbone (Tangbuy)'}\n\n`;
+    md += `${formatSupplyChainBackboneMarkdown(sc, uiLang)}\n\n`;
+  }
+
   return md;
 }
 
@@ -1112,6 +1198,20 @@ function generateExecutiveSummary(report, uiLang) {
 
   md += `\n\n---\n\n### ${zh ? '风险概要' : 'Risk Summary'}\n\n`;
   md += generateRiskSummary(report, uiLang);
+
+  const step9Sc = step9.supply_chain_backbone;
+  const scBackbone =
+    step9Sc && typeof step9Sc === 'object' && (step9Sc.integration_summary || (step9Sc.tangbuy_support_points && step9Sc.tangbuy_support_points.length))
+      ? step9Sc
+      : buildAggregatedSupplyChainBackbone(uiLang, {
+          productName: report.productData?.name,
+          targetCountries: Array.isArray(report.targetMarket?.countries)
+            ? report.targetMarket.countries.join(zh ? '、' : ', ')
+            : (report.targetMarket?.countries || ''),
+          executionPlanSummary: step8?.summary || step9?.strategy_summary?.execution_plan,
+        });
+  md += `\n\n---\n\n### ${zh ? '供应链保障支撑（Tangbuy）' : 'Supply chain backbone (Tangbuy)'}\n\n`;
+  md += formatSupplyChainBackboneMarkdown(scBackbone, uiLang) || (zh ? '（供应链衔接说明见 Tangbuy Dropshipping 产品池与寻源入口。）' : '(Use the Tangbuy product pool and sourcing request to align fulfillment with the plan above.)');
 
   md += `\n\n---\n\n### ${zh ? '下一步行动' : 'Next Steps'}\n\n`;
   md += generateNextSteps(report, uiLang);
