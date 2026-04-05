@@ -12,7 +12,7 @@ import { ModuleAIChat } from '../modules/AIChatVite.jsx';
 import { TRANSLATIONS } from '../utils/translations.js';
 import { createAIReport, loadAIReports } from '../utils/aiReports.js';
 import { supabase, isSupabaseConfigured } from '../utils/supabaseClient.js';
-import { ensureAnonymousSession, isAnonymousUser } from '../utils/supabaseAuth.js';
+import { ensureAnonymousSession, isAnonymousUser, persistLastOAuthProviderIfSocial } from '../utils/supabaseAuth.js';
 import AuthModal from '../components/AuthModal.jsx';
 
 export class ErrorBoundary extends React.Component {
@@ -114,7 +114,9 @@ export default function App() {
       if (!cancelled) setAuthUser(session?.user ?? null);
     })();
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setAuthUser(session?.user ?? null);
+      const user = session?.user ?? null;
+      setAuthUser(user);
+      if (user) persistLastOAuthProviderIfSocial(user);
     });
     return () => {
       cancelled = true;

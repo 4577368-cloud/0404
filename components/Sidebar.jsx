@@ -284,7 +284,7 @@ export default function Sidebar({
             onMouseEnter={(e) => { e.currentTarget.style.background = 'color-mix(in srgb, var(--brand-primary-fixed) 8%, transparent)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
           >
-            <span className="icon-plus text-[14px]" />
+            <span className="icon-plus text-[14px]" style={collapsed ? { color: 'var(--brand-primary-fixed)' } : undefined} />
             {!collapsed && <span>New Chat</span>}
           </button>
           <button onClick={() => { onHotProducts?.(); onClose?.(); }}
@@ -300,7 +300,7 @@ export default function Sidebar({
             onMouseEnter={(e) => { if (activeView !== 'hotProducts') e.currentTarget.style.background = 'color-mix(in srgb, var(--brand-primary-fixed) 5%, transparent)'; }}
             onMouseLeave={(e) => { if (activeView !== 'hotProducts') e.currentTarget.style.background = 'transparent'; }}
           >
-            <span className="icon-flame text-[14px]" />
+            <span className="icon-flame text-[14px]" style={collapsed ? { color: 'var(--brand-primary-fixed)' } : undefined} />
             {!collapsed && <span>{uiLang === 'zh' ? '爆款商品' : 'Hot Products'}</span>}
           </button>
           <button onClick={() => { onSourcing?.(); onClose?.(); }}
@@ -316,7 +316,7 @@ export default function Sidebar({
             onMouseEnter={(e) => { if (activeView !== 'sourcing') e.currentTarget.style.background = 'color-mix(in srgb, var(--brand-primary-fixed) 5%, transparent)'; }}
             onMouseLeave={(e) => { if (activeView !== 'sourcing') e.currentTarget.style.background = 'transparent'; }}
           >
-            <span className="icon-package text-[14px]" />
+            <span className="icon-package text-[14px]" style={collapsed ? { color: 'var(--brand-primary-fixed)' } : undefined} />
             {!collapsed && <span>{uiLang === 'zh' ? '寻源采购' : 'Sourcing'}</span>}
           </button>
           <button onClick={() => { onAIReports?.(); onClose?.(); }}
@@ -332,7 +332,7 @@ export default function Sidebar({
             onMouseEnter={(e) => { if (activeView !== 'aiReports') e.currentTarget.style.background = 'color-mix(in srgb, var(--brand-primary-fixed) 5%, transparent)'; }}
             onMouseLeave={(e) => { if (activeView !== 'aiReports') e.currentTarget.style.background = 'transparent'; }}
           >
-            <span className="icon-file-text text-[14px]" />
+            <span className="icon-file-text text-[14px]" style={collapsed ? { color: 'var(--brand-primary-fixed)' } : undefined} />
             {!collapsed && <span>{uiLang === 'zh' ? 'AI报告' : 'AI Reports'}</span>}
           </button>
         </div>

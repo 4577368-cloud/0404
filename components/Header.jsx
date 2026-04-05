@@ -169,10 +169,9 @@ export default function Header({
     if (!showCreditsHintForAnonymous) setCreditsHintOpen(false);
   }, [showCreditsHintForAnonymous]);
 
-  /** 仅匿名用户：首次进入自动展示约 3 秒；已 OAuth 登录不触发 */
+  /** 仅匿名用户：首次进入自动展开（时长与手动点开一致，见下方统一 3 秒收起） */
   React.useEffect(() => {
     if (!showCreditsHintForAnonymous) return undefined;
-    let cancelled = false;
     try {
       if (localStorage.getItem(CREDITS_HINT_STORAGE)) return undefined;
       localStorage.setItem(CREDITS_HINT_STORAGE, '1');
@@ -180,14 +179,14 @@ export default function Header({
       return undefined;
     }
     setCreditsHintOpen(true);
-    const tmr = setTimeout(() => {
-      if (!cancelled) setCreditsHintOpen(false);
-    }, 3000);
-    return () => {
-      cancelled = true;
-      clearTimeout(tmr);
-    };
   }, [showCreditsHintForAnonymous]);
+
+  /** 额度说明展开后：无操作则 3 秒收起（首次自动弹出与点击 ? 均适用） */
+  React.useEffect(() => {
+    if (!creditsHintOpen) return undefined;
+    const tmr = setTimeout(() => setCreditsHintOpen(false), 3000);
+    return () => clearTimeout(tmr);
+  }, [creditsHintOpen]);
 
 // (VIP quota rendering is handled below in the same Header component)
   const quotaLabel = currentLang === 'zh' ? '额度' : 'Credits';
@@ -375,29 +374,42 @@ export default function Header({
             </div>
             <button
               type="button"
-              className="text-[12px] font-semibold leading-none cursor-pointer hover:opacity-80"
+              className="inline-flex items-center justify-center cursor-pointer shrink-0 transition-[opacity,color] duration-150"
               style={{
                 color: 'var(--theme-text-muted)',
+                opacity: 0.42,
                 border: 'none',
                 background: 'transparent',
-                padding: '0 2px',
-                marginLeft: 2,
+                padding: 1,
+                marginLeft: 3,
               }}
+              title={currentLang === 'zh' ? '额度说明' : 'About credits'}
               aria-label={currentLang === 'zh' ? '额度说明' : 'Credits info'}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.opacity = '0.85';
+                e.currentTarget.style.color = 'var(--theme-text-secondary)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = '0.42';
+                e.currentTarget.style.color = 'var(--theme-text-muted)';
+              }}
               onClick={(e) => {
                 e.stopPropagation();
                 setCreditsHintOpen((v) => !v);
               }}
             >
-              ?
+              <span className="icon-info text-[11px]" aria-hidden />
             </button>
             {creditsHintOpen && (
               <div
-                className="absolute top-full right-0 mt-1 z-[60] max-w-[min(280px,calc(100vw-48px))] text-left"
+                className="absolute top-full right-0 mt-1 z-[60] text-left"
                 style={{
-                  padding: '10px 12px',
-                  fontSize: 11,
-                  lineHeight: 1.45,
+                  width: 'max-content',
+                  maxWidth: 'min(420px, calc(100vw - 24px))',
+                  minWidth: 'min(300px, calc(100vw - 24px))',
+                  padding: '12px 14px',
+                  fontSize: 12,
+                  lineHeight: 1.5,
                   color: 'var(--theme-text)',
                   background: 'var(--theme-dropdown-bg)',
                   border: '1px solid var(--theme-border)',
