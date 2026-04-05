@@ -1,0 +1,2590 @@
+{
+  "meta": {
+    "version": "3.1.1",
+    "language": "zh",
+    "business_type": "dropshipping+B2B",
+    "company": "Tangbuy",
+    "last_updated": "2026-02-27",
+    "description": "Tangbuy中文售前AI知识库 - 7大核心场景+29项高频问答+完整业务体系+图片/链接特殊处理"
+  },
+  "company_config": {
+    "name": "Tangbuy",
+    "mission": "为千万独立站卖家打造品牌加速器与执行落地，赋能全球每一个细分市场的独立品牌梦想",
+    "core_model": "品牌加速器：Tangbuy让Dropshipping从物流中转站进化为品牌加速器，为Shopify独立站卖家提供从寻源采购到全球履约的全链路供应链服务",
+    "urls": {
+      "website": "https://tangbuy.com",
+      "product_pool": "https://dropshipping.tangbuy.com/en-US/productPool",
+      "b2b_service": "https://dropshipping.tangbuy.com",
+      "sourcing_request": "https://dropshipping.tangbuy.com/en-US/source/inProgress",
+      "shipping_estimator": "https://shop.tangbuy.com/estimation",
+      "help_center": "https://dropshipping.tangbuy.com"
+    }
+  },
+  "five_promises": [
+    {
+      "promise": "绝对不跟卖",
+      "content": "严禁内部泄露选品，绝不参与自有店铺经营"
+    },
+    {
+      "promise": "货权归属卖家",
+      "content": "所有库存卖家可随时申请退回或转移"
+    },
+    {
+      "promise": "漏检即赔付",
+      "content": "出现质量漏检，全额赔付订单处理费"
+    },
+    {
+      "promise": "发货超时即免单",
+      "content": "备货入库超过24h未发出，免除该单手续费"
+    },
+    {
+      "promise": "数据隐私隔离",
+      "content": "卖家数据仅用于履约，绝不转卖第三方"
+    }
+  ],
+  "pricing_config": {
+    "base_fee": "¥8/单起（含质检、包材、发货）",
+    "packaging_fee": "¥1/件",
+    "warehouse_policy": "90天内免费周转",
+    "procurement_fee": "采购金额的5%（含议价跟单）",
+    "customization_fee": "卡片/贴标/飞机盒约¥1/件起",
+    "vip_discount": "5-15%",
+    "shipping_discount": "10%"
+  },
+  "warehouse_config": {
+    "size": "40000m²+现代化中央转运仓",
+    "location": "中国",
+    "features": [
+      "私域专仓管理",
+      "货架可扩展",
+      "使用可回收纸箱",
+      "质检打包有录像可调取",
+      "定制包材独立库位"
+    ]
+  },
+  "logistics_config": {
+    "cutoff_time": "每天下午3点截止，3点前订单当天出库",
+    "processing_time": "2-3天完成质检打包（有库存可当日发，最快2小时内出库）",
+    "delivery_time_eu_us": "欧美主流国家约6-12个工作日",
+    "carrier_count": "整合全球50+条一线物流专线",
+    "carriers": [
+      {
+        "name": "云途",
+        "route": "全球专线",
+        "days": "7-12",
+        "feature": "全程追踪，适合电子产品"
+      },
+      {
+        "name": "邮政",
+        "route": "欧洲专线",
+        "days": "10-18",
+        "feature": "性价比之选，清关能力强"
+      },
+      {
+        "name": "DHL/FedEx",
+        "route": "全球特快",
+        "days": "3-7",
+        "feature": "速度更快但价格更高，不推荐"
+      },
+      {
+        "name": "品类专线",
+        "route": "服装/化妆品/带电专线",
+        "days": "8-15",
+        "feature": "清关优化"
+      }
+    ]
+  },
+  "quality_config": {
+    "inspection_policy": "100%全局质检（入库检+发货前检）",
+    "defect_rate": "约2%",
+    "claim_window_days": 7,
+    "video_evidence": "全程录像，可调取作为争议证据",
+    "compliance_support": "正规持证工厂生产，符合基础安全标准"
+  },
+  "categories": [
+    {
+      "id": "platform",
+      "name": "平台介绍与访问",
+      "description": "公司定位、官网访问、产品库浏览、B2B服务引导",
+      "scenes": [
+        {
+          "id": "company_intro",
+          "name": "公司与平台介绍",
+          "qa_pairs": [
+            {
+              "question_key": "tangbuy_what_is",
+              "intent": "information",
+              "tags": [
+                "公司介绍",
+                "品牌加速器",
+                "定位",
+                "使命"
+              ],
+              "questions": [
+                "Tangbuy是什么？",
+                "你们公司做什么的？",
+                "品牌加速器模式是什么？",
+                "AI时代为什么需要Tangbuy？",
+                "Tangbuy的核心价值？",
+                "什么是品牌加速器模式",
+                "品牌加速器供应链是什么",
+                "你们的品牌加速器方案",
+                "品牌加速器怎么运作"
+              ],
+              "answer_template": "Tangbuy不是传统的Dropshipping物流中转站，而是AI时代下帮助卖家做品牌扩张的品牌加速器。我们把寻源采购、数字化质检、WMS云仓、全球履约和低MOQ定制整合成一套系统化服务：前端由您经营流量与品牌，后端由我们把工厂货转化为更稳定、可交付、可沉淀口碑的品牌资产。核心目标不是只把货发出去，而是让每一笔订单更容易沉淀好评、复购与品牌信任。",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://tangbuy.com"
+            },
+            {
+              "question_key": "product_catalog_access",
+              "intent": "information",
+              "tags": [
+                "产品库",
+                "网站",
+                "APP",
+                "浏览产品"
+              ],
+              "questions": [
+                "你们有哪些产品？",
+                "怎么浏览产品库？",
+                "有APP吗？",
+                "官网地址是多少？",
+                "产品池在哪里？",
+                "有APP或系统对接吗"
+              ],
+              "answer_template": "Tangbuy是全品类Dropshipping平台，100万+工厂直供热销商品。欢迎您：1) 访问官网 https://tangbuy.com；2) 浏览产品池 https://dropshipping.tangbuy.com/en-US/productPool； 3)下载Tangbuy APP获得更便捷的搜索/收藏/下单体验。有任何找品需求，随时告诉我，我来帮您！🔍",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://dropshipping.tangbuy.com/en-US/productPool"
+            },
+            {
+              "question_key": "b2b_service_overview",
+              "intent": "information",
+              "tags": [
+                "B2B",
+                "工厂直供",
+                "品牌扩张",
+                "服务详情"
+              ],
+              "questions": [
+                "B2B服务具体有哪些？",
+                "工厂直供怎么合作？",
+                "有B2B服务详情页吗？",
+                "你们怎么帮助品牌扩张？"
+              ],
+              "answer_template": "Tangbuy的B2B与品牌加速服务，核心围绕三步展开：1) 直连源头 - 通过AI寻源系统直连外贸出口级工厂，价格更透明，支持一键绑店配货；2) 降低风险 - 通过WMS云仓闭环完成100%拆包质检、精细包装和全球轨迹追踪；3) 品牌溢价 - 通过低MOQ的领标、吊牌、感谢卡等定制服务，把白牌商品逐步品牌化。",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://b2b.tangbuy.com"
+            },
+            {
+              "question_key": "store_binding_sourcing",
+              "intent": "information",
+              "tags": [
+                "绑店配货",
+                "智能货源匹配",
+                "店铺绑定",
+                "自动同步订单"
+              ],
+              "questions": [
+                "什么是绑店配货？",
+                "绑店配货是什么意思？",
+                "Tangbuy 的绑店配货怎么用？",
+                "绑定店铺后怎么配货？"
+              ],
+              "answer_template": "绑店配货是 Tangbuy 为已有店铺卖家提供的智能货源匹配方案。关联 Shopify 店铺后，系统会识别店铺在售商品并匹配中国工厂货源。您可在页面查看推荐货源与价格，确认后完成关联，后续订单可同步到 Tangbuy 进行采购、质检与发货；若系统匹配不到，也可由采购团队协助人工找货。",
+              "variables": {},
+              "fallback_action": "recommend_feature",
+              "fallback_value": "store_binding_sourcing"
+            },
+            {
+              "question_key": "how_to_start_with_tangbuy",
+              "intent": "onboarding",
+              "tags": [
+                "开始合作",
+                "合作流程",
+                "注册",
+                "上手"
+              ],
+              "questions": [
+                "如何开始与 Tangbuy 合作？",
+                "怎么开始使用 Tangbuy？",
+                "Tangbuy 合作流程是什么？",
+                "新手怎么开始？"
+              ],
+              "answer_template": "开始与 Tangbuy 合作可分为五步：1) 注册账号并关联 Shopify 或其他已支持的平台店铺；2) 在产品池挑选货源或提交采购需求；3) 处理商品描述后刊登到店铺；4) 订单同步后由 Tangbuy 承接采购、质检与发货；5) 再结合趋势工具和利润数据持续扩品。具体支持范围请以平台实际页面与客户经理说明为准。",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://tangbuy.com"
+            },
+            {
+              "question_key": "order_processing_timing",
+              "intent": "information",
+              "tags": [
+                "订单处理",
+                "运输时效",
+                "发货时间",
+                "物流"
+              ],
+              "questions": [
+                "订单处理和运输时效是多久？",
+                "Tangbuy 发货需要多久？",
+                "物流时效多久？",
+                "订单多久出库？"
+              ],
+              "answer_template": "时效口径请以知识库原文为准：有库存最快 2 小时出库，常规 2-3 天完成质检打包，欧美主流国家约 6-12 个工作日送达。涉及具体运费与到达时间，请优先使用运费估算工具或联系客户经理获取更准确方案。",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://shop.tangbuy.com/estimation"
+            },
+            {
+              "question_key": "private_label_process",
+              "intent": "information",
+              "tags": [
+                "品牌定制",
+                "Private Label",
+                "贴牌",
+                "定制流程"
+              ],
+              "questions": [
+                "如何通过 Tangbuy 做品牌定制？",
+                "Tangbuy 支持 Private Label 吗？",
+                "贴牌定制流程是什么？",
+                "怎么做自有品牌？"
+              ],
+              "answer_template": "Tangbuy 可支持品牌定制的闭环协作，一般包括：需求对接、工厂匹配、明细报价、样品确认、生产与包装跟进，以及后续发货协同。具体 MOQ、价格、交期与可实现范围需以实际工厂方案和客户经理确认为准，不做超出知识库原文的承诺。",
+              "variables": {},
+              "fallback_action": "recommend_service",
+              "fallback_value": "private_label_consultation"
+            },
+            {
+              "question_key": "product_selection_pricing_tips",
+              "intent": "information",
+              "tags": [
+                "选品",
+                "定价",
+                "趋势热品",
+                "利润"
+              ],
+              "questions": [
+                "选品与定价有哪些技巧？",
+                "Tangbuy 怎么帮我选品？",
+                "怎么做成本预估？",
+                "怎么定价更合理？"
+              ],
+              "answer_template": "Tangbuy 可从趋势热品、图片搜索、专属采购协助、透明工厂价与运费估算等维度支持选品与定价。建议先确认目标市场、供货价、运费和利润空间，再决定零售价。若需要供应链承接方案，可进一步结合 Tangbuy 的采购、质检、仓储与发货能力落地。",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://dropshipping.tangbuy.com/en-US/productPool"
+            },
+            {
+              "question_key": "winning_product_definition",
+              "intent": "information",
+              "tags": [
+                "爆品",
+                "Winning Product",
+                "趋势",
+                "热卖"
+              ],
+              "questions": [
+                "什么是爆品？",
+                "Tangbuy 怎么定义 Winning Product？",
+                "哪里看趋势热品？",
+                "厂家热卖怎么看？"
+              ],
+              "answer_template": "在 Tangbuy 语境下，爆品通常指需求明确、转化率高、具备传播属性的产品。您可重点关注 Trending Items 和厂家热卖等版块，结合市场、利润和履约稳定性综合判断，而不是只看短期热度。",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://dropshipping.tangbuy.com/en-US/productPool"
+            },
+            {
+              "question_key": "shopify_connection_steps",
+              "intent": "information",
+              "tags": [
+                "Shopify",
+                "店铺连接",
+                "店铺授权",
+                "绑定店铺"
+              ],
+              "questions": [
+                "如何将 Shopify 店铺连接至 Tangbuy？",
+                "Shopify 怎么绑定 Tangbuy？",
+                "店铺授权在哪里？",
+                "怎么新增授权店铺？"
+              ],
+              "answer_template": "连接 Shopify 店铺通常可在登录后的仪表盘或店铺授权页面完成。您可以通过页面中的“立即绑定 / Link Now”或新增授权入口发起授权。具体页面名称与可支持的平台范围请以后台实际显示和客户经理说明为准；若涉及未明确写入知识库的平台，不应默认视为已对接。",
+              "variables": {},
+              "fallback_action": "recommend_feature",
+              "fallback_value": "store_authorization"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fulfillment_optimization",
+      "name": "履约优化服务",
+      "description": "",
+      "scenes": [
+        {
+          "id": "consolidated_shipping",
+          "name": "组合发货省钱",
+          "qa_pairs": [
+            {
+              "question_key": "consolidated_shipping_consultation",
+              "intent": "information",
+              "tags": [
+                "组合发货",
+                "多供应商",
+                "防同质化",
+                "提高客单价",
+                "节省运费",
+                "合并包裹"
+              ],
+              "questions": [
+                "组合发货是什么意思？",
+                "多供应商产品能合并吗？",
+                "怎么减少产品同质化？",
+                "组合发货能省多少运费？",
+                "合并包裹怎么操作？",
+                "组合发货能提高客单价吗？"
+              ],
+              "answer_template": "Tangbuy组合发货帮您打造差异化竞争力+降本增效：📦 核心价值：1) 产品重组 - 将多供应商产品组合成新商品，减少平台同质化竞争，提升产品独特性；2) 客单价提升 - 通过套装/搭配销售，实测客单价提升20%-40%；3) 运费节省 - 多件商品合并打包，实测节省30%-60%物流成本。我收到了您的需求，由于我暂时无法识别图片和链接，您可以添加我们的客户经理给您精准1v1处理",
+              "variables": {
+                "aov_increase": "20%-40%",
+                "shipping_save": "30%-60%",
+                "user_profile_tip": {
+                  "default": "适合多SKU、多供应商的卖家，帮您统一收拢+二次质检+合并打包，极大节省运费并提升用户体验。",
+                  "multi_supplier": "适合多SKU、多供应商的卖家，帮您统一收拢+二次质检+合并打包，极大节省运费并提升用户体验。",
+                  "brand_upgrade": "适合从代发货转品牌的卖家，通过独特组合减少比价，提升客单价和复购率。",
+                  "high_refund": "适合受高退款率困扰的卖家，统一质检+合并发货，降低售后风险。",
+                  "viral_seller": "适合爆款型卖家，快速组合上新+合并履约，爆单不断货。"
+                }
+              },
+              "fallback_action": "recommend_feature",
+              "fallback_value": "consolidation_service"
+            }
+          ]
+        },
+        {
+          "id": "inventory_prep",
+          "name": "备货服务咨询",
+          "qa_pairs": [
+            {
+              "question_key": "inventory_prep_consultation",
+              "intent": "information",
+              "tags": [
+                "备货",
+                "90天免费仓储",
+                "独立仓位",
+                "2小时出货",
+                "履约时效",
+                "品牌信任"
+              ],
+              "questions": [
+                "备货服务怎么用？",
+                "90天免费仓储怎么理解？",
+                "备货后发货要多久？",
+                "独立仓位是什么意思？",
+                "备货能提高发货速度吗？",
+                "怎么提升客户信任度？"
+              ],
+              "answer_template": "Tangbuy备货服务帮您实现\"小库存+快履约\"：⚡ 核心能力：1) 90天免费仓储 - 小量备货无压力，期间随时可申请发货；2) 独立仓位管理 - 每个备货SKU独立库位+系统绑定，避免混用错发；3) 2小时极速出货 - 订单进入系统后最快2小时内出库，比常规发货提升30%-60%时效；4) 品牌信任提升 - 快速履约+稳定时效，显著提升客户满意度与复购率。我收到了您的需求，由于我暂时无法识别图片和链接，您可以添加我们的客户经理给您精准1v1处理",
+              "variables": {
+                "free_storage_days": "90天",
+                "rush_ship_time": "2小时",
+                "efficiency_improve": "30%-60%",
+                "user_profile_tip": {
+                  "default": "适合追求履约效率的卖家，小量备货也能实现快速发货。",
+                  "multi_supplier": "适合多SKU卖家，独立仓位管理避免混发错发，提升履约准确率。",
+                  "brand_upgrade": "适合品牌升级卖家，快速履约+稳定时效，显著提升客户满意度与复购率。",
+                  "high_refund": "适合高退款率卖家，2小时极速出货+独立质检，降低因发货慢导致的投诉。",
+                  "viral_seller": "适合爆款型卖家，小量备货+快速补货机制，爆单不断货。"
+                }
+              },
+              "fallback_action": "recommend_service",
+              "fallback_value": "inventory_consultation"
+            }
+          ]
+        },
+        {
+          "id": "tiered_discount",
+          "name": "阶梯折扣咨询",
+          "qa_pairs": [
+            {
+              "question_key": "tiered_discount_consultation",
+              "intent": "negotiation",
+              "tags": [
+                "阶梯折扣",
+                "批量优惠",
+                "供应商议价",
+                "分批下单",
+                "整合订单",
+                "采购成本"
+              ],
+              "questions": [
+                "拿货多能有折扣吗？",
+                "阶梯价格怎么算？",
+                "分批下单能享折扣吗？",
+                "你们能帮我和供应商谈价吗？",
+                "整合订单怎么操作？",
+                "采购成本怎么降低？"
+              ],
+              "answer_template": "Tangbuy阶梯折扣帮您拿到最优采购价：💰 核心优势：1) 专业议价 - 我们代表您与供应商深度谈判，争取大厂级折扣；2) 阶梯定价透明 - 按累计采购量享阶梯优惠，分批下单也可整合计算；3) 流程简化 - 系统自动累计您的订单量，达到门槛自动解锁折扣，无需手动操作。",
+              "variables": {
+                "discount_tier_threshold": "系统自动累计",
+                "negotiation_service": "免费",
+                "user_profile_tip": {
+                  "default": "适合有稳定采购需求的卖家，采购量越大折扣越多。",
+                  "multi_supplier": "适合多供应商卖家，整合多源订单统一议价，拿到更优阶梯价。",
+                  "brand_upgrade": "适合品牌升级卖家，稳定采购量+长期合作，享受专属议价权益。",
+                  "high_refund": "适合注重品质的卖家，议价同时保障质检标准，降本不降质。",
+                  "viral_seller": "适合爆款型卖家，快速上量+灵活分批，享受阶梯折扣同时保持灵活性。"
+                }
+              },
+              "fallback_action": "escalate",
+              "fallback_value": "sales_team"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sourcing_procurement",
+      "name": "智能寻源与采购",
+      "description": "",
+      "scenes": [
+        {
+          "id": "multi_dimension_comparison",
+          "name": "多维度选品比价",
+          "qa_pairs": [
+            {
+              "question_key": "multi_dim_comparison",
+              "intent": "information",
+              "tags": [
+                "选品比价",
+                "供应商对比",
+                "采购成本",
+                "现货查询"
+              ],
+              "questions": [
+                "怎么对比供应商价格？",
+                "如何确保采购成本有竞争力？",
+                "能看到供应商现货情况吗？",
+                "多维度比价怎么操作？",
+                "选品比价工具有吗？"
+              ],
+              "answer_template": "Tangbuy智能寻源支持多维度选品比价：✅ 核心能力：1) 供应商现货透视 - 实时查看多家供应商库存/价格/交期；2) 智能对比分析 - 自动计算综合成本（含运费/质检/时效）；3) 竞争力保障 - 推荐性价比最优方案，确保采购成本具备市场竞争力。",
+              "variables": {
+                "user_profile_tip": {
+                  "default": "适合追求采购效率的卖家，帮您快速锁定最优供应商。",
+                  "brand_upgrade": "适合品牌升级卖家，通过独家供应商合作保护产品原创性，避免同质化竞争。",
+                  "multi_supplier": "适合多供应商卖家，一站式对比多家货源，统一管理采购流程，降低沟通成本。",
+                  "high_refund": "适合注重品质的卖家，优先推荐质检达标供应商，从源头降低售后风险。",
+                  "viral_seller": "适合爆款型卖家，实时追踪热销品供应商库存，爆单不断货。"
+                }
+              },
+              "fallback_action": "recommend_feature",
+              "fallback_value": "product_comparison_tool"
+            }
+          ]
+        },
+        {
+          "id": "tiered_procurement",
+          "name": "阶梯采购与议价",
+          "qa_pairs": [
+            {
+              "question_key": "tiered_procurement_negotiation",
+              "intent": "negotiation",
+              "tags": [
+                "阶梯采购",
+                "议价服务",
+                "规模效应",
+                "大厂折扣"
+              ],
+              "questions": [
+                "采购量大能有优惠吗？",
+                "阶梯价格怎么算？",
+                "小团队能享受大厂折扣吗？",
+                "议价服务怎么操作？",
+                "批量采购有专属报价吗？"
+              ],
+              "answer_template": "Tangbuy阶梯采购帮您拿到最优价格：💰 核心优势：1) 规模效应议价 - 整合多卖家需求，深度谈判拿到大厂级折扣；2) 阶梯定价透明 -不同起订阶梯的定制化报价；3) 小团队友好 - 无需大单量，拼单也能享优惠。",
+              "variables": {
+                "discount_tier1": "97折",
+                "discount_tier2": "92折",
+                "bulk_threshold": "500件+",
+                "user_profile_tip": {
+                  "default": "适合有稳定采购需求的卖家，采购量越大折扣越多。",
+                  "brand_upgrade": "适合品牌升级卖家，长期合作享专属议价权益，降本同时保障品质。",
+                  "multi_supplier": "适合多供应商卖家，整合多源订单统一议价，拿到更优阶梯价。",
+                  "high_refund": "适合注重品质的卖家，议价同时锁定质检标准，降本不降质。",
+                  "viral_seller": "适合爆款型卖家，快速上量+灵活分批，享受阶梯折扣同时保持灵活性。"
+                }
+              },
+              "fallback_action": "escalate",
+              "fallback_value": "sales_team"
+            }
+          ]
+        },
+        {
+          "id": "24h_fast_procurement",
+          "name": "24小时极速采购",
+          "qa_pairs": [
+            {
+              "question_key": "fast_procurement_24h",
+              "intent": "information",
+              "tags": [
+                "极速采购",
+                "24小时响应",
+                "爆款不断货",
+                "采购时差"
+              ],
+              "questions": [
+                "采购响应要多久？",
+                "爆款断货了怎么办？",
+                "24小时采购怎么实现？",
+                "有采购时差问题吗？",
+                "急单能加急处理吗？"
+              ],
+              "answer_template": "Tangbuy 24小时极速采购：⚡ 核心能力：1) 全天候响应 - 专业采购团队轮班，7×18小时处理需求；2) 爆款优先 - 热销产品建立专属供应链通道，优先排产/优先发货；3) 时差消除 - 中国供应链+全球服务，消灭跨境采购时差。",
+              "variables": {
+                "rush_response_time": "2小时",
+                "service_hours": "7×24小时",
+                "user_profile_tip": {
+                  "default": "适合追求履约效率的卖家，急单加急通道最快2小时确认。",
+                  "brand_upgrade": "适合品牌升级卖家，稳定供应保障品牌口碑，避免因断货影响客户体验。",
+                  "multi_supplier": "适合多供应商卖家，统一调度多源库存，避免单一供应商断货风险。",
+                  "high_refund": "适合高退款率卖家，快速补货+优先质检，降低因发货慢导致的投诉。",
+                  "viral_seller": "适合爆款型卖家，96小时采样+快速补货机制，爆单不断货，抓住流量红利。"
+                }
+              },
+              "fallback_action": "recommend_feature",
+              "fallback_value": "rush_procurement_service"
+            }
+          ]
+        },
+        {
+          "id": "sub_account_collaboration",
+          "name": "子账号协作管理",
+          "qa_pairs": [
+            {
+              "question_key": "sub_account_collab",
+              "intent": "information",
+              "tags": [
+                "子账号",
+                "团队协作",
+                "分权操作",
+                "采购透明",
+                "成本优化"
+              ],
+              "questions": [
+                "支持多人协作采购吗？",
+                "子账号怎么设置权限？",
+                "采购流程能透明化管理吗？",
+                "团队采购怎么降低运营成本？",
+                "子账号功能怎么用？"
+              ],
+              "answer_template": "Tangbuy子账号协作让团队采购更高效：👥 核心功能：1) 分权操作 - 主账号分配角色权限，各司其职；2) 流程透明 - 采购进度/成本明细清洗可见，降低沟通成本；3) 成本优化 - 集中采购+分工协作，减少重复操作，提升人效。",
+              "variables": {
+                "user_profile_tip": {
+                  "default": "适合团队化运营的卖家，分权协作提升采购效率。",
+                  "brand_upgrade": "适合品牌升级卖家，采购/质检/财务分权管理，保障品牌标准统一执行。",
+                  "multi_supplier": "适合多供应商卖家，多成员并行对接不同供应商，大幅提升采购吞吐量。",
+                  "high_refund": "适合高退款率卖家，质检角色独立权限，确保每单必检，降低售后风险。",
+                  "viral_seller": "适合爆款型卖家，快速组建临时采购小组，抓住热点快速上新。"
+                }
+              },
+              "fallback_action": "recommend_feature",
+              "fallback_value": "sub_account_setup"
+            }
+          ]
+        },
+        {
+          "id": "smart_sourcing_overview",
+          "name": "智能寻源整体能力",
+          "qa_pairs": [
+            {
+              "question_key": "smart_sourcing_overview",
+              "intent": "consultation",
+              "tags": [
+                "智能寻源",
+                "AI寻源系统",
+                "全链路采购",
+                "核心能力",
+                "服务概览"
+              ],
+              "questions": [
+                "智能寻源包含哪些服务？",
+                "采购全流程怎么管理？",
+                "你们的核心采购能力是什么？",
+                "怎么保证采购效率和质量？",
+                "智能寻源适合什么样的卖家？",
+                "怎么解决买贵买错？",
+                "能直连工厂吗？"
+              ],
+              "answer_template": "Tangbuy的第一阶段核心是先解决“买贵、买错”。通过AI寻源系统，我们直连外贸出口级工厂与柔性制造资源，帮助卖家更快找到合适供应商：1) 价格透明 - 更接近中国出厂价，减少中间分销溢价；2) 一键绑店配货 - 发现趋势后可更快转成可履约商品；3) 多维度比价 - 同步比较价格、交期、质量与库存稳定性；4) 柔性制造承接 - 卖家负责发现趋势，我们负责把趋势转化为产品。对希望建立绝对价格竞争力的卖家尤其适合。",
+              "variables": {
+                "user_profile_tip": {
+                  "default": "适合日均订单10+、多SKU、追求采购效率的卖家。",
+                  "brand_upgrade": "适合从代发货转品牌的卖家，通过独家供应商+质检保障，建立品牌护城河。",
+                  "multi_supplier": "适合多供应商卖家，一站式管理多源采购，极大降低运营复杂度。",
+                  "high_refund": "适合受高退款率困扰的卖家，从采购源头把控品质，降低售后风险。",
+                  "viral_seller": "适合社交媒体爆款型卖家，快速响应+灵活采购，抓住流量红利不断货。"
+                }
+              },
+              "fallback_action": "recommend_service",
+              "fallback_value": "sourcing_consultation"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "product_pricing",
+      "name": "产品定价",
+      "description": "",
+      "scenes": [
+        {
+          "id": "multi_source_restructure",
+          "name": "多货源重组",
+          "qa_pairs": [
+            {
+              "question_key": "multi_source_restructure",
+              "intent": "information",
+              "tags": [
+                "多货源重组",
+                "防跟卖",
+                "产品原创",
+                "货源独特",
+                "差异化"
+              ],
+              "questions": [
+                "怎么防止别人跟卖同款？",
+                "多货源重组是什么意思？",
+                "如何保护产品原创性？",
+                "货源结构怎么优化？",
+                "你们怎么保证产品独特性？"
+              ],
+              "answer_template": "Tangbuy多货源重组帮您打造差异化竞争力：🛡️ 核心能力：1) 货源结构重组 - 同一产品对接2-3家供应商，避免单一依赖；2) 防跟卖机制 - 通过差异化选品+独家协议，降低被复制风险；3) 原创保护 - 支持签署保密协议，保护您的产品设计/包装/卖点。",
+              "variables": {
+                "user_profile_tip": {
+                  "default": "适合追求产品差异化的卖家，从源头避免同质化竞争。",
+                  "brand_upgrade": "适合品牌升级卖家，独家货源+保密协议，保护品牌原创性，建立竞争壁垒。",
+                  "multi_supplier": "适合多供应商卖家，灵活切换货源，避免单一供应商断货或涨价风险。",
+                  "high_refund": "适合高退款率卖家，多货源对比筛选优质供应商，从源头降低质量投诉。",
+                  "viral_seller": "适合爆款型卖家，快速锁定多家备选供应商，爆单时灵活调货不断供。"
+                }
+              },
+              "fallback_action": "recommend_service",
+              "fallback_value": "brand_protection_consultation"
+            }
+          ]
+        },
+        {
+          "id": "dynamic_pricing_template",
+          "name": "动态定价模板",
+          "qa_pairs": [
+            {
+              "question_key": "dynamic_pricing_template",
+              "intent": "information",
+              "tags": [
+                "动态定价",
+                "利润模型",
+                "多区域定价",
+                "智能定价",
+                "售价计算"
+              ],
+              "questions": [
+                "怎么计算产品售价？",
+                "动态定价模板怎么用？",
+                "不同国家怎么定不同价格？",
+                "利润模型怎么预设？",
+                "有智能定价工具吗？"
+              ],
+              "answer_template": "Tangbuy动态定价模板帮您快速锁定最优售价：💰 核心功能：1) 智能利润模型 - 预设毛利率/运费/平台佣金，自动计算建议售价；2) 多区域适配 - 支持按国家/货币/税费动态调整，一键生成全球定价",
+              "variables": {
+                "profit_margin_default": "30%",
+                "supported_regions": "50+国家",
+                "user_profile_tip": {
+                  "default": "适合多市场运营的卖家，快速生成全球多区域定价方案。",
+                  "brand_upgrade": "适合品牌升级卖家，通过溢价定价模型+价值包装，提升客单价和品牌形象。",
+                  "multi_supplier": "适合多供应商卖家，自动对比多源采购成本，动态调整售价保障利润。",
+                  "high_refund": "适合高退款率卖家，定价时预留售后成本空间，保障整体ROI健康。",
+                  "viral_seller": "适合爆款型卖家，实时追踪竞品价格+流量趋势，快速调整定价抓住红利。"
+                }
+              },
+              "fallback_action": "recommend_feature",
+              "fallback_value": "pricing_calculator_tool"
+            }
+          ]
+        },
+        {
+          "id": "trend_selection_support",
+          "name": "趋势选品支持",
+          "qa_pairs": [
+            {
+              "question_key": "trend_selection_support",
+              "intent": "information",
+              "tags": [
+                "趋势选品",
+                "流量趋势",
+                "市场切入",
+                "爆款捕捉",
+                "选品洞察"
+              ],
+              "questions": [
+                "怎么知道什么产品好卖？",
+                "趋势选品怎么操作？",
+                "实时流量趋势在哪里看？",
+                "怎么捕捉市场切入点？",
+                "有选品数据支持吗？"
+              ],
+              "answer_template": "Tangbuy趋势选品支持帮您精准捕捉市场机会：📈 核心能力：1) 趋势同步 - 同步TikTok/Amazon热销商品，识别上升品类",
+              "variables": {
+                "trend_update_frequency": "每日",
+                "early_warning_days": "7-14天",
+                "user_profile_tip": {
+                  "default": "适合数据驱动的卖家，用趋势数据指导选品决策。",
+                  "brand_upgrade": "适合品牌升级卖家，结合趋势+品牌定位，选品既热门又符合品牌调性。",
+                  "multi_supplier": "适合多SKU卖家，趋势分析+多货源匹配，快速扩充有潜力的产品线。",
+                  "high_refund": "适合高退款率卖家，优先推荐供应链成熟/质检达标的趋势品，降低试错风险。",
+                  "viral_seller": "适合社交媒体爆款型卖家，提前关注热点，快速上新抓住流量红利。"
+                }
+              },
+              "fallback_action": "recommend_feature",
+              "fallback_value": "trend_insights_dashboard"
+            }
+          ]
+        },
+        {
+          "id": "pricing_overview",
+          "name": "产品定价整体能力",
+          "qa_pairs": [
+            {
+              "question_key": "pricing_overview",
+              "intent": "consultation",
+              "tags": [
+                "产品定价",
+                "核心能力",
+                "定价策略",
+                "选品定价",
+                "服务概览"
+              ],
+              "questions": [
+                "产品定价包含哪些服务？",
+                "怎么结合选品和定价？",
+                "你们的核心定价能力是什么？",
+                "定价和选品怎么联动？",
+                "产品定价适合什么样的卖家？"
+              ],
+              "answer_template": "Tangbuy产品定价全链路赋能卖家：🎯 三大核心能力：1) 多货源重组 - 重组货源结构防跟卖，保护产品独特性；2) 动态定价模板 - 智能利润模型+多区域适配，快速锁定最优售价；3) 趋势选品支持 - 实时流量同步+市场切入分析，精准捕捉爆款机会。",
+              "variables": {
+                "user_profile_tip": {
+                  "default": "适合追求差异化/多市场运营/数据驱动的卖家。",
+                  "brand_upgrade": "适合从代发货转品牌的卖家，通过定价策略+视觉包装，实现品牌溢价。",
+                  "multi_supplier": "适合多供应商卖家，动态定价+多源比价，保障每单利润最大化。",
+                  "high_refund": "适合高退款率卖家，定价时预留售后成本，选品时优先质检达标产品。",
+                  "viral_seller": "适合爆款型卖家，趋势选品+快速定价+灵活调价，抓住流量红利快速变现。"
+                }
+              },
+              "fallback_action": "recommend_service",
+              "fallback_value": "pricing_consultation"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "brand_path",
+      "name": "品牌进阶路径",
+      "description": "",
+      "scenes": [
+        {
+          "id": "stage_selection",
+          "name": "阶段选择咨询",
+          "qa_pairs": [
+            {
+              "question_key": "brand_stage_selection",
+              "intent": "consultation",
+              "tags": [
+                "阶段选择",
+                "三阶段",
+                "路径匹配",
+                "新手咨询",
+                "进阶路径"
+              ],
+              "questions": [
+                "我是新手卖家该选哪个阶段？",
+                "刚起步适合什么服务？",
+                "不同阶段有什么区别？",
+                "怎么判断我适合哪种模式？",
+                "品牌进阶路径有哪些？",
+                "你们的三步解决方案是什么？",
+                "品牌资产化怎么做？",
+                "我现在适合先做哪一步？",
+                "我是小卖家应该从哪个阶段开始？",
+                "我是品牌卖家该从哪个阶段切入？",
+                "我现在订单不稳定适合哪个阶段？",
+                "如果我想先控制风险应该选哪个阶段？",
+                "如果我想提升客单价该走哪个阶段？",
+                "如果我想先解决发货和库存问题该选哪个阶段？",
+                "如果我想做品牌化应该先上哪个阶段？",
+                "不同发展阶段分别适合什么卖家？"
+              ],
+              "answer_template": "Tangbuy把品牌资产化拆成三步：1) 直连源头 - 先解决“买贵、买错”，通过AI寻源系统连接外贸出口级工厂，建立价格竞争力；2) 云仓闭环 - 再解决“质检、时效、库存”，通过WMS云仓完成100%拆包质检、精细包装和全球轨迹追踪，沉淀用户口碑与AI权重；3) 品牌溢价 - 最后解决“同质化”，通过低MOQ定制领标、吊牌、感谢卡等服务，把白牌商品逐步品牌化，拉高客单价与复购。",
+              "variables": {
+                "user_profile_tip": {
+                  "default": "告诉我您的现状，我帮您匹配最适合的路径。",
+                  "brand_upgrade": "您已具备品牌意识，建议从单品升级起步，通过轻量定制快速建立品牌认知。",
+                  "multi_supplier": "您面临多供应商管理痛点，建议从组货型起步，先解决履约效率问题。",
+                  "high_refund": "您关注品质与口碑，建议直接选择人群升级，通过全量质检+高端服务建立信任。",
+                  "viral_seller": "您追求快速成长，建议组货型+单品升级组合，先保履约效率再逐步品牌化。"
+                }
+              },
+              "fallback_action": "recommend_service",
+              "fallback_value": "brand_consultation"
+            }
+          ]
+        },
+        {
+          "id": "consolidation_type",
+          "name": "组货型咨询",
+          "qa_pairs": [
+            {
+              "question_key": "consolidation_consultation",
+              "intent": "information",
+              "tags": [
+                "组货型",
+                "组合发货",
+                "私域仓储",
+                "效率提升",
+                "多供应商"
+              ],
+              "questions": [
+                "什么是组货型？",
+                "组合发货能省多少钱？",
+                "多供应商发货太乱怎么办？",
+                "私域仓储怎么用？",
+                "组货型适合什么样的卖家？",
+                "我现在发货很乱适合组货型吗？",
+                "多SKU多供应商适合走组货型吗？",
+                "组货型主要解决什么问题？",
+                "组货型能不能先帮我提效率？",
+                "我想先把履约跑顺，应该选组货型吗？",
+                "组货型是不是更适合先降本增效？",
+                "组货型和组合发货是什么关系？",
+                "我现在运费高、发货慢，组货型能解决吗？",
+                "组货型适合订单量不大的卖家吗？"
+              ],
+              "answer_template": "组货型是Tangbuy为效率驱动型卖家设计的路径：✅ 核心能力：1) 私域仓储 - 您的多供应商产品统一入仓，系统化管理；2) 组合发货 - 多件商品合并打包，实测节省30%-60%运费；3) 履约优化 - 24小时闪电发货+物流脱敏。我收到了您的需求，由于我暂时无法识别图片和链接，您可以添加我们的客户经理给您精准1v1处理",
+              "variables": {
+                "shipping_save_range": "30%-60%",
+                "order_threshold": "20",
+                "user_profile_tip": {
+                  "default": "适合日均订单20+、多SKU、多供应商的卖家。",
+                  "brand_upgrade": "适合品牌升级初期卖家，先解决履约效率，为品牌体验打基础。",
+                  "multi_supplier": "专为多供应商卖家设计，统一收拢+二次质检+合并打包，极大降低运营复杂度。",
+                  "high_refund": "适合高退款率卖家，统一质检+合并发货，降低因发货慢/错发导致的投诉。",
+                  "viral_seller": "适合爆款型卖家，快速整合多源库存，爆单时高效履约不断货。"
+                }
+              },
+              "fallback_action": "recommend_feature",
+              "fallback_value": "consolidation_service"
+            }
+          ]
+        },
+        {
+          "id": "single_upgrade",
+          "name": "单品升级咨询",
+          "qa_pairs": [
+            {
+              "question_key": "single_upgrade_consultation",
+              "intent": "information",
+              "tags": [
+                "单品升级",
+                "轻量定制",
+                "白牌转品牌",
+                "DTC",
+                "包装定制"
+              ],
+              "questions": [
+                "怎么消除白牌感？",
+                "轻量定制有哪些？",
+                "定制包装盒多少钱？",
+                "怎么开启DTC品牌？",
+                "单品升级包含什么服务？",
+                "我想做品牌感应该选单品升级吗？",
+                "我想从白牌变成品牌该怎么做？",
+                "单品升级适合什么阶段的卖家？",
+                "我现在想提升客单价适合做单品升级吗？",
+                "先做包装定制是不是就属于单品升级？",
+                "单品升级能不能低成本试错？",
+                "我想先做感谢卡吊牌这些，属于哪个阶段？",
+                "单品升级和品牌定制有什么关系？",
+                "单品升级能帮我提升复购吗？"
+              ],
+              "answer_template": "单品升级帮您低成本实现品牌化：🎨 轻量定制方案：1) 包装定制 - 品牌彩盒/感谢卡/吊牌，约¥1/件起；2) 视觉统一 - 产品图/详情页风格一致，提升专业感；3) 情感链接 - 定制感谢信/小礼物，提升复购。",
+              "variables": {
+                "customization_price": "¥1/件起",
+                "user_profile_tip": {
+                  "default": "无需大投入，即可让产品从'能卖'升级为'好卖+溢价'。",
+                  "brand_upgrade": "专为从代发货转品牌的卖家设计，轻量定制快速建立品牌认知，低成本试错。",
+                  "multi_supplier": "适合多SKU卖家，统一视觉包装提升整体店铺调性，增强客户信任。",
+                  "high_refund": "适合高退款率卖家，通过高品质包装+情感链接，提升客户满意度降低投诉。",
+                  "viral_seller": "适合爆款型卖家，快速定制包装+视觉统一，抓住热点快速建立品牌印象。"
+                }
+              },
+              "fallback_action": "recommend_service",
+              "fallback_value": "brand_customization"
+            }
+          ]
+        },
+        {
+          "id": "audience_upgrade",
+          "name": "人群升级咨询",
+          "qa_pairs": [
+            {
+              "question_key": "audience_upgrade_consultation",
+              "intent": "consultation",
+              "tags": [
+                "人群升级",
+                "全量质检",
+                "高价值人群",
+                "品牌壁垒",
+                "LTV"
+              ],
+              "questions": [
+                "怎么锁定高价值客户？",
+                "全量质检是什么？",
+                "高复购怎么做？",
+                "品牌壁垒怎么建立？",
+                "人群升级有什么优势？",
+                "我想做高价值客户运营适合哪个阶段？",
+                "我想提高复购和LTV该选哪个阶段？",
+                "人群升级适合什么样的品牌卖家？",
+                "高客单价卖家适合做人群升级吗？",
+                "我想做品牌壁垒应该走到哪个阶段？",
+                "如果我更重视口碑和复购，是不是该做人群升级？",
+                "人群升级是不是更适合成熟卖家？",
+                "全链路品牌服务属于哪个阶段？",
+                "我想让客户更认可品牌，该走人群升级吗？"
+              ],
+              "answer_template": "人群升级是为追求长期价值的卖家设计：👑 核心能力：1) 全链路方案 - 从寻源/质检/定制/履约一站式服务；2) 全量质检+视频留证 - 100%检测+全程录像，降低售后风险；3) 高价值人群运营 - 通过品质/包装/服务建立品牌认知，提升LTV。我收到了您的需求，",
+              "variables": {
+                "user_profile_tip": {
+                  "default": "适合客单价$40+、追求复购、有品牌野心的卖家。",
+                  "brand_upgrade": "适合成熟品牌卖家，通过全链路服务+深度定制，建立竞争壁垒提升客户终身价值。",
+                  "multi_supplier": "适合多SKU品牌卖家，统一质检标准+品牌包装，提升整体店铺口碑和复购率。",
+                  "high_refund": "专为高退款率卖家设计，100%质检+视频留证+快速售后，彻底扭转口碑。",
+                  "viral_seller": "适合爆款转品牌的卖家，通过全量质检+高端服务，将流量用户转化为品牌忠实粉丝。"
+                }
+              },
+              "fallback_action": "escalate",
+              "fallback_value": "brand_consultation"
+            }
+          ]
+        },
+        {
+          "id": "path_upgrade",
+          "name": "路径升级咨询",
+          "qa_pairs": [
+            {
+              "question_key": "path_upgrade_consultation",
+              "intent": "consultation",
+              "tags": [
+                "路径升级",
+                "服务升级",
+                "灵活切换",
+                "试点测试"
+              ],
+              "questions": [
+                "我现在是组货型怎么升级到单品升级？",
+                "升级需要什么条件？",
+                "升级后服务有什么变化？",
+                "可以从单品升级降级吗？",
+                "升级流程是怎样的？",
+                "不同阶段之间可以切换吗？",
+                "我能不能先做组货型再做单品升级？",
+                "我现在做了一部分品牌化，下一步怎么升级？",
+                "升级一定要一次性全部做吗？",
+                "能不能先拿几个SKU试点升级？",
+                "我现在不确定要不要升级，怎么判断？",
+                "从单品升级到人群升级要做哪些准备？",
+                "阶段升级是不是可以按业务情况逐步来？",
+                "升级后原来的流程会不会受影响？"
+              ],
+              "answer_template": "进阶式路径支持灵活升级：🔄 升级流程：1) 评估现状 - 分析您当前订单结构/客单价/复购率；2) 定制方案 - 匹配下一阶段所需服务（如组货型→单品升级：增加包装定制+视觉统一）；3) 小步测试 - 先选1-2款产品试点，验证效果后再全面升级。",
+              "variables": {
+                "user_profile_tip": {
+                  "default": "升级无门槛，按需开启，小步快跑降低风险。",
+                  "brand_upgrade": "适合已有品牌意识的卖家，从小批量定制试点开始，验证市场反应后再全面升级。",
+                  "multi_supplier": "适合多供应商卖家，先选核心SKU升级包装/质检，逐步扩展到全店提升整体调性。",
+                  "high_refund": "适合高退款率卖家，优先升级质检服务+售后流程，快速降低投诉率后再考虑品牌包装。",
+                  "viral_seller": "适合爆款型卖家，选1-2款潜力爆款试点升级，快速验证效果后复制成功模式。"
+                }
+              },
+              "fallback_action": "recommend_service",
+              "fallback_value": "brand_consultation"
+            }
+          ]
+        },
+        {
+          "id": "stage_comparison",
+          "name": "阶段对比咨询",
+          "qa_pairs": [
+            {
+              "question_key": "stage_comparison_consultation",
+              "intent": "negotiation",
+              "tags": [
+                "阶段对比",
+                "ROI",
+                "投入产出",
+                "痛点匹配"
+              ],
+              "questions": [
+                "组货型和单品升级哪个更适合我？",
+                "三个阶段的投入产出比？",
+                "升级后成本会增加多少？",
+                "哪个阶段性价比最高？",
+                "怎么选择最适合的阶段？",
+                "组货型、单品升级、人群升级分别适合谁？",
+                "三个阶段分别解决什么问题？",
+                "如果我想先提效率和降本，该选哪个阶段？",
+                "如果我想做品牌溢价，该选哪个阶段？",
+                "如果我想提升复购和口碑，该选哪个阶段？",
+                "三个阶段哪个最适合新手？",
+                "三个阶段哪个更适合成熟品牌？",
+                "现阶段我更应该先解决发货还是先做品牌？",
+                "不同阶段的重点收益分别是什么？"
+              ],
+              "answer_template": "三阶段对比一目了然：📊 组货型：投入低/见效快，适合解决'发货乱/运费高'痛点；🎨 单品升级：中等投入/品牌溢价，适合解决'白牌感/复购低'痛点；👑 人群升级：高投入/高壁垒，适合解决'竞争激烈/客户流失'痛点.",
+              "variables": {
+                "user_profile_tip": {
+                  "default": "建议先解决最痛的问题，再逐步升级。",
+                  "brand_upgrade": "您已关注品牌建设，单品升级性价比最高，轻量投入快速建立品牌认知。",
+                  "multi_supplier": "您面临履约效率痛点，组货型投入最低见效最快，先解决发货乱/运费高问题。",
+                  "high_refund": "您关注口碑与复购，人群升级虽投入高但能彻底扭转售后问题，长期ROI更优。",
+                  "viral_seller": "您追求快速成长，建议组货型+单品升级组合，先保效率再逐步品牌化，平衡投入与增长。"
+                }
+              },
+              "fallback_action": "escalate",
+              "fallback_value": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sourcing",
+      "name": "寻源服务",
+      "description": "产品查找、供应商匹配、采购支持、新手入门",
+      "scenes": [
+        {
+          "id": "new_seller",
+          "name": "新手卖家入门",
+          "qa_pairs": [
+            {
+              "question_key": "how_to_find_products",
+              "intent": "information",
+              "tags": [
+                "新手",
+                "找产品",
+                "选品",
+                "热销爆款"
+              ],
+              "questions": [
+                "怎么在Tangbuy上找产品？",
+                "如何发现热销爆款？",
+                "有没有选品推荐？",
+                "产品库在哪里浏览？",
+                "现在流行什么产品",
+                "哪个品类销量最好",
+                "市场趋势怎么样",
+                "有什么热销品推荐",
+                "趋势选品支持"
+              ],
+              "answer_template": "3种高效寻源方式：1) 浏览产品池 https://dropshipping.tangbuy.com/en-US/productPool， 用筛选条件缩小心仪商品范围；2) 输入关键词或上传图片智能搜索同款/相似款；3) 商品池没有？提交采购请求 https://dropshipping.tangbuy.com/en-US/source/inProgress， 24小时内为您寻源。我们还提供趋势选品支持，帮您捕捉市场机会！📊",
+              "variables": {},
+              "fallback_action": "recommend_feature",
+              "fallback_value": "sourcing_request_form"
+            },
+            {
+              "question_key": "product_existence_check",
+              "intent": "information",
+              "tags": [
+                "产品查询",
+                "同款",
+                "类似款",
+                "图片识别",
+                "链接识别"
+              ],
+              "questions": [
+                "有没有同款",
+                "有类似款吗",
+                "能找到一样的吗",
+                "能找到类似的吗",
+                "这个产品你们有吗",
+                "能帮我找这个产品吗",
+                "你们做这类产品吗",
+                "这个产品在你们这能买到吗"
+              ],
+              "answer_template": "我收到了您的需求，由于我暂时无法识别图片和链接，您可以添加我们的客户经理给您精准1v1处理。您也可以直接访问产品池 https://dropshipping.tangbuy.com/en-US/productPool 搜索关键词，或提交定向寻品需求，我们的专业团队将在24小时内为您匹配最优方案！🎯",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://dropshipping.tangbuy.com/en-US/source/inProgress"
+            },
+            {
+              "question_key": "moq_policy",
+              "intent": "policy",
+              "tags": [
+                "起订量",
+                "一件代发",
+                "小批量",
+                "MOQ"
+              ],
+              "questions": [
+                "一件代发有起订量吗？",
+                "我可以只买1件测试吗？",
+                "最低下单数量是多少？",
+                "小批量可以下单吗？",
+                "起订量多少"
+              ],
+              "answer_template": "Tangbuy大多数产品支持真正的一件代发，0起订量，您可以只下单1件测试。部分定制商品或批发专享产品可能有起订量要求（商品页会明确标注）。建议新手卖家先从低MOQ产品入手测试市场，再逐步扩大规模。💡",
+              "variables": {},
+              "fallback_action": "none",
+              "fallback_value": null
+            },
+            {
+              "question_key": "new_seller_start_guide",
+              "intent": "process",
+              "tags": [
+                "新手",
+                "怎么开始",
+                "dropshipping入门",
+                "新手卖家"
+              ],
+              "questions": [
+                "我想做dropshipping但是不知道怎么开始",
+                "我是新手怎么开始做dropshipping？",
+                "新手卖家该怎么开始？",
+                "怎么做dropshipping",
+                "我想开始做电商怎么开始",
+                "新手入门教程",
+                "怎么做代发",
+                "代发怎么开始",
+                "我想做代发怎么开始",
+                "新手做电商怎么开始",
+                "新手做跨境电商怎么开始",
+                "电商创业怎么开始",
+                "0基础怎么做电商",
+                "没有经验怎么做电商",
+                "如何开始做dropshipping",
+                "我不懂电商怎么开始"
+              ],
+              "answer_template": "恭喜您选择Tangbuy开启Dropshipping之旅！以下是新手入门4步走：\n\n**1️⃣ 选品测试** - 访问产品池 https://dropshipping.tangbuy.com/en-US/productPool， 0起订量，先选1-2款产品测试市场反应\n\n**2️⃣ 上架销售** - 将商品上架到您的Shopify/WooCommerce店铺，设置合适的价格和运费\n\n**3️⃣ 客户下单** - 顾客下单后，您在Tangbuy下单，我们100%质检+中性包装+直接发往客户手中\n\n**4️⃣ 赚取利润** - 客户确认收货，差价就是您的利润（产品成本+运费+服务费）\n\n💡 **新手建议**：先从低单价、轻便易运输的产品开始测试，积累经验后再拓展品类。\n\n您想卖什么类型的产品？我可以帮您推荐合适的品类！🎯",
+              "variables": {},
+              "fallback_action": "recommend_feature",
+              "fallback_value": "product_recommendation"
+            },
+            {
+              "question_key": "sourcing_request_process",
+              "intent": "process",
+              "tags": [
+                "代找服务",
+                "定向寻源",
+                "Amazon产品",
+                "AliExpress"
+              ],
+              "questions": [
+                "能帮我找Amazon/AliExpress上的产品吗？",
+                "代找服务怎么操作？",
+                "找产品需要提供什么信息？",
+                "定向寻品怎么申请？",
+                "定向寻品"
+              ],
+              "answer_template": "当然可以！寻源团队几乎能帮您找到任何产品。提交需求时提供：1) 产品图片或链接（Amazon/AliExpress/1688等）；2) 目标价格区间（可选）；3) 预估月销量（便于争取更优价格）。48小时内您将收到供应商方案、报价及样品信息。该服务对注册用户完全免费！🎯",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://dropshipping.tangbuy.com/en-US/source/inProgress"
+            },
+            {
+              "question_key": "what_is_winning_product",
+              "intent": "information",
+              "tags": [
+                "爆款",
+                "选品",
+                "市场洞察",
+                "趋势"
+              ],
+              "questions": [
+                "什么是爆款产品？",
+                "怎么判断产品有没有潜力？",
+                "你们怎么帮我选品？",
+                "有选品工具吗？"
+              ],
+              "answer_template": "爆款产品=已验证销量+强劲需求+高客户吸引力。Tangbuy帮您精准识别：1) '趋势爆款'栏目 - 实时同步全球热销数据；2) '工厂热选' - 供应链端验证的高潜力新品；3) 市场洞察工具 - 分析搜索趋势/竞争度/利润空间。不确定？建议您联系我们的客户经理，为您推荐3-5款潜力产品参考！🔥",
+              "variables": {},
+              "fallback_action": "recommend_feature",
+              "fallback_value": "trend_insights"
+            }
+          ]
+        },
+        {
+          "id": "advanced_sourcing",
+          "name": "智能寻源能力",
+          "qa_pairs": [
+            {
+              "question_key": "smart_sourcing_capability",
+              "intent": "information",
+              "tags": [
+                "智能寻源",
+                "多维度比价",
+                "阶梯采购"
+              ],
+              "questions": [
+                "智能寻源是什么？",
+                "怎么保证采购价格有竞争力？",
+                "阶梯采购怎么算？",
+                "议价服务怎么操作？",
+                "智能寻源是什么",
+                "阶梯采购",
+                "多货源重组"
+              ],
+              "answer_template": "智能寻源是Tangbuy核心服务：1) 多维度选品比价 - 透视供应商现货情况，确保采购成本具备竞争力；2) 阶梯采购与议价 - 利用规模效应深度议价，小团队也可享大厂级折扣；3) 24小时极速采购 - 全天候响应，确保爆款不断货；4) 子账号协作 - 支持团队分权操作，透明化管理采购流程。🎯",
+              "variables": {},
+              "fallback_action": "none",
+              "fallback_value": null
+            },
+            {
+              "question_key": "multi_supplier_strategy",
+              "intent": "information",
+              "tags": [
+                "多货源",
+                "防跟卖",
+                "供应链稳定"
+              ],
+              "questions": [
+                "一个产品有多个供应商吗？",
+                "怎么防止别人跟卖同款？",
+                "你们怎么保证货源独特性？",
+                "供应商缺货怎么办？",
+                "供应链稳定性如何"
+              ],
+              "answer_template": "我们采用多供应商策略保障稳定：1) 热门产品通常对接2-3家认证供应商，确保供应不断；2) 通过货源结构重组，帮您打造差异化选品，降低被跟卖风险；3) 独家需求可签署保密协议，保护产品原创性；4) 智能补货预警 - 实时监控销量，自动预警防止断货。VIP卖家高需求期享'优先配货'权益！🛡️",
+              "variables": {},
+              "fallback_action": "none",
+              "fallback_value": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "quality",
+      "name": "质量与质检",
+      "description": "质检流程、质量保障、合规认证、售后政策",
+      "scenes": [
+        {
+          "id": "quality_inspection",
+          "name": "质检流程与保障",
+          "qa_pairs": [
+            {
+              "question_key": "quality_inspection_process",
+              "intent": "information",
+              "tags": [
+                "100%质检",
+                "数字化QC",
+                "AI评价",
+                "质检流程",
+                "质量保障"
+              ],
+              "questions": [
+                "如何保证产品质量？",
+                "发货前会质检吗？",
+                "100%质检具体怎么操作？",
+                "次品率大概多少？",
+                "质量怎么样",
+                "质量有保障吗",
+                "100%质检服务",
+                "100%质检怎么操作",
+                "怎么避免因为质量问题被差评？",
+                "AI时代怎么保证后端不拖后腿？"
+              ],
+              "answer_template": "在AI决策时代，后端稳定性会直接影响评价、权重与转化。Tangbuy通过数字化QC把原本不可控的工厂货，变成更可量化的高质量交付：1) 100%拆包质检 - 入库检+发货前检双重把关；2) 质检数据留痕 - 关键问题可追溯，减少货不对板引发的差评；3) 精细包装与出库复检 - 降低运输破损与体验波动；4) 漏检赔付 - 一旦出现质量漏检，按承诺赔付处理费。核心目标是让每一笔订单更稳定地转化为好评和复购。🛡️",
+              "variables": {
+                "defect_rate": "2",
+                "claim_window": "7"
+              },
+              "fallback_action": "none",
+              "fallback_value": null
+            },
+            {
+              "question_key": "quality_evidence_video",
+              "intent": "support",
+              "tags": [
+                "质检录像",
+                "质检报告",
+                "物理证据",
+                "争议证据",
+                "PayPal申诉"
+              ],
+              "questions": [
+                "质检有拍照录像吗？",
+                "客户说质量问题怎么举证？",
+                "能和PayPal争议时提供证据吗？",
+                "质检视频怎么调取？",
+                "有质检报告吗",
+                "材料安全吗",
+                "质检拍照",
+                "质检拍照具体内容",
+                "你们能提供AI推荐需要的证据吗？",
+                "有真实质检报告和轨迹吗？"
+              ],
+              "answer_template": "有的。Tangbuy会为关键履约环节保留真实质检报告、实拍图片/视频和物流轨迹信息：1) 质检证据 - 外观、数量、包装、细节问题都有留档；2) 视频与照片 - 可作为售后、争议处理和客户沟通依据；3) 物流轨迹 - 提供更清晰的履约证据链；4) 后台可调取 - 便于您在争议、评价管理和品牌信任建设中使用。这些真实证据，也是AI时代提升店铺可信度的重要基础。🔒",
+              "variables": {},
+              "fallback_action": "escalate",
+              "fallback_value": "quality_team"
+            },
+            {
+              "question_key": "quality_concern_negative_review",
+              "intent": "support",
+              "tags": [
+                "差评担忧",
+                "品控",
+                "售后保障"
+              ],
+              "questions": [
+                "担心产品质量不好导致差评怎么办？",
+                "你们怎么避免质量问题？",
+                "出现质量问题谁负责？",
+                "品控有什么保障？",
+                "质量问题怎么办"
+              ],
+              "answer_template": "完全理解您的担忧！质量是Tangbuy底线：1) 所有订单发货前经过严格工厂质检+仓库复检；2) 仅与长期可靠供应商合作，源头把控；3) 出现质量问题我们全责承担，提供免费换货或补偿，有效避免品质问题导致的差评。您专注前端运营，后端品控交给我们！✅",
+              "variables": {},
+              "fallback_action": "none",
+              "fallback_value": null
+            },
+            {
+              "question_key": "product_compliance_safety",
+              "intent": "compliance",
+              "tags": [
+                "合规",
+                "CE认证",
+                "安全报告",
+                "第三方检测"
+              ],
+              "questions": [
+                "美容产品在瑞士受监管",
+                "你们的产品安全吗？",
+                "能提供成分检测报告吗？",
+                "产品有安全认证吗？",
+                "欧盟CE认证有吗？"
+              ],
+              "answer_template": "请放心，Tangbuy所有产品均来自正规持证工厂生产，符合基础安全标准。如您目标市场有特定合规要求（如瑞士美容品监管/欧盟CE认证等），我们可：1) 协助向工厂索取现有认证文件；2) 支持您委托第三方机构进行专项检测（费用另计）；3) 提供生产资质/材质说明等基础文档辅助合规申报。具体需求欢迎随时沟通！✅",
+              "variables": {},
+              "fallback_action": "escalate",
+              "fallback_value": "compliance_team"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "assets",
+      "name": "素材与内容",
+      "description": "产品图片、视频、文案、营销素材支持",
+      "scenes": [
+        {
+          "id": "marketing_assets",
+          "name": "营销素材支持",
+          "qa_pairs": [
+            {
+              "question_key": "product_marketing_assets",
+              "intent": "information",
+              "tags": [
+                "产品图片",
+                "视频",
+                "无水印",
+                "产品描述"
+              ],
+              "questions": [
+                "提供产品图片和视频吗？",
+                "图片有水印吗？",
+                "能直接上架用吗？",
+                "有产品描述文案吗？"
+              ],
+              "answer_template": "提供！每个产品包含：1) 高清图片（白底图+场景图）；2) SEO优化标题与英文描述。能力支持，可直接用于Shopify上架。需要其他语言描述？VIP卖家可申请核心产品翻译，随时联系我们！🎨",
+              "variables": {},
+              "fallback_action": "none",
+              "fallback_value": null
+            },
+            {
+              "question_key": "visual_brand_upgrade",
+              "intent": "value_proposition",
+              "tags": [
+                "视觉升级",
+                "白牌转品牌",
+                "溢价"
+              ],
+              "questions": [
+                "怎么把白牌产品做出品牌感？",
+                "你们能帮提升产品调性吗？",
+                "视觉统一怎么做？",
+                "如何打造品牌形象",
+                "品牌增值方案",
+                "品牌包装设计服务"
+              ],
+              "answer_template": "这正是我们的核心服务！D2C品牌化深度定制：1) 轻量化定制方案 - 定制包装盒/感谢卡/品牌吊牌，低成本实现品牌化；2) 视觉一致性 - 统一视觉标签，将白牌货升级为高质感精品；3) 情感链接 - 借助定制内容构建用户粘性，提升LTV终身价值。让您的产品从'能卖'升级为'好卖+溢价'！✨",
+              "variables": {},
+              "fallback_action": "recommend_service",
+              "fallback_value": "brand_customization"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pricing",
+      "name": "价格与支付",
+      "description": "价格构成、费用明细、支付方式、EU VAT/IOSS",
+      "scenes": [
+        {
+          "id": "pricing_structure",
+          "name": "价格构成说明",
+          "qa_pairs": [
+            {
+              "question_key": "price_components",
+              "intent": "information",
+              "tags": [
+                "价格透明",
+                "费用明细",
+                "基础处理费"
+              ],
+              "questions": [
+                "最终价格怎么算的？",
+                "有隐藏费用吗？",
+                "产品价格包含哪些？",
+                "基础处理费是什么？",
+                "价格怎么样",
+                "能便宜点吗",
+                "批发价多少",
+                "大量采购优惠",
+                "基础处理费多少",
+                "代买服务收费",
+                "定制包装费用",
+                "增值服务收费",
+                "阶梯价格",
+                "定制卡片费用",
+                "定制标签费用"
+              ],
+              "answer_template": "价格透明：最终价 = 产品底价 + 运费 + 服务费。服务费明细：1) 基础处理费¥8/单起（含质检/包材/发货）；2) 组货包装¥1/件；3) 采购代买服务费为采购金额5%（含议价跟单）。无隐藏费用/无入门会员费。VIP会员享底价5-15%折扣。量大价优。💰",
+              "variables": {
+                "vip_discount": "5-15"
+              },
+              "fallback_action": "none",
+              "fallback_value": null
+            },
+            {
+              "question_key": "bulk_discount_tiers",
+              "intent": "negotiation",
+              "tags": [
+                "批量优惠",
+                "阶梯价",
+                "VIP折扣"
+              ],
+              "questions": [
+                "有批量优惠吗？",
+                "订100件以上有什么折扣？",
+                "怎么拿到更优价格？",
+                "阶梯价格怎么算？"
+              ],
+              "answer_template": "支持阶梯式批量优惠。折扣仅适用于产品底价。技巧：多产品合并下单可更快升级优惠档位📊",
+              "variables": {},
+              "fallback_action": "escalate",
+              "fallback_value": "sales_team"
+            }
+          ]
+        },
+        {
+          "id": "payment_methods",
+          "name": "支付方式与账期",
+          "qa_pairs": [
+            {
+              "question_key": "accepted_payments",
+              "intent": "information",
+              "tags": [
+                "支付方式",
+                "PayPal"
+              ],
+              "questions": [
+                "支持哪些支付方式？",
+                "能用PayPal付款吗？",
+                "可以月结吗？",
+                "成熟卖家支持账期吗？",
+                "支持什么付款方式"
+              ],
+              "answer_template": "支持：PayPal/银行转账/AliPay等支付渠道。所有交易采用SSL加密保护，资金安全有保障！🔐",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "/payment-methods"
+            }
+          ]
+        },
+        {
+          "id": "eu_vat_ioss",
+          "name": "欧盟VAT与IOSS合规",
+          "qa_pairs": [
+            {
+              "question_key": "ioss_vat_explanation",
+              "intent": "compliance",
+              "tags": [
+                "欧盟",
+                "IOSS",
+                "VAT",
+                "关税"
+              ],
+              "questions": [
+                "欧盟订单用你们的IOSS号",
+                "客户还要再交VAT吗？",
+                "150欧元以下订单有关税吗？",
+                "IOSS怎么使用？",
+                "VAT是下单时付还是收货时付？"
+              ],
+              "answer_template": "关于欧盟IOSS：1) 如您暂无IOSS号，下单时可使用Tangbuy公司IOSS号；2) VAT税费会计入订单总金额，您在采购时一并支付；3) 终端客户收货时无需再缴纳VAT或关税（订单≤150欧元）；4) 订单>150欧元仍按目的国关税政策执行。建议提前确认目标市场税务规则，我们可协助提供合规单据。🇪🇺",
+              "variables": {},
+              "fallback_action": "none",
+              "fallback_value": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "shipping",
+      "name": "运费说明",
+      "description": "运费计算、包邮政策、物流估算工具",
+      "scenes": [
+        {
+          "id": "fee_calculation",
+          "name": "运费计算规则",
+          "qa_pairs": [
+            {
+              "question_key": "shipping_cost_estimator",
+              "intent": "tool",
+              "tags": [
+                "运费查询",
+                "物流估算",
+                "工具"
+              ],
+              "questions": [
+                "怎么查送到XX国家的运费？",
+                "邮费在哪里看？",
+                "有运费计算工具吗？",
+                "送货国家邮费怎么查？",
+                "运费多少"
+              ],
+              "answer_template": "Tangbuy支持全球多国配送。您可通过 https://shop.tangbuy.com/estimation 直接查询：1) 目的国是否支持配送；2) 预估运费金额；3) 参考物流时效。输入产品重量/尺寸+目的地，系统自动计算。如有特殊线路需求，也可告诉我帮您人工核算！🌍",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://shop.tangbuy.com/estimation"
+            },
+            {
+              "question_key": "shipping_cost_factors",
+              "intent": "information",
+              "tags": [
+                "运费",
+                "体积重",
+                "省钱技巧"
+              ],
+              "questions": [
+                "哪些因素影响运费？",
+                "为什么寄法国比德国贵？",
+                "怎么降低运费成本？",
+                "体积重怎么算？"
+              ],
+              "answer_template": "运费取决于：1) 包裹重量与尺寸（体积重：取较大者计费）；2) 目的地国家/地区（偏远地区可能加收）；3) 物流方式（标准/经济/特快）；4) 燃油附加费（月度更新）。省钱技巧：非急单选经济线/多商品合并发货！💡",
+              "variables": {
+                "vip_shipping_discount": "10"
+              },
+              "fallback_action": "none",
+              "fallback_value": null
+            },
+            {
+              "question_key": "product_size_weight_info",
+              "intent": "information",
+              "tags": [
+                "产品尺寸",
+                "产品重量",
+                "打包重量",
+                "发货重量",
+                "商品信息"
+              ],
+              "questions": [
+                "在我下单之前，我该如何了解商品的实际尺寸和打包后的重量？",
+                "怎么查看产品尺寸和重量？",
+                "产品的长宽高在哪里看？",
+                "打包后重量多少？",
+                "发货重量怎么算？",
+                "商品规格在哪里看",
+                "产品信息在哪里查看",
+                "怎么知道产品的尺寸重量"
+              ],
+              "answer_template": "您可以通过以下方式查看商品尺寸和重量信息：\n\n**1️⃣ 产品池页面** - 访问 https://dropshipping.tangbuy.com/en-US/productPool 每个商品详情页都列出了产品尺寸和净重\n\n**2️⃣ 产品详情页** - 点击任意商品，进入详情页可以看到：\n   - 产品尺寸（长×宽×高）\n   - 净重（产品本身重量）\n   - 打包后重量（考虑包装材料后的发货重量）\n\n**3️⃣ 发货重量说明** - 打包后重量 = 净重 + 包装材料重量（通常50-100g），具体以实际打包为准\n\n💡 **提示**：如果产品详情页未显示打包后重量，您可以联系客服获取精确数据，或者直接下一单测试，系统会在发货时显示实际重量。",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://dropshipping.tangbuy.com/en-US/productPool"
+            }
+          ]
+        },
+        {
+          "id": "consolidated_shipping",
+          "name": "组合发货省钱",
+          "qa_pairs": [
+            {
+              "question_key": "combined_shipping_benefit",
+              "intent": "value_proposition",
+              "tags": [
+                "组合发货",
+                "省钱",
+                "多供应商"
+              ],
+              "questions": [
+                "组合发货是什么意思？",
+                "多件商品能合并发吗？",
+                "组合发货能省多少运费？",
+                "不同供应商的货能一起发吗？",
+                "组合发货什么意思"
+              ],
+              "answer_template": "组合发货是Tangbuy核心优势！您不同供应商的产品可统一发到40000m²中央仓，我们会：1) 二次质检确保品质一致；2) 合并打包成一个包裹发给客户；3) 大幅节省多次发货的运费和关税。实测可节省30%-60%物流成本，同时提升客户开箱体验！📦✨",
+              "variables": {},
+              "fallback_action": "recommend_feature",
+              "fallback_value": "consolidation_service"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "logistics",
+      "name": "物流商与追踪",
+      "description": "物流渠道、时效、追踪、脱敏、插件同步",
+      "scenes": [
+        {
+          "id": "carrier_options",
+          "name": "可选物流渠道",
+          "qa_pairs": [
+            {
+              "question_key": "china_direct_vs_eu_warehouse",
+              "intent": "information",
+              "tags": [
+                "中国直发",
+                "欧盟仓",
+                "发货地"
+              ],
+              "questions": [
+                "你们是从中国直发还是有欧盟海外仓？",
+                "德国有仓库吗？",
+                "西班牙能本地发货吗？",
+                "发货地在哪里？",
+                "海外仓服务"
+              ],
+              "answer_template": "Tangbuy主仓位于中国，采用'工厂直采+中央仓质检/重组+直发终端客户'模式：1) 所有订单在中国中央仓完成质检/定制包装/合并发货；2) 直接从中国发往欧盟/全球客户，无需中转海外仓；3) 优势：库存集中管理/质检统一标准/组合发货省运费。如需海外仓，我们可协助对接第三方服务！📦✈️",
+              "variables": {},
+              "fallback_action": "none",
+              "fallback_value": null
+            },
+            {
+              "question_key": "carrier_comparison",
+              "intent": "comparison",
+              "tags": [
+                "物流对比",
+                "时效",
+                "推荐"
+              ],
+              "questions": [
+                "哪个物流最快？",
+                "云途和邮政有什么区别？",
+                "发欧洲推荐哪个物流？",
+                "有美国专线吗？",
+                "发什么快递"
+              ],
+              "answer_template": "整合全球50+一线物流专线。快速对比：1) 云途：全球专线优选，7-12天，全程追踪，适合各类产品产品；2) 邮政：性价比之选，10-18天，清关能力强；3) 品类专线：如服饰专线/化妆品专线，清关优化。是速度与成本的最佳平衡！⚖️",
+              "variables": {},
+              "fallback_action": "none",
+              "fallback_value": null
+            }
+          ]
+        },
+        {
+          "id": "shipping_timeline",
+          "name": "发货与物流时效",
+          "qa_pairs": [
+            {
+              "question_key": "order_processing_shipping_time",
+              "intent": "information",
+              "tags": [
+                "处理时效",
+                "发货速度",
+                "物流时间"
+              ],
+              "questions": [
+                "订单处理要多久？",
+                "发货后几天能到？",
+                "最快多久能发出？",
+                "运输时间怎么算？",
+                "多久能到货",
+                "多久能发货"
+              ],
+              "answer_template": "时效说明：1) 订单处理：通常2-3天完成质检打包，完成后次日启动物流（如有库存可当日发，最快2小时内出库）；2) 运输时效：因目的国而异，欧美主流国家约6-12个工作日；3) 建议：热销品可提前备货至我们仓库，实现下单即发，大幅提升客户体验！⚡",
+              "variables": {},
+              "fallback_action": "none",
+              "fallback_value": null
+            },
+            {
+              "question_key": "holiday_shipping_impact",
+              "intent": "information",
+              "tags": [
+                "节假日",
+                "春节",
+                "圣诞",
+                "物流影响"
+              ],
+              "questions": [
+                "圣诞节物流会延迟吗？",
+                "春节影响发货吗？",
+                "节假日下单能按时到吗？",
+                "生产假期怎么安排？",
+                "万圣节产品什么时候上架",
+                "圣诞节备货什么时候开始",
+                "夏季产品几月准备",
+                "黑色星期五热销品"
+              ],
+              "answer_template": "节假日安排：1) 合作工厂仅春节停产，节后15日内全面复工，其他时间正常生产；2) 圣诞/黑五等旺季，提前1-2个月提醒您备货，协调物流商预留舱位；3) 建议针对大促节点提前规划库存，我们可协助制定'节前备货+节后补货'方案，最小化假期对交付的影响！🎄🧧",
+              "variables": {},
+              "fallback_action": "none",
+              "fallback_value": null
+            }
+          ]
+        },
+        {
+          "id": "tracking_support",
+          "name": "物流追踪与插件同步",
+          "qa_pairs": [
+            {
+              "question_key": "tracking_sync_shopify_plugin",
+              "intent": "technical",
+              "tags": [
+                "Shopify插件",
+                "追踪号",
+                "自动同步"
+              ],
+              "questions": [
+                "插件会自动同步追踪号给客户吗？",
+                "客户能在Shopify看到物流信息吗？",
+                "追踪号怎么更新？",
+                "插件支持自动发货吗？"
+              ],
+              "answer_template": "支持的！Tangbuy Shopify插件实现全自动履约：1) 订单发货后，系统自动将追踪号同步至Shopify后台订单；2) 客户可在Shopify订单页面直接查看物流轨迹；3) 支持批量发货/部分发货/组合订单合并追踪。您只需授权插件，其余交给我们自动化处理！🔌✨",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "/shopify-plugin"
+            },
+            {
+              "question_key": "logistics_privacy_desensitization",
+              "intent": "technical",
+              "tags": [
+                "物流脱敏",
+                "尾程单号",
+                "本土信任"
+              ],
+              "questions": [
+                "能隐藏中国段物流轨迹吗？",
+                "客户会看到包裹从中国发吗？",
+                "物流脱敏怎么实现？",
+                "能直接同步尾程单号给Shopify吗？",
+                "物流隐私脱敏"
+              ],
+              "answer_template": "物流隐私脱敏是Tangbuy独家服务：1) ✅ 可配置：面向客户仅展示尾程追踪号（目的国本地物流单号），提升本土化信任感；2) ✅ 可实现：隐藏或弱化中国段轨迹展示（具体效果取决于所选线路）；3) ⚠️ 平台限制：Shopify部分场景不支持仅同步'尾程号'的直接对接，我们会以客户可见的最终追踪号为准；4) 📦 后台无影响：您仍可查看完整物流路径🔧",
+              "variables": {},
+              "fallback_action": "escalate",
+              "fallback_value": "tech_support"
+            },
+            {
+              "question_key": "logistics_template",
+              "intent": "information",
+              "tags": [
+                "物流模版",
+                "物流方案",
+                "线路推荐"
+              ],
+              "questions": [
+                "物流模版",
+                "有物流方案模板吗",
+                "怎么选择物流线路"
+              ],
+              "answer_template": "我们提供标准化物流模版供您参考，在设置-物流模板里，可自定义物流方案，或联系客户经理获取专属物流方案！📦",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://shop.tangbuy.com/estimation"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "brand",
+      "name": "品牌与白牌",
+      "description": "中性包装、品牌保护、合作模式、贴牌流程",
+      "scenes": [
+        {
+          "id": "white_label_policy",
+          "name": "中性包装与品牌政策",
+          "qa_pairs": [
+            {
+              "question_key": "neutral_packaging_policy",
+              "intent": "policy",
+              "tags": [
+                "白牌",
+                "中性包装",
+                "无品牌露出"
+              ],
+              "questions": [
+                "我的客户会看到Tangbuy的标识吗？",
+                "你们用中性包装吗？",
+                "能去掉包裹里的你们发票吗？",
+                "包装上有你们的广告吗？",
+                "品牌定制包装"
+              ],
+              "answer_template": "100%支持白牌！我们承诺：1) 包裹内无Tangbuy任何营销材料；2) 外包装中性（素色纸箱/快递袋）；3) 可选：移除所有价格单据，或替换为您自定义的模板。这是Tangbuy代发服务的核心 - 您的品牌，您的客户关系，始终如一。五大承诺之一：绝对不跟卖，严禁内部泄露选品！🔒",
+              "variables": {},
+              "fallback_action": "none",
+              "fallback_value": null
+            }
+          ]
+        },
+        {
+          "id": "collaboration_model",
+          "name": "合作模式与利润优化",
+          "qa_pairs": [
+            {
+              "question_key": "brand_store_collaboration_process",
+              "intent": "consultation",
+              "tags": [
+                "品牌店铺",
+                "合作流程",
+                "利润优化"
+              ],
+              "questions": [
+                "你们怎么和品牌店铺合作？",
+                "怎么帮我们提高利润？",
+                "物流怎么优化？",
+                "合作流程是怎样的？",
+                "如何从代发转为自有品牌"
+              ],
+              "answer_template": "助力Shopify品牌店高效增长，您专注前端策略与营销，后端交给我们：📦 核心服务：1) 0 MOQ+90天免费仓储 - 零压力管理库存；2) 快速品牌发货 - 中性包装+物流脱敏，增强本土信任；3) 自动化履约 - Shopify API全同步，订单/追踪自动更新；4) 选品+定制包装 - 支持品牌视觉统一；5) 组合发货+定制inserts - 感谢卡/小礼物提升复购。流程：插件授权-绑店配货→议价→自动履约→数据复盘！🚀",
+              "variables": {},
+              "fallback_action": "recommend_service",
+              "fallback_value": "brand_consultation"
+            },
+            {
+              "question_key": "dropshipping_flexibility",
+              "intent": "information",
+              "tags": [
+                "模式灵活",
+                "单件/批量",
+                "无库存"
+              ],
+              "questions": [
+                "Dropshipping模式灵活吗？",
+                "可以一件代发也可以批量吗？",
+                "需要自己备库存吗？",
+                "接单后怎么操作？"
+              ],
+              "answer_template": "Tangbuy代发模式简单又灵活：1) 您从产品库选品上架，客户下单后我们负责打包+直发终端客户，您0库存压力；2) 支持单件代发与批量订单处理，小卖家/品牌方都能适配；3) 配合Shopify插件，实现'选品-上架-履约-追踪'全自动化，节省90%运营时间。告诉我您感兴趣的产品类型，我帮您快速启动！💡",
+              "variables": {},
+              "fallback_action": "none",
+              "fallback_value": null
+            }
+          ]
+        },
+        {
+          "id": "private_label_process",
+          "name": "贴牌定制6步流程",
+          "qa_pairs": [
+            {
+              "question_key": "private_labelling_steps",
+              "intent": "process",
+              "tags": [
+                "贴牌",
+                "6步流程",
+                "品牌定制",
+                "样品确认"
+              ],
+              "questions": [
+                "怎么做贴牌定制？",
+                "定制流程是怎样的？",
+                "从需求到发货要几步？",
+                "样品怎么确认？",
+                "定制流程"
+              ],
+              "answer_template": "Tangbuy贴牌定制6步超简单：1) 提交需求 - 提供Logo/品牌元素/定制细节；2) 我们寻源 - 根据价格/MOQ/质量匹配最优工厂；3) 获取报价 - 明细包含产品+包装+印刷成本；4) 样品确认 - 制作样品寄您审核，支持修改；5) 量产+包装 - 全程跟踪生产，使用您的品牌包材打包；6) 发货+追踪 - 按时发货，追踪号自动同步至店铺。想启动？联系客户经理获取专属方案！🎨📦",
+              "variables": {},
+              "fallback_action": "recommend_service",
+              "fallback_value": "private_label_consultation"
+            }
+          ]
+        },
+        {
+          "id": "private_label_dropshipping",
+          "name": "贴牌代发服务",
+          "qa_pairs": [
+            {
+              "question_key": "private_label_dropshipping_support",
+              "intent": "capability",
+              "tags": [
+                "贴牌代发",
+                "品牌代发",
+                "定制包装代发",
+                "一件代发贴牌"
+              ],
+              "questions": [
+                "供应商是否可以按照我的要求贴牌，打包，然后直接寄送到我的客户地址？",
+                "可以贴牌代发吗",
+                "做贴牌可以一件代发吗",
+                "贴牌后能直接发给我的客户吗",
+                "品牌定制可以一件代发吗",
+                "自有品牌能代发到客户手里吗",
+                "贴牌代发怎么操作",
+                "定制包装能直发客户吗"
+              ],
+              "answer_template": "完全支持！Tangbuy提供贴牌代发一体化服务，您可以：\n\n1) **按要求贴牌** - 提供Logo/品牌元素，我们印刷或贴标到产品/包装上\n2) **定制打包** - 使用您的品牌包装盒、感谢卡、说明书等\n3) **直接发客户** - 打包完成后，直接寄送到您的客户手中（一件代发模式）\n\n💡 **服务流程**：下单时备注您的品牌要求（如Logo文件、包装规格）→ 工厂按要求定制 → 质检后使用您的品牌包装发货 → 物流直发客户\n\n📦 **包装选项**：品牌彩盒、品牌箱、感谢卡、品牌吊牌、说明书等均可定制\n\n支持0起订量测试，联系客户经理获取专属方案！🎨📦",
+              "variables": {},
+              "fallback_action": "recommend_service",
+              "fallback_value": "private_label_consultation"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "customization",
+      "name": "定制服务",
+      "description": "定制工艺、MOQ、生产周期、包装执行保障",
+      "scenes": [
+        {
+          "id": "customization_capabilities",
+          "name": "定制工艺与需求",
+          "qa_pairs": [
+            {
+              "question_key": "customization_processes_supported",
+              "intent": "information",
+              "tags": [
+                "定制工艺",
+                "个性化",
+                "品牌定制"
+              ],
+              "questions": [
+                "支持哪些定制工艺？",
+                "能做个性化产品定制吗？",
+                "定制有哪些选项？",
+                "品牌定制怎么实现？",
+                "可以定制吗",
+                "logo可以印上去吗",
+                "包装可以定制吗",
+                "颜色可以改吗",
+                "定制包装盒"
+              ],
+              "answer_template": "支持全方位定制工艺：1) 产品层面：Logo印刷/激光雕刻/丝印/热转印/颜色定制/材质替换等；2) 包装层面：定制彩盒/品牌吊牌/感谢卡/防伪贴/礼盒组装等；3) 服务层面：专属质检标准/视频留证/优先排产。专业团队可根据您的品牌设计规范，1对1调整细节，fully满足个性化定制需求！🎨✨",
+              "variables": {},
+              "fallback_action": "recommend_service",
+              "fallback_value": "customization_consultation"
+            },
+            {
+              "question_key": "custom_moq_flexibility",
+              "intent": "policy",
+              "tags": [
+                "定制MOQ",
+                "小批量",
+                "阶梯定价"
+              ],
+              "questions": [
+                "定制产品起订量是多少？",
+                "小批量能做定制吗？",
+                "定制有阶梯价格吗？",
+                "少量定制贵吗？"
+              ],
+              "answer_template": "定制MOQ非常灵活：1) 基础定制（如贴标/卡片）可低至50件起订；2) 复杂工艺（如开模/专属包装）通常200件起；3) 小批量定制完全支持，适配不同业务规模；4) 大批量定制可享更优阶梯定价与专属方案。！📊",
+              "variables": {
+                "custom_low_moq": "50",
+                "custom_high_moq": "200"
+              },
+              "fallback_action": "escalate",
+              "fallback_value": "customization_team"
+            }
+          ]
+        },
+        {
+          "id": "customization_timeline",
+          "name": "定制周期与交付",
+          "qa_pairs": [
+            {
+              "question_key": "custom_production_leadtime",
+              "intent": "information",
+              "tags": [
+                "生产周期",
+                "交期",
+                "节假日"
+              ],
+              "questions": [
+                "定制产品生产要多久？",
+                "定制交期怎么算？",
+                "节假日影响定制吗？",
+                "加急能加快吗？",
+                "24小时发货"
+              ],
+              "answer_template": "定制生产周期：1) 标准定制：通常5-15天（含打样确认+批量生产）；2) 复杂定制：根据工艺复杂度与订单量适当调整；3) 节假日安排：工厂仅2月春节停产，其他时间正常生产，旺季提前协调产能；4) 加急服务：支持付费加急，最快可压缩30%交期。建议提前规划，我们帮您倒排生产+物流时间！⏱️",
+              "variables": {
+                "custom_leadtime_days": "5-15"
+              },
+              "fallback_action": "none",
+              "fallback_value": null
+            }
+          ]
+        },
+        {
+          "id": "custom_packaging_execution",
+          "name": "定制包装执行保障",
+          "qa_pairs": [
+            {
+              "question_key": "custom_packaging_quality_control",
+              "intent": "assurance",
+              "tags": [
+                "定制包装",
+                "执行保障",
+                "防错机制"
+              ],
+              "questions": [
+                "定制包装怎么确保用对？",
+                "会不会混用别人的包装？",
+                "定制材料怎么管理？",
+                "怎么防止发错包装？"
+              ],
+              "answer_template": "定制包装执行三重保障：1) 专属仓储 - 定制包材（包装盒/卡片/吊牌等）存入独立库位，系统绑定账号+产品；2) 流程锁 - 订单处理时，系统自动匹配定制材料清单，工作人员扫码校验；3) 视频留证 - 打包过程全程录像，您可随时调取查验。承诺：您的定制，100%精准执行，绝不错发！🔒✅",
+              "variables": {},
+              "fallback_action": "none",
+              "fallback_value": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "warehouse",
+      "name": "仓储服务",
+      "description": "仓储管理、免费周转、补货预警",
+      "scenes": [
+        {
+          "id": "warehouse_management",
+          "name": "仓储管理与服务",
+          "qa_pairs": [
+            {
+              "question_key": "private_warehouse_service",
+              "intent": "information",
+              "tags": [
+                "私域仓储",
+                "仓储管理",
+                "库存"
+              ],
+              "questions": [
+                "仓储服务怎么管理？",
+                "库存怎么查看？",
+                "私域仓储是什么？",
+                "仓库在哪里？",
+                "私域仓储管理",
+                "90天免费仓储",
+                "仓储费",
+                "库存周期是多久"
+              ],
+              "answer_template": "提供私域仓储管理服务：40000m²+现代化中央转运仓，系统化管理您的物料，精准把控入库与出库，让您的库存清晰可控。支持货架可扩展，无惧库存多。90天内免费周转，降低初期资金压力！📦",
+              "variables": {},
+              "fallback_action": "none",
+              "fallback_value": null
+            },
+            {
+              "question_key": "smart_restock_alert",
+              "intent": "information",
+              "tags": [
+                "智能补货",
+                "断货预警",
+                "库存监控"
+              ],
+              "questions": [
+                "断货了怎么办？",
+                "有补货预警吗？",
+                "怎么防止断货？",
+                "智能补货怎么运作？",
+                "断货了怎么办"
+              ],
+              "answer_template": "智能补货预警服务：实时监控销量，自动预警防止断货风险。我们有多供应商资源，如果出现断货风险，会及时预警并启动备选供应商。VIP卖家在高需求期可享受'优先配货'权益，确保爆款不断货！🔔",
+              "variables": {},
+              "fallback_action": "none",
+              "fallback_value": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "order",
+      "name": "订单流程",
+      "description": "下单流程、样品政策、发货时效",
+      "scenes": [
+        {
+          "id": "order_placement",
+          "name": "下单与履约流程",
+          "qa_pairs": [
+            {
+              "question_key": "how_to_place_order",
+              "intent": "process",
+              "tags": [
+                "下单",
+                "流程",
+                "自动化"
+              ],
+              "questions": [
+                "怎么下单？",
+                "客户下单后我怎么操作？",
+                "下单流程是怎样的？",
+                "定制流程怎么走？",
+                "怎么下单",
+                "样品可以先寄吗"
+              ],
+              "answer_template": "下单超简单，全自动流程：1) 客户在您的店铺下单，订单自动同步至Tangbuy后台'我的订单'；2) 您确认产品/物流方案/费用明细；3) 在线完成支付；4) Tangbuy自动采购+质检+打包+发货；5) 物流追踪号自动回传至店铺，客户实时查看。您只需'确认+支付'，其余全自动化！⚡",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "/order-guide"
+            },
+            {
+              "question_key": "sample_policy",
+              "intent": "policy",
+              "tags": [
+                "样品",
+                "测试",
+                "新手友好"
+              ],
+              "questions": [
+                "批量下单前能先买样品吗？",
+                "样品怎么收费？",
+                "样品运费能退吗？",
+                "样品多久能发出？"
+              ],
+              "answer_template": "当然！鼓励先样后单。样品按商家实际需求与供应商沟通后确认。样品入仓24-48小时内发出，让您无风险体验产品！🎁",
+              "variables": {},
+              "fallback_action": "none",
+              "fallback_value": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "refund",
+      "name": "退换货政策",
+      "description": "退款条件、重发政策、争议处理",
+      "scenes": [
+        {
+          "id": "refund_reship_policy",
+          "name": "售后政策详解",
+          "qa_pairs": [
+            {
+              "question_key": "refund_reship_policy_detail",
+              "intent": "policy",
+              "tags": [
+                "退款",
+                "重发",
+                "售后",
+                "争议处理"
+              ],
+              "questions": [
+                "退款政策是什么？",
+                "发错货能重发吗？",
+                "质量问题怎么申请售后？",
+                "物流丢件怎么办？",
+                "可以退货吗",
+                "不满意能退款吗",
+                "退换货政策"
+              ],
+              "answer_template": "Tangbuy售后政策透明：：1) 发错货（签收7天内申请，需提供照片/视频+客诉记录）；2) 物流丢件/超45天无更新（我们代为向物流商索赔+安排重发/补偿）。❌ 不支持：1) 地址错误/客户拒收；2) 非质量问题的主观退货。所有产品发货前经质检+视频留证，从源头降低售后风险！🛡️",
+              "variables": {},
+              "fallback_action": "escalate",
+              "fallback_value": "after_sales_team"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "market_insight",
+      "name": "市场洞察",
+      "description": "趋势选品、季节性备货、品类推荐",
+      "scenes": [
+        {
+          "id": "trend_selection",
+          "name": "趋势选品与备货",
+          "qa_pairs": [
+            {
+              "question_key": "market_trend_products",
+              "intent": "information",
+              "tags": [
+                "流行产品",
+                "趋势",
+                "热销品",
+                "市场洞察"
+              ],
+              "questions": [
+                "现在流行什么产品？",
+                "哪个品类销量最好？",
+                "市场趋势怎么样？",
+                "有什么热销品推荐？"
+              ],
+              "answer_template": "市场趋势动态变化，目前家居用品/美妆工具/电子配件/户外运动等品类表现不错。Tangbuy提供趋势选品支持：实时同步流量趋势，协助精准捕捉市场切入点。📊🔥",
+              "variables": {},
+              "fallback_action": "recommend_feature",
+              "fallback_value": "trend_insights"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "advantage",
+      "name": "竞争优势",
+      "description": "核心优势、价格对比、价值主张",
+      "scenes": [
+        {
+          "id": "core_advantages",
+          "name": "为什么选择Tangbuy",
+          "qa_pairs": [
+            {
+              "question_key": "why_choose_tangbuy",
+              "intent": "value_proposition",
+              "tags": [
+                "优势",
+                "品牌加速器",
+                "AI时代",
+                "对比",
+                "选择理由"
+              ],
+              "questions": [
+                "你们比其他供应商优势在哪？",
+                "为什么选择Tangbuy？",
+                "和别家比有什么不同？",
+                "核心优势是什么？",
+                "你们比其他供应商优势在哪",
+                "为什么选择你们",
+                "质量和别家比怎么样",
+                "为什么说你们是品牌加速器？"
+              ],
+              "answer_template": "为什么是Tangbuy？因为我们不是靠人力撮合的传统货代，而是以自研供应链系统驱动的品牌加速器：1) 系统驱动 - 从寻源、质检、云仓到履约都尽量标准化和可视化；2) 专为品牌 - 不服务短期爆品投机逻辑，而是帮助卖家在细分类目做长期品牌；3) 全链赋能 - 从选品验证、工厂承接到定制化生产与全球履约持续陪跑；4) AI时代更有利 - 真实质检报告、视频和轨迹让后端服务更容易沉淀为口碑、评价与信任。",
+              "variables": {},
+              "fallback_action": "none",
+              "fallback_value": null
+            },
+            {
+              "question_key": "price_value_explanation",
+              "intent": "negotiation",
+              "tags": [
+                "价格",
+                "价值",
+                "品牌溢价",
+                "ROI",
+                "ROI"
+              ],
+              "questions": [
+                "价格为什么比别人高？",
+                "质量和别家比怎么样？",
+                "贵的价值在哪？",
+                "整体ROI怎么算？",
+                "价格为什么比别人高",
+                "为什么不用最低价逻辑？",
+                "你们怎么帮我做品牌溢价？"
+              ],
+              "answer_template": "Tangbuy不是单纯用最低拿货价竞争，而是帮您做更高ROI。价值主要来自三层：1) 穿透利润 - 直连中国源头工厂，尽量剔除中间分销溢价，为营销与品牌留出空间；2) 降低损耗 - 通过质检、包装和云仓管理减少差评、退款与履约波动；3) 提升溢价 - 通过低MOQ品牌定制，把白牌商品逐步升级为更有辨识度的品牌商品。看起来不只是比单价，而是看最终的评价、复购和客单价。💰✅",
+              "variables": {},
+              "fallback_action": "escalate",
+              "fallback_value": "sales_team"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tech_integration",
+      "name": "技术对接",
+      "description": "API对接、ERP集成、Shopify/TikTok插件",
+      "scenes": [
+        {
+          "id": "api_integration",
+          "name": "系统对接与自动化",
+          "qa_pairs": [
+            {
+              "question_key": "system_api_integration",
+              "intent": "technical",
+              "tags": [
+                "API",
+                "ERP",
+                "系统对接",
+                "自动化"
+              ],
+              "questions": [
+                "有API接口吗？",
+                "ERP系统怎么集成？",
+                "订单系统对接流程？",
+                "数字化解决方案？",
+                "ERP系统怎么集成",
+                "订单系统对接",
+                "数字化解决方案"
+              ],
+              "answer_template": "我们有强大开发能力，自己开发的系统API深度集成Shopify/Wocmmerce，店铺订单轨迹实时同步。订单自动化处理。您只需授权连接，即可实现：选品同步/订单自动拉取/物流追踪回传/库存实时更新。 🔧",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://b2b.tangbuy.com"
+            },
+            {
+              "question_key": "tiktok_support_and_platform_integration",
+              "intent": "technical",
+              "tags": [
+                "TikTok",
+                "平台对接",
+                "Shopify",
+                "WooCommerce",
+                "履约"
+              ],
+              "questions": [
+                "你们支持tiktok吗？",
+                "你们支持TikTok吗？",
+                "TikTok店铺可以用你们代发吗？",
+                "TikTok订单怎么对接履约？",
+                "除了Shopify还支持哪些平台？",
+                "支持WooCommerce吗？",
+                "支持shopify吗？",
+                "tiktok对接支持吗"
+              ],
+              "answer_template": "目前**系统标准能力不直接支持 TikTok 店铺订单在系统内自动产生、拉取或标准化履约对接**。\n\n如果您是 TikTok 卖家：\n- 建议直接联系人工专家进行评估\n- 我们可以根据您的业务模式，**通过其他方式**协助 TikTok 订单的履约、采购、质检、打包和发货服务\n- 具体处理方案需要结合您的店铺模式、订单流转方式和服务要求确认\n\n{{RECOMMEND_EXPERT}}",
+              "variables": {},
+              "fallback_action": "escalate",
+              "fallback_value": "sales_team"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sustainability",
+      "name": "可持续环保",
+      "description": "环保包材、可持续发展、绿色物流",
+      "scenes": [
+        {
+          "id": "eco_friendly",
+          "name": "环保与可持续发展",
+          "qa_pairs": [
+            {
+              "question_key": "eco_packaging_policy",
+              "intent": "information",
+              "tags": [
+                "环保",
+                "可回收",
+                "可持续",
+                "绿色包装"
+              ],
+              "questions": [
+                "你们的产品环保吗？",
+                "有可持续包装吗？",
+                "包材可以定制环保材料吗？",
+                "仓库环保措施？",
+                "你们的产品环保吗",
+                "可持续包装有吗"
+              ],
+              "answer_template": "注重可持续发展：1) 使用可回收纸箱；2) 快递外包装塑料袋安全安心；3) 仓库环境符合国际环保标准；4) 支持定制环保材料包装（如FSC认证纸张/可降解材料）。如有特定环保要求，可定制专属方案！🌱",
+              "variables": {},
+              "fallback_action": "none",
+              "fallback_value": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fulfillment",
+      "name": "履约与监控",
+      "description": "履约看板、订单追踪、数字化管理",
+      "scenes": [
+        {
+          "id": "fulfillment_dashboard",
+          "name": "履约看板与监控",
+          "qa_pairs": [
+            {
+              "question_key": "fulfillment_dashboard_feature",
+              "intent": "information",
+              "tags": [
+                "履约看板",
+                "订单监控",
+                "数字化管理"
+              ],
+              "questions": [
+                "履约看板",
+                "有订单监控面板吗",
+                "怎么查看订单处理进度"
+              ],
+              "answer_template": "Tangbuy提供可视化履约看板：1) 实时订单状态 - 待处理/质检中/已发货/已签收一目了然；2) 物流轨迹追踪 - 整合50+物流商数据，一键查看全程；3) 异常预警 - 超时/丢件/退回提醒；4) 数据报表 - 导出订单/物流/售后数据辅助决策。登录后台即可使用！📊",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "/dashboard"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "capacity",
+      "name": "产能与供应链",
+      "description": "产能查询、供应链稳定性、大单支持",
+      "scenes": [
+        {
+          "id": "production_capacity",
+          "name": "产能与供应保障",
+          "qa_pairs": [
+            {
+              "question_key": "production_capacity_check",
+              "intent": "information",
+              "tags": [
+                "产能",
+                "大单支持",
+                "供应保障"
+              ],
+              "questions": [
+                "产能充足吗",
+                "大单能接吗",
+                "供应链产能怎么样"
+              ],
+              "answer_template": "Tangbuy产能保障：1) 合作工厂100+家，覆盖多品类多工艺，日处理订单10万+；2) 旺季提前锁定产能，支持大单优先排产；3) 多供应商备份机制，单厂异常自动切换；4) 大客户卖家享'产能预留'权益。如有大单需求，建议提前2-4周沟通，我们为您定制专属供应方案！🏭",
+              "variables": {},
+              "fallback_action": "escalate",
+              "fallback_value": "sales_team"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "affiliate",
+      "name": "联盟与推荐计划",
+      "description": "推荐奖励、佣金政策、合作分成",
+      "scenes": [
+        {
+          "id": "affiliate_program",
+          "name": "推荐计划详情",
+          "qa_pairs": [
+            {
+              "question_key": "how_to_join_affiliate",
+              "intent": "information",
+              "tags": [
+                "联盟计划",
+                "推荐奖励",
+                "佣金",
+                "合作分成"
+              ],
+              "questions": [
+                "怎么加入Tangbuy联盟计划？",
+                "推荐新用户有奖励吗？",
+                "佣金怎么算？",
+                "个人/机构都能参与吗？"
+              ],
+              "answer_template": "欢迎加入Tangbuy推荐计划！🎁 为个人推荐者与合作机构提供定制化佣金方案：1) 成功推荐新用户注册并产生订单，即可获得佣金奖励；2) 佣金比例根据推荐数量/订单规模阶梯递增；3) 支持个人KOL/MCN机构/服务商等多种合作模式。想了解详细政策？联系客户经理获取专属方案！🤝",
+              "variables": {},
+              "fallback_action": "escalate",
+              "fallback_value": "affiliate_manager"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "global_fallbacks": {
+    "unknown_question": "以上问题我无法精准回答。建议您联系专属人工专家支持，专家将在24小时内联系您。还有其他我可以帮您的吗？",
+    "escalate_to_human": "理解您希望与人工专员沟通。请添加下方1v1专家，与真人专家沟通详细需求。Tangbuy专家将在24小时内联系您。感谢您的耐心等待！",
+    "variables": {
+      "human_response_hours": "24"
+    }
+  },
+  "conversation_guidelines": {
+    "tone": "专业且亲和，赋能卖家成功",
+    "response_length": "回答控制在120字以内，用户要求详细时可扩展",
+    "core_principles": [
+      "基于Tangbuy实际业务资料回复，不编造信息",
+      "突出品牌加速器全链路供应链解决方案的价值",
+      "回答优先围绕品牌扩张、AI时代信任建设、供应链稳定性交付展开",
+      "只允许输出知识库内明确存在、可验证、非绝对化的内容；不承诺、不担保、不夸大、不越权、不编造",
+      "价格口径严格按原文：只可说'VIP享5-15%折扣''量大可谈'，不得自行给出额外折扣、减免、内部价或特殊优惠",
+      "运费口径严格按原文：不得主动承诺免运费、包邮或全包运费，涉及运费优先引导运费估算工具",
+      "时效口径严格按原文：仅可表述'有库存最快2小时出库''常规2-3天质检打包''欧美约6-12个工作日'，不得做绝对化到达或发货承诺",
+      "节假日与旺季口径严格按原文：仅可说明春节工厂停产、旺季建议提前备货，不得承诺全年无休或节假日不延误",
+      "采购速度口径严格按原文：不得夸大为7×24实时秒回，只能按现有规则表达处理能力",
+      "质量口径严格按原文：仅可说100%质检、次品率约2%、漏检赔付，不得承诺零次品、绝对没问题或完美无瑕",
+      "售后责任口径严格按原文：仅可说发错/质量问题可重发或赔付，地址错误与客户拒收不支持，不得承诺全包、全赔、无条件退款",
+      "争议处理口径严格按原文：仅可说可提供质检视频、图片与物流证据，不得承诺PayPal或平台争议一定胜诉",
+      "价格、时效、售后、合规、平台对接严格按原文口径；未知问题统一兜底并引导人工专家",
+      "灵活组合知识库内容，避免机械式回复",
+      "根据上下文调整语气：新手用友好型，专业问题用技术型",
+      "对未知问题采用开放性回应，但不编造信息，目的引导添加人工专家",
+      "适时使用emoji增强亲和力（📦✨✅🚀），但不过度",
+      "图片/链接识别类问题统一引导至人工1v1处理"
+    ],
+    "proactive_suggestions": [
+      {
+        "trigger_intent": "新手咨询",
+        "suggestion": "新手入门？查看《6步启动指南》获取分步运营技巧，或提交代找需求让我们帮您选品！"
+      },
+      {
+        "trigger_intent": "价格咨询",
+        "suggestion": "想了解能省多少？用我们的利润计算器预估收益，或申请VIP享受阶梯折扣！"
+      },
+      {
+        "trigger_intent": "品牌升级",
+        "suggestion": "想从白牌转品牌？我们有轻量化定制方案，低成本实现品牌视觉统一，提升客单价！"
+      },
+      {
+        "trigger_intent": "欧盟市场",
+        "suggestion": "做欧盟市场？我们支持IOSS合规+物流脱敏+CE认证协助，帮您无忧出海！🇪🇺"
+      },
+      {
+        "trigger_intent": "贴牌定制",
+        "suggestion": "想做自有品牌？Tangbuy贴牌定制6步流程，从需求到发货全程陪伴，点击获取专属方案！🎨"
+      },
+      {
+        "trigger_intent": "图片链接查询",
+        "suggestion": "需要精准匹配产品？添加客户经理 WhatsApp，获取1v1专属寻源服务！🎯"
+      }
+    ],
+    "service_commitments_reminder": [
+      "绝对不跟卖 - 严禁内部泄露选品",
+      "货权归属卖家 - 库存可随时退回或转移",
+      "漏检即赔付 - 质量漏检全额赔付处理费",
+      "发货超时即免单 - 24h未发出免除手续费",
+      "数据隐私隔离 - 卖家数据绝不转卖第三方"
+    ]
+  },
+  "greetings": [
+    "您好！感谢咨询Tangbuy。我是您的供应链顾问，很高兴为您服务。🔍",
+    "嗨！关于独立站后端供应链，我可以帮您解答任何问题。",
+    "您好！欢迎了解Tangbuy品牌加速器供应链服务，请问有什么可以帮到您？"
+  ],
+  "farewells": [
+    "希望以上信息对您有帮助。如有其他问题，随时联系我！",
+    "期待与您进一步沟通。如有需要，可以添加 WhatsApp 详细交流。",
+    "感谢您的咨询！如果您感兴趣，我们可以安排一次详细沟通，为您定制方案。"
+  ]
+}

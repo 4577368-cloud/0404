@@ -1,0 +1,1317 @@
+{
+  "meta": {
+    "version": "3.1.0",
+    "language": "es",
+    "business_type": "dropshipping+B2B",
+    "company": "Tangbuy",
+    "last_updated": "2026-02-27",
+    "description": "Base de conocimientos en español para IA de preventa de Tangbuy - 7 Categorías Principales + 29+ Preguntas Frecuentes + Marco Comercial Completo"
+  },
+  "company_config": {
+    "name": "Tangbuy",
+    "mission": "Construyendo una plataforma de acelerador de marca y ejecución para millones de vendedores de tiendas independientes, empoderando sueños de marcas independientes en cada nicho de mercado globalmente",
+    "core_model": "Acelerador de marca: Tangbuy ayuda a que el Dropshipping evolucione de una estación de tránsito logístico a un acelerador de marca, con servicios de cadena de suministro de extremo a extremo para vendedores Shopify, desde abastecimiento hasta cumplimiento global",
+    "urls": {
+      "website": "https://tangbuy.com",
+      "product_pool": "https://dropshipping.tangbuy.com/es-ES/productPool",
+      "b2b_service": "https://dropshipping.tangbuy.com",
+      "sourcing_request": "https://dropshipping.tangbuy.com/es-ES/source/inProgress",
+      "shipping_estimator": "https://shop.tangbuy.com/estimation",
+      "help_center": "https://dropshipping.tangbuy.com"
+    }
+  },
+  "five_promises": [
+    {"promise": "Sin Competencia con Vendedores", "content": "Prohibición estricta de filtración interna de selección de productos, nunca operamos nuestras propias tiendas"},
+    {"promise": "Propiedad del Inventario para Vendedores", "content": "Todo el inventario puede ser devuelto o transferido por los vendedores en cualquier momento"},
+    {"promise": "Compensación por Defectos No Detectados", "content": "Compensación completa de tarifas de procesamiento de pedidos si se pasan problemas de calidad durante la inspección"},
+    {"promise": "Pedido Gratis por Envío Retrasado", "content": "Exención de tarifas de procesamiento si los pedidos no se envían dentro de 24 horas después del almacenamiento"},
+    {"promise": "Aislamiento de Privacidad de Datos", "content": "Los datos del vendedor se usan solo para cumplimiento, nunca se venden a terceros"}
+  ],
+  "pricing_config": {
+    "base_fee": "Desde ¥8/pedido (incluye QC, embalaje, envío)",
+    "packaging_fee": "¥1/artículo",
+    "warehouse_policy": "90 días de almacenamiento gratuito",
+    "procurement_fee": "5% del monto de adquisición (incluye negociación y seguimiento)",
+    "customization_fee": "Tarjetas/etiquetado/cajas tipo avión desde ~¥1/artículo",
+    "vip_discount": "5-15%",
+    "shipping_discount": "10%"
+  },
+  "warehouse_config": {
+    "size": "Almacén central de transferencia moderno de 40,000m²+",
+    "location": "China",
+    "features": ["Gestión de almacén privado", "Estanterías expandibles", "Cajas reciclables", "Videos de QC/embalaje disponibles", "Almacenamiento dedicado para materiales personalizados"]
+  },
+  "logistics_config": {
+    "cutoff_time": "Corte diario a las 3 PM; pedidos antes de las 3 PM se envían el mismo día",
+    "processing_time": "2-3 días para QC y embalaje (envío mismo día si hay stock, más rápido 2 horas)",
+    "delivery_time_eu_us": "6-12 días hábiles a países principales de UE/EE.UU.",
+    "delivery_time_latam": "10-20 días hábiles a países principales de Latinoamérica",
+    "carrier_count": "50+ líneas logísticas globales de primer nivel integradas",
+    "carriers": [
+      {"name": "YunExpress", "route": "Línea dedicada EE.UU./Canadá", "days": "7-12", "feature": "Seguimiento de extremo a extremo, ideal para electrónicos"},
+      {"name": "Correos de China", "route": "Línea dedicada Europa", "days": "10-18", "feature": "Rentable, fuerte despacho aduanero"},
+      {"name": "DHL/FedEx", "route": "Express global", "days": "3-7", "feature": "Más rápido pero costo más alto"},
+      {"name": "Líneas por país", "route": "España/México directo", "days": "8-15", "feature": "Despacho aduanero optimizado"}
+    ]
+  },
+  "quality_config": {
+    "inspection_policy": "Inspección de calidad global 100% (entrada + previo al envío)",
+    "defect_rate": "~2%",
+    "claim_window_days": 7,
+    "video_evidence": "Grabación de video de proceso completo, disponible como evidencia para disputas",
+    "compliance_support": "Productos de fábricas certificadas, cumpliendo estándares básicos de seguridad; certificación CE y asistencia para pruebas de terceros disponibles"
+  },
+  "categories": [
+    {
+      "id": "platform",
+      "name": "Introducción y Acceso a la Plataforma",
+      "description": "Posicionamiento de la empresa, acceso al sitio web, navegación del catálogo de productos, guía de servicios B2B",
+      "scenes": [
+        {
+          "id": "company_intro",
+          "name": "Introducción a la Empresa y Plataforma",
+          "qa_pairs": [
+            {
+              "question_key": "tangbuy_what_is",
+              "intent": "information",
+              "tags": ["intro empresa", "acelerador de marca", "era IA", "posicionamiento", "misión"],
+              "questions": [
+                "¿Qué es Tangbuy?",
+                "¿Qué hace su empresa?",
+                "¿Qué es el modelo de acelerador de marca?",
+                "¿Por qué las marcas necesitan Tangbuy en la era de la IA?",
+                "¿Cuál es el valor central de Tangbuy?"
+              ],
+              "answer_template": "Tangbuy no es una simple estación logística de Dropshipping. Es un acelerador de marca diseñado para la era de la IA. Integramos abastecimiento, QC digital, almacenamiento en la nube WMS, cumplimiento global y personalización de bajo MOQ en un solo sistema. Usted se enfoca en tráfico y crecimiento de marca en el front-end, mientras nosotros convertimos productos de fábrica en activos de marca más estables, entregables y favorables para reseñas. El objetivo no es solo enviar paquetes, sino ayudar a que cada pedido se traduzca en confianza, reseñas positivas y recompra.",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://tangbuy.com"
+            },
+            {
+              "question_key": "product_catalog_access",
+              "intent": "information",
+              "tags": ["catálogo productos", "sitio web", "APP", "navegar productos"],
+              "questions": [
+                "¿Qué productos tienen?",
+                "¿Cómo navego su catálogo de productos?",
+                "¿Tienen una APP?",
+                "¿Cuál es la URL de su sitio web?",
+                "¿Dónde está su catálogo de productos?"
+              ],
+              "answer_template": "Tangbuy es una plataforma de Dropshipping de categoría completa con 1M+ productos de tendencia directos de fábrica. Bienvenido a: 1) Visitar nuestro sitio web https://tangbuy.com; 2) Navegar nuestro catálogo https://dropshipping.tangbuy.com/es-ES/productPool; 3) Descargar la APP Tangbuy para una experiencia más conveniente de búsqueda/marcadores/pedidos. ¿Necesita ayuda para encontrar productos? ¡Solo pregunte, estoy aquí para ayudar! 🔍",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://dropshipping.tangbuy.com/es-ES/productPool"
+            },
+            {
+              "question_key": "b2b_service_overview",
+              "intent": "information",
+              "tags": ["B2B", "directo de fábrica", "expansión de marca", "detalles servicio"],
+              "questions": [
+                "¿Qué servicios B2B ofrecen?",
+                "¿Cómo funciona la cooperación directo de fábrica?",
+                "¿Hay una página de servicios B2B?",
+                "¿Cómo ayudan a las marcas a expandirse?"
+              ],
+              "answer_template": "El servicio B2B y de aceleración de marca de Tangbuy gira en torno a tres pasos: 1) Conectar con fábricas de origen - mediante nuestro sistema de abastecimiento con IA conectamos con fábricas listas para exportación, con más transparencia de precios y preparación más rápida para el cumplimiento; 2) Reducir el riesgo operativo - con el circuito WMS cloud warehouse para QC por desempaque al 100 %, empaque refinado y seguimiento global; 3) Construir premium de marca - mediante personalización de bajo MOQ como etiquetas, hangtags y tarjetas de agradecimiento, para convertir gradualmente productos de marca blanca en productos de marca.",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://dropshipping.tangbuy.com"
+            },
+            {
+              "question_key": "store_binding_sourcing",
+              "intent": "information",
+              "tags": ["vinculación de tienda", "coincidencia inteligente de abastecimiento", "vincular tienda", "sincronización automática"],
+              "questions": [
+                "¿Qué es la vinculación de tienda con abastecimiento?",
+                "¿Qué significa la vinculación de tienda en Tangbuy?",
+                "¿Cómo funciona la vinculación de tienda en Tangbuy?",
+                "¿Cómo hago matching de productos después de conectar mi tienda?"
+              ],
+              "answer_template": "La vinculación de tienda es la solución de coincidencia inteligente de abastecimiento de Tangbuy para vendedores que ya tienen una tienda. Después de conectar su tienda Shopify, el sistema puede identificar los productos que ya vende y emparejarlos con opciones de suministro de fábricas chinas. Puede revisar fuentes recomendadas y precios, confirmar la relación y luego dejar que los pedidos futuros se sincronicen con Tangbuy para compra, control de calidad y envío. Si el sistema no encuentra coincidencia, nuestro equipo de abastecimiento también puede ayudar manualmente.",
+              "variables": {},
+              "fallback_action": "recommend_feature",
+              "fallback_value": "store_binding_sourcing"
+            },
+            {
+              "question_key": "how_to_start_with_tangbuy",
+              "intent": "onboarding",
+              "tags": ["empezar", "incorporación", "proceso de cooperación", "registro"],
+              "questions": [
+                "¿Cómo empiezo a trabajar con Tangbuy?",
+                "¿Cómo empezar con Tangbuy?",
+                "¿Cuál es el proceso para comenzar con Tangbuy?",
+                "¿Cómo debe empezar un principiante?"
+              ],
+              "answer_template": "El flujo típico para empezar con Tangbuy puede entenderse en cinco pasos: 1) Registrar una cuenta y conectar su tienda Shopify u otra plataforma claramente soportada; 2) Elegir productos del catálogo o enviar una solicitud de abastecimiento; 3) Ajustar la descripción del producto y publicarlo en su tienda; 4) Dejar que Tangbuy gestione compra, QC y envío cuando los pedidos se sincronicen; 5) Seguir ampliando con herramientas de tendencias y datos de beneficio. El alcance real de plataformas soportadas siempre debe basarse en lo que muestre el backend y confirme su account manager.",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://tangbuy.com"
+            },
+            {
+              "question_key": "order_processing_timing",
+              "intent": "information",
+              "tags": ["procesamiento de pedidos", "tiempo de envío", "plazo logístico", "logística"],
+              "questions": [
+                "¿Cuánto tarda el procesamiento del pedido y el envío?",
+                "¿Cuánto tarda Tangbuy en enviar?",
+                "¿Cuál es el plazo logístico?",
+                "¿Qué tan rápido se despachan los pedidos?"
+              ],
+              "answer_template": "Siga el texto aprobado por la base de conocimiento: los productos en stock pueden salir tan rápido como en 2 horas, el proceso estándar con control de calidad suele tardar 2-3 días, y la entrega a Europa/EE. UU. suele ser de aproximadamente 6-12 días laborables. Para un coste de envío y ETA exactos, use el estimador de flete o consulte a su account manager.",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://shop.tangbuy.com/estimation"
+            },
+            {
+              "question_key": "private_label_process",
+              "intent": "information",
+              "tags": ["private label", "marca propia", "personalización", "proceso de etiquetado"],
+              "questions": [
+                "¿Cómo puedo hacer private label con Tangbuy?",
+                "¿Tangbuy admite private label?",
+                "¿Cuál es el proceso de marca propia?",
+                "¿Cómo puedo crear mi propia marca?"
+              ],
+              "answer_template": "Tangbuy puede apoyar un flujo de colaboración de private label que normalmente incluye alineación de requisitos, emparejamiento con fábrica, detalle de cotización, confirmación de muestras, seguimiento de producción y embalaje, y coordinación del envío. El MOQ, precio, plazo y viabilidad concretos deben seguir la solución real de la fábrica y la confirmación del account manager, sin prometer nada más allá de la base de conocimiento.",
+              "variables": {},
+              "fallback_action": "recommend_service",
+              "fallback_value": "private_label_consultation"
+            },
+            {
+              "question_key": "product_selection_pricing_tips",
+              "intent": "information",
+              "tags": ["selección de productos", "precios", "productos en tendencia", "beneficio"],
+              "questions": [
+                "¿Qué consejos tienen para selección de producto y precios?",
+                "¿Cómo ayuda Tangbuy con la selección de productos?",
+                "¿Cómo puedo estimar costes?",
+                "¿Cómo debería fijar precios?"
+              ],
+              "answer_template": "Tangbuy puede apoyar la selección de producto y la fijación de precios mediante productos en tendencia, búsqueda por imagen, soporte de abastecimiento dedicado, precios de fábrica transparentes y estimación de envío. Una forma práctica es confirmar primero su mercado objetivo, el coste del producto, el flete y el margen esperado antes de fijar el precio de venta. Si además necesita ejecución, Tangbuy puede ayudar con abastecimiento, QC, almacenaje y coordinación del envío.",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://dropshipping.tangbuy.com/es-ES/productPool"
+            },
+            {
+              "question_key": "winning_product_definition",
+              "intent": "information",
+              "tags": ["producto ganador", "tendencias", "productos calientes", "estrategia de producto"],
+              "questions": [
+                "¿Qué es un producto ganador?",
+                "¿Cómo define Tangbuy un winning product?",
+                "¿Dónde puedo ver productos en tendencia?",
+                "¿Cómo veo los hot picks de fábrica?"
+              ],
+              "answer_template": "En el contexto de Tangbuy, un producto ganador suele ser un artículo con demanda clara, fuerte potencial de conversión y buen atractivo social o de mercado. Puede centrarse en áreas como Trending Items y factory hot picks, y evaluarlas junto con el margen y la estabilidad del cumplimiento, en lugar de perseguir solo calor a corto plazo.",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://dropshipping.tangbuy.com/es-ES/productPool"
+            },
+            {
+              "question_key": "shopify_connection_steps",
+              "intent": "information",
+              "tags": ["Shopify", "conexión de tienda", "autorización de tienda", "vincular tienda"],
+              "questions": [
+                "¿Cómo conecto mi tienda Shopify con Tangbuy?",
+                "¿Cómo vinculo Shopify con Tangbuy?",
+                "¿Dónde está la autorización de tienda?",
+                "¿Cómo agrego una nueva tienda autorizada?"
+              ],
+              "answer_template": "La conexión con Shopify suele completarse desde el dashboard o la página de autorización de tiendas después de iniciar sesión. Puede usar accesos como 'Link Now' o la opción de nueva autorización para empezar. El nombre exacto de la página y la lista de plataformas compatibles siempre deben seguir lo que muestre el backend y lo que confirme su account manager. Si una plataforma no aparece explícitamente en la base de conocimiento, no debe asumirse como ya integrada.",
+              "variables": {},
+              "fallback_action": "recommend_feature",
+              "fallback_value": "store_authorization"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sourcing",
+      "name": "Abastecimiento de Productos",
+      "description": "Descubrimiento de productos, coincidencia de proveedores, soporte de adquisición, incorporación de nuevos vendedores",
+      "scenes": [
+        {
+          "id": "new_seller",
+          "name": "Incorporación de Nuevos Vendedores",
+          "qa_pairs": [
+            {
+              "question_key": "how_to_find_products",
+              "intent": "information",
+              "tags": ["nuevo vendedor", "encontrar productos", "selección productos", "artículos tendencia"],
+              "questions": [
+                "¿Cómo encuentro productos en Tangbuy?",
+                "¿Cómo puedo descubrir productos de tendencia?",
+                "¿Tienen recomendaciones de productos?",
+                "¿Dónde puedo navegar su catálogo de productos?"
+              ],
+              "answer_template": "3 formas eficientes de abastecer en Tangbuy: 1) Navegue nuestro catálogo https://dropshipping.tangbuy.com/es-ES/productPool y use filtros para reducir sus opciones; 2) Ingrese palabras clave o suba imágenes para búsqueda inteligente de productos iguales/similares; 3) ¿No encuentra lo que necesita? Envíe una solicitud de abastecimiento en https://dropshipping.tangbuy.com/es-ES/source/inProgress, y nuestro equipo abastecerá para usted dentro de 24 horas. ¡También proporcionamos soporte de selección de productos basado en tendencias para ayudarle a capturar oportunidades de mercado! 📊",
+              "variables": {},
+              "fallback_action": "recommend_feature",
+              "fallback_value": "sourcing_request_form"
+            },
+            {
+              "question_key": "moq_policy",
+              "intent": "policy",
+              "tags": ["MOQ", "dropshipping", "lote pequeño", "pedido mínimo"],
+              "questions": [
+                "¿Hay un MOQ para dropshipping?",
+                "¿Puedo pedir solo 1 pieza para probar?",
+                "¿Cuál es la cantidad mínima de pedido?",
+                "¿Aceptan pedidos de lotes pequeños?"
+              ],
+              "answer_template": "¡Buena noticia! La mayoría de los productos Tangbuy admiten dropshipping verdadero con CERO MOQ - puede pedir solo 1 pieza para probar. Algunos productos personalizados o exclusivos de venta al por mayor pueden tener requisitos de MOQ (claramente marcados en páginas de productos). Recomendamos a nuevos vendedores comenzar con productos de bajo MOQ para probar el mercado antes de escalar. 💡",
+              "variables": {},
+              "fallback_action": "none"
+            },
+            {
+              "question_key": "new_seller_start_guide",
+              "intent": "process",
+              "tags": ["nuevo vendedor", "cómo empezar", "principiante dropshipping", "primeros pasos"],
+              "questions": [
+                "Quiero hacer dropshipping pero no sé por dónde empezar",
+                "¿Cómo empiezo con el dropshipping como principiante?",
+                "¿Cómo deben empezar los nuevos vendedores?",
+                "Cómo hacer dropshipping",
+                "Quiero empezar en e-commerce, ¿por dónde empiezo?",
+                "guía para principiantes",
+                "cómo empezar con dropshipping",
+                "empezar en dropshipping",
+                "quiero hacer dropshipping",
+                "nuevo en dropshipping",
+                "cómo empezar una tienda online",
+                "sin experiencia en e-commerce"
+              ],
+              "answer_template": "¡Felicitaciones por elegir Tangbuy para tu viaje de dropshipping! Aquí tienes una guía de 4 pasos para principiantes:\n\n**1️⃣ Prueba de productos** - Visita nuestro catálogo de productos https://dropshipping.tangbuy.com/es-ES/productPool, comienza con 0 MOQ, prueba primero 1-2 productos\n\n**2️⃣ Listar y vender** - Lista los productos en tu tienda Shopify/WooCommerce, establece precios y envíos\n\n**3️⃣ Pedidos de clientes** - Cuando un cliente hace un pedido, tú realizas el pedido en Tangbuy. Nosotros manejamos 100% QC, empaquetado neutro y envío directo a los clientes\n\n**4️⃣ Obtener ganancias** - Una vez que el cliente recibe el paquete, la diferencia de precio es tu ganancia (costo del producto + envío + tarifa de servicio)\n\n💡 **Consejo para principiantes**: Comienza con productos de bajo precio y ligeros para probar el mercado, luego expande categorías a medida que ganas experiencia.\n\n¿Qué tipo de productos te interesa vender? ¡Puedo ayudarte a encontrar la categoría adecuada! 🎯",
+              "variables": {},
+              "fallback_action": "recommend_feature",
+              "fallback_value": "product_recommendation"
+            },
+            {
+              "question_key": "sourcing_request_process",
+              "intent": "process",
+              "tags": ["abastecimiento productos", "abastecimiento personalizado", "productos Amazon", "AliExpress"],
+              "questions": [
+                "¿Pueden ayudarme a encontrar productos que vi en Amazon/AliExpress?",
+                "¿Cómo funciona su servicio de abastecimiento?",
+                "¿Qué información necesito proporcionar para abastecimiento de productos?",
+                "¿Cómo solicito abastecimiento dirigido de productos?"
+              ],
+              "answer_template": "¡Absolutamente! Nuestro equipo de abastecimiento puede ayudarle a encontrar casi cualquier producto. Al enviar una solicitud, proporcione: 1) Imágenes o enlaces de productos (Amazon/AliExpress/1688, etc.); 2) Rango de precio objetivo (opcional); 3) Volumen mensual estimado (nos ayuda a negociar mejor precio). Dentro de 48 horas, recibirá opciones de proveedores, cotizaciones e información de muestras. ¡Este servicio es completamente GRATIS para usuarios registrados! 🎯",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://dropshipping.tangbuy.com/es-ES/source/inProgress"
+            },
+            {
+              "question_key": "what_is_winning_product",
+              "intent": "information",
+              "tags": ["producto ganador", "selección productos", "información mercado", "tendencias"],
+              "questions": [
+                "¿Qué es un producto ganador?",
+                "¿Cómo identifico productos con potencial?",
+                "¿Cómo ayudan con la selección de productos?",
+                "¿Tienen herramientas de selección de productos?"
+              ],
+              "answer_template": "Un producto ganador = Potencial de ventas probado + Fuerte demanda de mercado + Alto atractivo para clientes. Tangbuy le ayuda a identificarlos a través de: 1) Sección 'Artículos de Tendencia' - Datos de ventas populares globales en tiempo real; 2) 'Selecciones Populares de Fábrica' - Productos nuevos de alto potencial verificados por nuestra cadena de suministro; 3) Herramientas de información de mercado - Analizar tendencias de búsqueda/competencia/márgenes de beneficio. ¿No está seguro? Dígame su mercado/categoría objetivo, y le recomendaré 3-5 productos potenciales para su referencia. 🔥",
+              "variables": {},
+              "fallback_action": "recommend_feature",
+              "fallback_value": "trend_insights"
+            }
+          ]
+        },
+        {
+          "id": "advanced_sourcing",
+          "name": "Capacidades de Abastecimiento Inteligente",
+          "qa_pairs": [
+            {
+              "question_key": "smart_sourcing_capability",
+              "intent": "information",
+              "tags": ["abastecimiento inteligente", "sistema de abastecimiento con IA", "comparación multidimensional", "adquisición escalonada"],
+              "questions": [
+                "¿Qué es el abastecimiento inteligente?",
+                "¿Cómo aseguran precios de adquisición competitivos?",
+                "¿Cómo funciona la fijación de precios escalonada?",
+                "¿Cómo funciona el servicio de negociación?",
+                "¿Cómo evitan comprar demasiado caro o elegir el producto equivocado?",
+                "¿Pueden conectarse directamente con fábricas?"
+              ],
+              "answer_template": "La primera etapa de Tangbuy consiste en resolver compras demasiado caras y elecciones de producto equivocadas. A través de nuestro sistema de abastecimiento con IA, nos conectamos directamente con fábricas orientadas a exportación y recursos de manufactura flexible: 1) Precios más transparentes - más cerca del precio de fábrica en China y con menos intermediarios; 2) Preparación rápida para cumplimiento - convertir tendencias en productos ejecutables más rápido; 3) Comparación multidimensional - comparar precio, plazo, calidad y estabilidad de inventario; 4) Soporte de manufactura flexible - usted detecta tendencias, nosotros ayudamos a convertirlas en productos. Esto es especialmente útil para vendedores que buscan una ventaja fuerte en precio.",
+              "variables": {},
+              "fallback_action": "none"
+            },
+            {
+              "question_key": "multi_supplier_strategy",
+              "intent": "information",
+              "tags": ["multi-proveedor", "anti-copia", "estabilidad cadena suministro"],
+              "questions": [
+                "¿Tienen múltiples proveedores para un producto?",
+                "¿Cómo previenen que otros copien el mismo producto?",
+                "¿Cómo aseguran la unicidad del producto?",
+                "¿Qué pasa si un proveedor se queda sin stock?"
+              ],
+              "answer_template": "Usamos una estrategia de multi-proveedor para asegurar estabilidad: 1) Productos populares típicamente conectan a 2-3 proveedores certificados para asegurar suministro continuo; 2) A través de reestructuración de cadena de suministro, le ayudamos a crear selección de productos diferenciada para reducir riesgos de copia; 3) Para necesidades exclusivas, podemos firmar NDAs para proteger su originalidad de producto; 4) Alertas inteligentes de reabastecimiento - Monitoreo de ventas en tiempo real con advertencias automáticas para prevenir agotamientos. ¡Vendedores VIP disfrutan 'asignación prioritaria' durante períodos de alta demanda! 🛡️",
+              "variables": {},
+              "fallback_action": "none"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "quality",
+      "name": "Calidad e Inspección",
+      "description": "Procesos de QC, garantía de calidad, certificación de cumplimiento, políticas postventa",
+      "scenes": [
+        {
+          "id": "quality_inspection",
+          "name": "Proceso de QC y Garantía",
+          "qa_pairs": [
+            {
+              "question_key": "quality_inspection_process",
+              "intent": "information",
+              "tags": ["QC 100%", "QC digital", "reseñas IA", "proceso QC", "garantía calidad"],
+              "questions": [
+                "¿Cómo aseguran la calidad del producto?",
+                "¿Inspeccionan antes del envío?",
+                "¿Cómo funciona específicamente el QC 100%?",
+                "¿Cuál es su tasa de defectos?",
+                "¿Cómo evitan reseñas negativas causadas por problemas de calidad?",
+                "¿Cómo evitan que el back-end perjudique la confianza de marca en la era de la IA?"
+              ],
+              "answer_template": "En la era de la IA, la estabilidad del back-end afecta directamente reseñas, peso de ranking y conversión. Tangbuy usa QC digital para convertir productos de fábrica antes poco controlables en entregas más medibles y de mayor calidad: 1) QC por desempaque al 100 % - inspección al ingreso y antes del envío; 2) Trazabilidad de datos QC - reducir inconsistencias y reseñas negativas; 3) Empaque refinado y recontrol antes de salida - reducir daños y variaciones de experiencia; 4) Compensación por defectos no detectados - si la inspección omite un problema de calidad, compensamos según la política. El objetivo es que cada pedido tenga más probabilidad de generar buenas reseñas y recompra. 🛡️",
+              "variables": {"defect_rate": "2", "claim_window": "7"},
+              "fallback_action": "none"
+            },
+            {
+              "question_key": "quality_concern_negative_review",
+              "intent": "support",
+              "tags": ["preocupación reseña negativa", "QC", "garantía postventa"],
+              "questions": [
+                "Me preocupa recibir reseñas negativas por mala calidad de producto. ¿Qué debo hacer?",
+                "¿Cómo evitan problemas de calidad?",
+                "¿Quién es responsable si ocurren problemas de calidad?",
+                "¿Qué garantía de calidad proporcionan?"
+              ],
+              "answer_template": "¡Entendemos completamente su preocupación! La calidad es el límite inferior de Tangbuy: 1) Todos los pedidos pasan QC estricto de fábrica + re-inspección de almacén antes del envío; 2) Solo cooperamos con proveedores confiables a largo plazo para control de fuente; 3) Si ocurren problemas de calidad, asumimos plena responsabilidad y proporcionamos reemplazo o compensación gratuita, evitando efectivamente reseñas negativas causadas por problemas de calidad. ¡Usted se enfoca en operaciones frontales; nosotros manejamos QC trasero! ✅",
+              "variables": {},
+              "fallback_action": "none"
+            },
+            {
+              "question_key": "quality_evidence_video",
+              "intent": "support",
+              "tags": ["reporte QC", "video QC", "evidencia física", "evidencia disputa", "apelación PayPal"],
+              "questions": [
+                "¿Toman fotos/videos durante QC?",
+                "¿Cómo proporciono evidencia si clientes reclaman problemas de calidad?",
+                "¿Pueden proporcionar evidencia para disputas de PayPal?",
+                "¿Cómo accedo a videos de QC?",
+                "¿Proporcionan reportes reales de QC y evidencia de seguimiento?",
+                "¿Estos materiales ayudan a construir confianza en la era de la IA?"
+              ],
+              "answer_template": "Sí. Tangbuy conserva reportes reales de QC, fotos/videos de producto y registros de seguimiento logístico para pasos clave del cumplimiento: 1) Evidencia QC - apariencia, cantidad, embalaje y detalles del problema quedan registrados; 2) Fotos y videos - útiles para postventa, disputas y comunicación con clientes; 3) Seguimiento logístico - ofrece una cadena de evidencia de cumplimiento más clara; 4) Acceso en backend - práctico para gestionar disputas, reseñas y confianza de marca. En la era de la IA, estos materiales reales son evidencia física importante para reforzar la credibilidad de la tienda. 🔒",
+              "variables": {},
+              "fallback_action": "escalate",
+              "fallback_value": "quality_team"
+            }
+          ]
+        },
+        {
+          "id": "compliance_safety",
+          "name": "Cumplimiento y Certificación de Seguridad",
+          "qa_pairs": [
+            {
+              "question_key": "product_compliance_safety",
+              "intent": "compliance",
+              "tags": ["cumplimiento", "certificación CE", "informe seguridad", "pruebas terceros"],
+              "questions": [
+                "Los productos de belleza están regulados en Suiza. ¿Son seguros sus productos?",
+                "¿Pueden proporcionar informes de prueba de ingredientes?",
+                "¿Sus productos tienen certificaciones de seguridad?",
+                "¿Tienen certificación CE de la UE?"
+              ],
+              "answer_template": "Descanse tranquilo, todos los productos Tangbuy provienen de fábricas certificadas y cumplen estándares básicos de seguridad. Si su mercado objetivo tiene requisitos específicos de cumplimiento (ej. regulaciones de productos de belleza suizos, certificación CE de la UE, etc.), podemos: 1) Ayudar a solicitar documentos de certificación existentes de fábricas; 2) Apoyarle en encargar a agencias de terceros para pruebas especializadas (aplican tarifas adicionales); 3) Proporcionar documentos básicos como calificaciones de producción/especificaciones de materiales para asistir con declaraciones de cumplimiento. ¡No dude en contactarnos para necesidades específicas! ✅",
+              "variables": {},
+              "fallback_action": "escalate",
+              "fallback_value": "compliance_team"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "assets",
+      "name": "Activos y Contenido de Productos",
+      "description": "Imágenes de productos, videos, redacción, soporte de material de marketing",
+      "scenes": [
+        {
+          "id": "marketing_assets",
+          "name": "Soporte de Activos de Marketing",
+          "qa_pairs": [
+            {
+              "question_key": "product_marketing_assets",
+              "intent": "information",
+              "tags": ["imágenes productos", "videos", "sin marca de agua", "descripciones productos"],
+              "questions": [
+                "¿Proporcionan imágenes y videos de productos?",
+                "¿Las imágenes están sin marca de agua?",
+                "¿Puedo usarlas directamente para listar?",
+                "¿Tienen redacción de descripción de productos?"
+              ],
+              "answer_template": "¡Sí! Cada producto incluye: 1) Imágenes de alta resolución (fondo blanco + tomas de estilo de vida); 2) Videos de demostración cortos (15-30 segundos); 3) Títulos optimizados para SEO y descripciones en inglés. Todos los activos están sin marca de agua y pueden usarse directamente para listados de su tienda Shopify/TikTok. ¿Necesita descripciones en chino/otros idiomas? ¡Vendedores VIP pueden solicitar servicios de traducción de productos centrales - solo contáctenos en cualquier momento! 🎨",
+              "variables": {},
+              "fallback_action": "none"
+            },
+            {
+              "question_key": "visual_brand_upgrade",
+              "intent": "value_proposition",
+              "tags": ["actualización visual", "marca blanca a marca", "precio premium"],
+              "questions": [
+                "¿Cómo puedo hacer que productos de marca blanca se sientan más de marca?",
+                "¿Pueden ayudar a mejorar el atractivo de mi producto?",
+                "¿Cómo logro consistencia visual?"
+              ],
+              "answer_template": "¡Esto es exactamente nuestro servicio central! Personalización profunda enfocada en marca D2C: 1) Soluciones de personalización livianas - Cajas de embalaje personalizadas/tarjetas de agradecimiento/etiquetas de marca para lograr marca a bajo costo; 2) Consistencia visual - Etiquetas visuales unificadas para actualizar bienes de marca blanca en productos premium de alta calidad; 3) Conexión emocional - Construir adherencia de usuario a través de contenido personalizado (como notas de agradecimiento) para aumentar LTV valor de vida. ¡Deje que sus productos evolucionen de 'vendibles' a 'altamente vendibles + precio premium'! ✨",
+              "variables": {},
+              "fallback_action": "recommend_service",
+              "fallback_value": "brand_customization"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pricing",
+      "name": "Precios y Pago",
+      "description": "Composición de precios, detalles de tarifas, métodos de pago, IVA/IOSS de la UE",
+      "scenes": [
+        {
+          "id": "pricing_structure",
+          "name": "Explicación de Composición de Precios",
+          "qa_pairs": [
+            {
+              "question_key": "price_components",
+              "intent": "information",
+              "tags": ["precios transparentes", "detalles tarifas", "tarifa procesamiento base"],
+              "questions": [
+                "¿Cómo se calcula el precio final?",
+                "¿Hay tarifas ocultas?",
+                "¿Qué incluye el precio del producto?",
+                "¿Qué es la tarifa de procesamiento base?"
+              ],
+              "answer_template": "Precios transparentes: Precio Final = Precio Base del Producto + Tarifa de Envío + Tarifa de Servicio. Detalles de tarifa de servicio: 1) Tarifa de procesamiento base desde ¥8/pedido (incluye QC/embalaje/envío); 2) Embalaje consolidado ¥1/artículo; 3) Tarifa de servicio de agencia de adquisición es 5% del monto de adquisición (incluye negociación y seguimiento). Sin tarifas ocultas, sin tarifas de membresía de entrada. Miembros VIP disfrutan descuento del 5-15% en precios base. Mejor precio para volúmenes más grandes. 💰",
+              "variables": {"vip_discount": "5-15"},
+              "fallback_action": "none"
+            },
+            {
+              "question_key": "bulk_discount_tiers",
+              "intent": "negotiation",
+              "tags": ["descuento por volumen", "precios escalonados", "descuento VIP"],
+              "questions": [
+                "¿Ofrecen descuentos por volumen?",
+                "¿Qué descuento por pedir 100+ piezas?",
+                "¿Cómo puedo obtener mejor precio?",
+                "¿Cómo funcionan los precios escalonados?"
+              ],
+              "answer_template": "¡Sí! Ofrecemos descuentos por volumen escalonados: 97% del precio base para 50-99 piezas, 92% para 100-499 piezas, cotizaciones personalizadas para 500+ piezas. Los descuentos aplican solo al precio base del producto. Consejo profesional: Combine múltiples productos en un pedido para alcanzar niveles más altos más rápido. ¡Los miembros VIP obtienen acceso anticipado a ventas flash y ofertas exclusivas! 📊",
+              "variables": {},
+              "fallback_action": "escalate",
+              "fallback_value": "sales_team"
+            }
+          ]
+        },
+        {
+          "id": "payment_methods",
+          "name": "Métodos de Pago y Términos",
+          "qa_pairs": [
+            {
+              "question_key": "accepted_payments",
+              "intent": "information",
+              "tags": ["métodos pago", "Alipay", "PayPal"],
+              "questions": [
+                "¿Qué métodos de pago aceptan?",
+                "¿Puedo pagar con PayPal?",
+                "¿Soportan facturación mensual?",
+                "¿Ofrecen términos de pago para vendedores establecidos?"
+              ],
+              "answer_template": "Aceptamos: Alipay / Transferencia Bancaria / PayPal / Alibaba Trade Assurance. Para vendedores de calidad con historial de cooperación de 3+ meses y GMV mensual ≥ $5,000, ofrecemos términos de pago Net-15/Net-30 - aplicable vía solicitud de backend. ¡Todas las transacciones usan encriptación SSL para seguridad de fondos! 🔐",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "/payment-methods"
+            }
+          ]
+        },
+        {
+          "id": "eu_vat_ioss",
+          "name": "IVA de la UE y Cumplimiento IOSS",
+          "qa_pairs": [
+            {
+              "question_key": "ioss_vat_explanation",
+              "intent": "compliance",
+              "tags": ["UE", "IOSS", "IVA", "aranceles aduaneros"],
+              "questions": [
+                "Si uso su número IOSS para pedidos de la UE, ¿los clientes aún necesitan pagar IVA?",
+                "¿Hay aranceles aduaneros para pedidos menores a €150?",
+                "¿Cómo uso IOSS?",
+                "¿El IVA se paga al realizar el pedido o al recibir?"
+              ],
+              "answer_template": "Respecto a IOSS de la UE: 1) Si no tiene un número IOSS, puede usar el número IOSS de la empresa Tangbuy al realizar pedidos; 2) Los impuestos de IVA se incluirán en su monto total de pedido y se pagarán juntos durante la adquisición; 3) Sus clientes finales no necesitarán pagar IVA adicional o aranceles aduaneros al recibir (para pedidos ≤ €150); 4) Pedidos > €150 aún siguen políticas aduaneras del país de destino. Recomendamos confirmar reglas fiscales del mercado objetivo con anticipación; podemos asistir con proporcionar documentación de cumplimiento. 🇪🇺",
+              "variables": {},
+              "fallback_action": "none"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "shipping",
+      "name": "Tarifas de Envío",
+      "description": "Cálculo de costos de envío, políticas de envío gratuito, herramientas de estimación logística",
+      "scenes": [
+        {
+          "id": "fee_calculation",
+          "name": "Reglas de Cálculo de Costos de Envío",
+          "qa_pairs": [
+            {
+              "question_key": "shipping_cost_estimator",
+              "intent": "tool",
+              "tags": ["consulta costo envío", "estimación logística", "herramienta"],
+              "questions": [
+                "¿Cómo verifico costos de envío al país XX?",
+                "¿Dónde puedo ver tarifas de envío?",
+                "¿Tienen una calculadora de costos de envío?",
+                "¿Cómo verifico tarifas de envío para diferentes países?"
+              ],
+              "answer_template": "Tangbuy admite entrega global multi-país. Puede consultar directamente vía https://shop.tangbuy.com/estimation: 1) Si el país de destino es compatible; 2) Monto estimado de costo de envío; 3) Tiempo de entrega logística de referencia. Ingrese peso/dimensiones del producto + destino para cálculo automático del sistema. Para requisitos de ruta especiales, ¡también puedo ayudarle a calcular manualmente! 🌍",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://shop.tangbuy.com/estimation"
+            },
+            {
+              "question_key": "shipping_cost_factors",
+              "intent": "information",
+              "tags": ["costo envío", "peso volumétrico", "consejos ahorro"],
+              "questions": [
+                "¿Qué factores afectan los costos de envío?",
+                "¿Por qué el envío a Francia es más caro que a Alemania?",
+                "¿Cómo puedo reducir costos de envío?",
+                "¿Cómo se calcula el peso volumétrico?"
+              ],
+              "answer_template": "Los costos de envío dependen de: 1) Peso y dimensiones del paquete (peso volumétrico = L×A×H/5000, se cobra basado en el mayor de peso real o volumétrico); 2) País/región de destino (áreas remotas pueden tener recargos); 3) Método de envío (estándar/económico/express); 4) Recargos de combustible (actualizados mensualmente). Consejos de ahorro: Elija líneas económicas para pedidos no urgentes / Consolide múltiples artículos en un envío / ¡Los miembros VIP disfrutan 10% de descuento en envío! 💡",
+              "variables": {"vip_shipping_discount": "10"},
+              "fallback_action": "none"
+            },
+            {
+              "question_key": "product_size_weight_info",
+              "intent": "information",
+              "tags": ["dimensiones producto", "peso producto", "peso paquete", "peso envío", "info producto"],
+              "questions": [
+                "¿Cómo puedo conocer las dimensiones reales y el peso empacado de un producto antes de ordenar?",
+                "¿Dónde puedo encontrar las dimensiones y el peso del producto?",
+                "¿Dónde ver el tamaño del producto?",
+                "¿Cuál es el peso del paquete?",
+                "¿Cómo se calcula el peso de envío?",
+                "¿Dónde ver las especificaciones del producto",
+                "¿Cómo conocer las dimensiones y el peso del producto"
+              ],
+              "answer_template": "Puede encontrar información sobre dimensiones y peso del producto a través de:\n\n**1️⃣ Página del Catálogo de Productos** - Visite https://dropshipping.tangbuy.com/es-ES/productPool, cada página de detalle del producto lista las dimensiones y el peso neto\n\n**2️⃣ Página de Detalle del Producto** - Haga clic en cualquier producto, la página de detalle muestra:\n   - Dimensiones del producto (L×A×A)\n   - Peso neto (peso del producto en sí)\n   - Peso del paquete (peso de envío incluyendo materiales de empaque)\n\n**3️⃣ Nota sobre Peso de Envío** - Peso del paquete = peso neto + materiales de empaque (típicamente 50-100g), el peso exacto depende del empaque real\n\n💡 **Consejo**: Si el peso del paquete no se muestra en la página del producto, puede contactar al servicio al cliente para datos exactos, o hacer un pedido de prueba - el sistema mostrará el peso real al enviar.",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://dropshipping.tangbuy.com/es-ES/productPool"
+            }
+          ]
+        },
+        {
+          "id": "consolidated_shipping",
+          "name": "Ahorro con Envío Consolidado",
+          "qa_pairs": [
+            {
+              "question_key": "combined_shipping_benefit",
+              "intent": "value_proposition",
+              "tags": ["envío consolidado", "ahorro costos", "multi-proveedor"],
+              "questions": [
+                "¿Qué es el envío consolidado?",
+                "¿Pueden enviarse múltiples artículos juntos?",
+                "¿Cuánto puedo ahorrar con envío consolidado?",
+                "¿Pueden enviarse juntos productos de diferentes proveedores?"
+              ],
+              "answer_template": "¡El envío consolidado es una ventaja central de Tangbuy! Productos de sus diferentes proveedores pueden enviarse a nuestro almacén central de 40,000m², donde: 1) Realizamos QC secundario para asegurar calidad consistente; 2) Consolidamos y empacamos en un paquete para su cliente; 3) Ahorramos significativamente en múltiples tarifas de envío y aranceles aduaneros. Las pruebas muestran ahorro de costos logísticos del 30%-60% mientras mejoran la experiencia de desembalaje del cliente. 📦✨",
+              "variables": {},
+              "fallback_action": "recommend_feature",
+              "fallback_value": "consolidation_service"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "logistics",
+      "name": "Proveedores Logísticos y Seguimiento",
+      "description": "Canales logísticos, tiempos de entrega, seguimiento, desensibilización, sincronización de plugin",
+      "scenes": [
+        {
+          "id": "carrier_options",
+          "name": "Canales Logísticos Disponibles",
+          "qa_pairs": [
+            {
+              "question_key": "china_direct_vs_eu_warehouse",
+              "intent": "information",
+              "tags": ["envío directo China", "almacén UE", "origen envío"],
+              "questions": [
+                "¿Envían directamente desde China o tienen almacenes en la UE?",
+                "¿Tienen un almacén en Alemania?",
+                "¿Pueden enviar localmente desde España?",
+                "¿Desde dónde envían?"
+              ],
+              "answer_template": "El almacén principal de Tangbuy está ubicado en China. Usamos un modelo de 'adquisición directo de fábrica + QC/reestructuración de almacén central + envío directo al cliente': 1) Todos los pedidos completan QC/embalaje personalizado/envío consolidado en nuestro almacén central de China; 2) Enviamos directamente desde China a sus clientes de la UE/globales sin transitar por almacenes en el extranjero; 3) Ventajas: Gestión centralizada de inventario / Estándares de QC unificados / Envío consolidado ahorra costos. Si necesita servicios de almacén en el extranjero, ¡podemos ayudarle a conectar con proveedores de terceros! 📦✈️",
+              "variables": {},
+              "fallback_action": "none"
+            },
+            {
+              "question_key": "carrier_comparison",
+              "intent": "comparison",
+              "tags": ["comparación logística", "tiempo entrega", "recomendaciones"],
+              "questions": [
+                "¿Qué proveedor logístico es más rápido?",
+                "¿Cuál es la diferencia entre YunExpress y Correos de China?",
+                "¿Qué logística recomiendan para Europa?",
+                "¿Tienen líneas dedicadas para EE.UU.?"
+              ],
+              "answer_template": "Integramos 50+ líneas logísticas globales de primer nivel. Comparación rápida: 1) YunExpress: Línea dedicada EE.UU./Canadá preferida, 7-12 días, seguimiento de extremo a extremo, ideal para electrónicos; 2) Correos de China: Opción rentable para Europa, 10-18 días, fuerte despacho aduanero; 3) DHL/FedEx: Express global, 3-7 días, costo más alto; 4) Líneas por país: ej. Francia directo/Alemania dedicada, despacho aduanero optimizado. Para Europa, recomendamos línea estándar de Correos de China o líneas directas de Francia/Alemania para mejor equilibrio velocidad-costo. ⚖️",
+              "variables": {},
+              "fallback_action": "none"
+            }
+          ]
+        },
+        {
+          "id": "shipping_timeline",
+          "name": "Tiempos de Envío y Entrega Logística",
+          "qa_pairs": [
+            {
+              "question_key": "order_processing_shipping_time",
+              "intent": "information",
+              "tags": ["tiempo procesamiento", "velocidad envío", "tiempo logístico"],
+              "questions": [
+                "¿Cuánto tiempo toma el procesamiento de pedidos?",
+                "¿Cuántos días después del envío llegará?",
+                "¿Qué tan rápido pueden enviar como máximo?",
+                "¿Cómo se calcula el tiempo de envío?"
+              ],
+              "answer_template": "Explicación de cronograma: 1) Procesamiento de pedidos: Usualmente 2-3 días para completar QC y embalaje, logística inicia el día siguiente después de completar (envío mismo día si hay stock, más rápido 2 horas para artículos de almacén); 2) Tiempo de envío: Varía por país de destino, ~6-12 días hábiles a países principales de UE/EE.UU.; 3) Recomendación: Pre-almacene artículos de tendencia en nuestro almacén para lograr capacidad de 'pedido-a-envío', mejorando significativamente la experiencia del cliente. ⚡",
+              "variables": {},
+              "fallback_action": "none"
+            },
+            {
+              "question_key": "holiday_shipping_impact",
+              "intent": "information",
+              "tags": ["festivos", "Año Nuevo Chino", "Navidad", "impacto logístico"],
+              "questions": [
+                "¿La Navidad afectará los tiempos de entrega logística?",
+                "¿El Año Nuevo Chino afecta el envío?",
+                "¿Pueden llegar a tiempo los pedidos realizados durante festivos?",
+                "¿Cómo se organizan los festivos de producción?"
+              ],
+              "answer_template": "Organización de festivos: 1) Nuestras fábricas asociadas solo detienen producción durante el Año Nuevo Chino en febrero, reanudan completamente en marzo, producción normal en otros momentos; 2) Para temporadas pico como Navidad/Black Friday, le recordamos preparar inventario con 1-2 meses de anticipación y coordinar con proveedores logísticos para reservar capacidad; 3) Recomendamos planificar inventario con anticipación para períodos promocionales principales; podemos ayudar a desarrollar planes de 'abastecimiento previo a festivos + reabastecimiento posterior a festivos' para minimizar el impacto de festivos en la entrega. 🎄🧧",
+              "variables": {},
+              "fallback_action": "none"
+            }
+          ]
+        },
+        {
+          "id": "tracking_support",
+          "name": "Seguimiento Logístico y Sincronización de Plugin",
+          "qa_pairs": [
+            {
+              "question_key": "tracking_sync_shopify_plugin",
+              "intent": "technical",
+              "tags": ["plugin Shopify", "número seguimiento", "sincronización automática"],
+              "questions": [
+                "¿El plugin sincronizará automáticamente números de seguimiento a clientes?",
+                "¿Pueden los clientes ver información logística en Shopify?",
+                "¿Cómo se actualizan los números de seguimiento?",
+                "¿El plugin admite envío automático?"
+              ],
+              "answer_template": "¡Sí! El plugin Shopify de Tangbuy habilita cumplimiento totalmente automatizado: 1) Después del envío del pedido, el sistema sincroniza automáticamente números de seguimiento a sus pedidos de backend de Shopify; 2) Sus clientes pueden ver directamente el seguimiento logístico en páginas de pedidos de Shopify; 3) Admite envío masivo/envío parcial/seguimiento combinado de pedidos consolidados. ¡Usted solo autoriza el plugin; nosotros manejamos el resto con automatización! 🔌✨",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "/shopify-plugin"
+            },
+            {
+              "question_key": "logistics_privacy_desensitization",
+              "intent": "technical",
+              "tags": ["desensibilización logística", "seguimiento última milla", "confianza local"],
+              "questions": [
+                "¿Pueden ocultar el seguimiento logístico de etapa China?",
+                "¿Verán los clientes paquetes enviados desde China?",
+                "¿Cómo funciona la desensibilización logística?",
+                "¿Pueden sincronizar solo números de seguimiento de última milla a Shopify?"
+              ],
+              "answer_template": "La desensibilización de privacidad logística es un servicio exclusivo de Tangbuy: 1) ✅ Configurable: Mostrar solo números de seguimiento de última milla (números logísticos locales del país de destino) a clientes, mejorando confianza local; 2) ✅ Lograble: Ocultar o debilitar visualización de seguimiento de etapa China (efectos específicos dependen de rutas seleccionadas); 3) ⚠️ Limitaciones de plataforma: Algunos escenarios de Shopify no admiten sincronización directa de 'solo números de última milla' - usaremos el número de seguimiento final visible para clientes; 4) 📦 Sin impacto en backend: Aún puede ver rutas logísticas completas. Dígame su país de destino + plataforma + categoría de producto, y le emparejaré la mejor solución de desensibilización. 🔧",
+              "variables": {},
+              "fallback_action": "escalate",
+              "fallback_value": "tech_support"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "brand",
+      "name": "Marca y Marca Blanca",
+      "description": "Embalaje neutro, protección de marca, modelos de cooperación, procesos de marca privada",
+      "scenes": [
+        {
+          "id": "white_label_policy",
+          "name": "Políticas de Embalaje Neutro y Marca",
+          "qa_pairs": [
+            {
+              "question_key": "neutral_packaging_policy",
+              "intent": "policy",
+              "tags": ["marca blanca", "embalaje neutro", "sin exposición de marca"],
+              "questions": [
+                "¿Verán mis clientes la marca Tangbuy?",
+                "¿Usan embalaje neutro?",
+                "¿Pueden quitar sus facturas de los paquetes?",
+                "¿Sus paquetes tienen su publicidad?"
+              ],
+              "answer_template": "¡Soporte 100% de marca blanca! Prometemos: 1) Sin materiales de marketing de Tangbuy en paquetes; 2) Embalaje exterior neutro (cajas simples/bolsas de mensajería); 3) Opcional: Remover todos los documentos de precios o reemplazar con sus plantillas de factura personalizadas. Este es el núcleo del servicio de dropshipping de Tangbuy - Su marca, su relación con el cliente, siempre. Una de nuestras Cinco Promesas: ¡Absolutamente sin competir con vendedores, prohibición estricta de filtración interna de selección! 🔒",
+              "variables": {},
+              "fallback_action": "none"
+            }
+          ]
+        },
+        {
+          "id": "collaboration_model",
+          "name": "Modelo de Cooperación y Optimización de Ganancias",
+          "qa_pairs": [
+            {
+              "question_key": "brand_store_collaboration_process",
+              "intent": "consultation",
+              "tags": ["tiendas de marca", "proceso cooperación", "optimización ganancias"],
+              "questions": [
+                "¿Cómo cooperan con tiendas de marca?",
+                "¿Cómo nos ayudan a aumentar ganancias?",
+                "¿Cómo optimizan la logística?",
+                "¿Cuál es su proceso de cooperación?"
+              ],
+              "answer_template": "Ayudamos a tiendas de marca Shopify a escalar eficientemente - usted se enfoca en estrategia frontal y marketing, nosotros manejamos lo trasero: 📦 Servicios centrales: 1) 0 MOQ + 90 días de almacenamiento gratuito - Gestión de inventario sin presión; 2) Envío rápido de marca - Embalaje neutro + desensibilización logística para mejorar confianza local; 3) Cumplimiento automatizado - Sincronización completa de API de Shopify para actualizaciones automáticas de pedidos/seguimiento; 4) Selección de productos + embalaje personalizado - Soporte para visuales de marca unificados; 5) Envío consolidado + inserciones personalizadas - Tarjetas de agradecimiento/pequeños regalos para impulsar compras repetidas. Proceso: Selección de productos → Negociación de precio → Autorización de plugin → Cumplimiento automatizado → Revisión de datos. 🚀",
+              "variables": {},
+              "fallback_action": "recommend_service",
+              "fallback_value": "brand_consultation"
+            },
+            {
+              "question_key": "dropshipping_flexibility",
+              "intent": "information",
+              "tags": ["modelo flexible", "pedidos individuales/masivos", "sin inventario"],
+              "questions": [
+                "¿Es flexible el modelo de Dropshipping?",
+                "¿Puedo hacer tanto dropshipping de artículo individual como pedidos masivos?",
+                "¿Necesito preparar inventario yo mismo?",
+                "¿Qué hago después de recibir pedidos?"
+              ],
+              "answer_template": "El modelo de dropshipping de Tangbuy es simple y flexible: 1) Usted selecciona productos de nuestro catálogo para listar; después de que el cliente pide, manejamos embalaje + envío directo a clientes finales - cero presión de inventario para usted; 2) Admite tanto dropshipping de artículo individual como procesamiento de pedidos masivos, adecuado para pequeños vendedores y propietarios de marca por igual; 3) Con integración de plugin Shopify, logre automatización completa de 'selección-listado-cumplimiento-seguimiento', ahorrando 90% de su tiempo operativo. Dígame qué tipos de productos le interesan, y le ayudaré a comenzar rápidamente. 💡",
+              "variables": {},
+              "fallback_action": "none"
+            }
+          ]
+        },
+        {
+          "id": "private_label_process",
+          "name": "Proceso de Personalización de Marca Privada en 6 Pasos",
+          "qa_pairs": [
+            {
+              "question_key": "private_labelling_steps",
+              "intent": "process",
+              "tags": ["marca privada", "proceso 6 pasos", "personalización de marca", "aprobación muestra"],
+              "questions": [
+                "¿Cómo hago personalización de marca privada?",
+                "¿Cuál es el proceso de personalización?",
+                "¿Cuántos pasos desde solicitud hasta envío?",
+                "¿Cómo se aprueban las muestras?"
+              ],
+              "answer_template": "Personalización de marca privada de Tangbuy en 6 pasos simples: 1) Enviar requisitos - Proporcionar logo/elementos de marca/detalles de personalización; 2) Nosotros abastecemos - Emparejar fábricas óptimas basado en precio/MOQ/calidad; 3) Obtener cotización - Costos detallados incluyendo producto + embalaje + impresión; 4) Aprobación de muestra - Producimos y enviamos muestras para su revisión, revisiones admitidas; 5) Producción masiva + embalaje - Seguir producción全程, empacar con sus materiales de marca; 6) Envío + seguimiento - Enviar a tiempo, números de seguimiento se sincronizan automáticamente a su tienda. ¿Listo para comenzar? ¡Contáctese con su gerente de cuenta para una solución exclusiva! 🎨📦",
+              "variables": {},
+              "fallback_action": "recommend_service",
+              "fallback_value": "private_label_consultation"
+            }
+          ]
+        },
+        {
+          "id": "private_label_dropshipping",
+          "name": "Servicio de Marca Blanca con Dropshipping",
+          "qa_pairs": [
+            {
+              "question_key": "private_label_dropshipping_support",
+              "intent": "capability",
+              "tags": [
+                "marca blanca dropshipping",
+                "marca dropshipping",
+                "embalaje personalizado dropshipping",
+                "dropshipping de marca"
+              ],
+              "questions": [
+                "¿El proveedor puede etiquetar, empaquetar y enviar directamente a la dirección de mi cliente según mis requisitos?",
+                "¿Se puede hacer marca blanca con dropshipping?",
+                "¿Se puede enviar marca blanca directamente a los clientes?",
+                "¿La personalización de marca se puede hacer con dropshipping?",
+                "¿Puedo tener mi marca enviada a los clientes finales?",
+                "¿Cómo funciona el dropshipping de marca?",
+                "Embalaje personalizado al cliente final"
+              ],
+              "answer_template": "¡Por supuesto! Tangbuy ofrece servicio integrado de marca blanca con dropshipping:\n\n1) **Etiquetado personalizado** - Proporcione su logo/elementos de marca, nosotros imprimimos o adherimos al producto/empaque\n2) **Embalaje personalizado** - Use sus cajas de marca, tarjetas de agradecimiento, manuales de instrucciones, etc.\n3) **Envío directo al cliente** - Después del empaquetado, enviar directamente a la dirección de su cliente (modo dropshipping)\n\n💡 **Flujo de servicio**: Realizar pedido con requisitos de marca (archivos de logo, especificaciones de embalaje) → Fábrica personaliza → Control de calidad → Envío con su embalaje de marca → Logística entrega al cliente\n\n📦 **Opciones de embalaje**: Cajas de marca, cartones de marca, tarjetas de agradecimiento, hangtags de marca, manuales de instrucciones - todo personalizable\n\nSoporta prueba sin MOQ, ¡contacte a su gerente de cuenta para una solución exclusiva! 🎨📦",
+              "variables": {},
+              "fallback_action": "recommend_service",
+              "fallback_value": "private_label_consultation"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "customization",
+      "name": "Servicios de Personalización",
+      "description": "Procesos de personalización, MOQ, ciclos de producción, garantía de ejecución de embalaje",
+      "scenes": [
+        {
+          "id": "customization_capabilities",
+          "name": "Procesos y Requisitos de Personalización",
+          "qa_pairs": [
+            {
+              "question_key": "customization_processes_supported",
+              "intent": "information",
+              "tags": ["procesos personalización", "personalización", "personalización de marca"],
+              "questions": [
+                "¿Qué procesos de personalización admiten?",
+                "¿Pueden hacer personalización de productos personalizada?",
+                "¿Qué opciones de personalización están disponibles?",
+                "¿Cómo funciona la personalización de marca?"
+              ],
+              "answer_template": "Admitimos procesos de personalización integrales: 1) Nivel de producto: Impresión de logo/grabado láser/serigrafía/transferencia térmica/personalización de color/sustitución de materiales, etc.; 2) Nivel de embalaje: Cajas de color personalizadas/etiquetas de marca/tarjetas de agradecimiento/etiquetas antifalsificación/ensamblaje de cajas de regalo, etc.; 3) Nivel de servicio: Estándares de QC exclusivos/evidencia de video/programación de producción prioritaria. Nuestro equipo profesional puede ajustar detalles 1-a-1 según sus especificaciones de diseño de marca, ¡cumpliendo completamente sus necesidades de personalización! 🎨✨",
+              "variables": {},
+              "fallback_action": "recommend_service",
+              "fallback_value": "customization_consultation"
+            },
+            {
+              "question_key": "custom_moq_flexibility",
+              "intent": "policy",
+              "tags": ["MOQ personalizado", "lote pequeño", "precios escalonados"],
+              "questions": [
+                "¿Cuál es el MOQ para productos personalizados?",
+                "¿Pueden hacer personalización para lotes pequeños?",
+                "¿Tienen precios escalonados para personalización?",
+                "¿Es cara la personalización de lote pequeño?"
+              ],
+              "answer_template": "El MOQ de personalización es muy flexible: 1) Personalización básica (como etiquetado/tarjetas) puede comenzar desde tan bajo como {custom_low_moq} piezas; 2) Procesos complejos (como apertura de molde/embalaje exclusivo) típicamente comienzan desde {custom_high_moq} piezas; 3) La personalización de lote pequeño es totalmente admitida, adaptándose a diferentes escalas de negocio; 4) La personalización de lote grande disfruta mejores precios escalonados y soluciones exclusivas. Sugiero decirme primero sus necesidades de personalización y volumen estimado, y le emparejaré la solución más rentable. 📊",
+              "variables": {"custom_low_moq": "50", "custom_high_moq": "200"},
+              "fallback_action": "escalate",
+              "fallback_value": "customization_team"
+            }
+          ]
+        },
+        {
+          "id": "customization_timeline",
+          "name": "Cronograma y Entrega de Personalización",
+          "qa_pairs": [
+            {
+              "question_key": "custom_production_leadtime",
+              "intent": "information",
+              "tags": ["ciclo producción", "tiempo entrega", "festivos"],
+              "questions": [
+                "¿Cuánto tiempo toma la producción de productos personalizados?",
+                "¿Cómo se calcula el tiempo de entrega de personalización?",
+                "¿Los festivos afectan la personalización?",
+                "¿Pueden acelerarse los pedidos urgentes?"
+              ],
+              "answer_template": "Ciclo de producción de personalización: 1) Personalización estándar: Usualmente {custom_leadtime_days} días (incluyendo aprobación de muestra + producción masiva); 2) Personalización compleja: Ajustada apropiadamente basado en complejidad de proceso y volumen de pedido; 3) Organización de festivos: Fábricas solo detienen producción durante Año Nuevo Chino en febrero, producción normal en otros momentos, coordinamos capacidad con anticipación para temporadas pico; 4) Servicio urgente: Servicio acelerado pago disponible, puede comprimir cronograma hasta 30%. Recomendamos planificar con anticipación; ¡le ayudaremos a programar inversamente tiempo de producción + logística! ⏱️",
+              "variables": {"custom_leadtime_days": "5-15"},
+              "fallback_action": "none"
+            }
+          ]
+        },
+        {
+          "id": "custom_packaging_execution",
+          "name": "Garantía de Ejecución de Embalaje Personalizado",
+          "qa_pairs": [
+            {
+              "question_key": "custom_packaging_quality_control",
+              "intent": "assurance",
+              "tags": ["embalaje personalizado", "garantía ejecución", "prevención errores"],
+              "questions": [
+                "¿Cómo aseguran el uso correcto de embalaje personalizado?",
+                "¿Se mezclará embalaje de diferentes clientes?",
+                "¿Cómo se gestionan los materiales personalizados?",
+                "¿Cómo previenen enviar embalaje incorrecto?"
+              ],
+              "answer_template": "La ejecución de embalaje personalizado tiene triple garantía: 1) Almacenamiento dedicado - Sus materiales de embalaje personalizado (cajas/tarjetas/etiquetas, etc.) almacenados en ubicaciones de almacén independientes, vinculados por sistema a su cuenta + productos; 2) Bloqueo de proceso - Durante procesamiento de pedidos, el sistema empareja automáticamente su lista de materiales personalizados, el personal escanea para verificar; 3) Evidencia de video - Grabación de video de proceso completo de embalaje, disponible para su revisión en cualquier momento. Promesa: Su personalización, ejecución 100% precisa, ¡nunca enviada incorrecta! 🔒✅",
+              "variables": {},
+              "fallback_action": "none"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "warehouse",
+      "name": "Servicios de Almacén",
+      "description": "Gestión de almacén, período de almacenamiento gratuito, alertas de reabastecimiento",
+      "scenes": [
+        {
+          "id": "warehouse_management",
+          "name": "Gestión y Servicios de Almacén",
+          "qa_pairs": [
+            {
+              "question_key": "private_warehouse_service",
+              "intent": "information",
+              "tags": ["almacén privado", "gestión almacén", "inventario"],
+              "questions": [
+                "¿Cómo se gestiona el servicio de almacén?",
+                "¿Cómo veo el inventario?",
+                "¿Qué es almacén privado?",
+                "¿Dónde está ubicado su almacén?"
+              ],
+              "answer_template": "Proporcionamos servicios de gestión de almacén privado: Almacén central de transferencia moderno de 40,000m²+, gestión sistemática de sus materiales, control preciso de entrada y salida, haciendo su inventario claro y controlable. Admite estanterías expandibles, sin miedo a inventario grande. ¡Todos los materiales de embalaje personalizado almacenados en ubicaciones dedicadas para prevenir mezcla! 📦",
+              "variables": {},
+              "fallback_action": "none"
+            },
+            {
+              "question_key": "free_warehouse_period",
+              "intent": "policy",
+              "tags": ["90 días gratis", "período almacenamiento gratuito", "tarifas almacén"],
+              "questions": [
+                "¿Cómo se calculan las tarifas de almacén?",
+                "¿Qué significa 90 días gratis?",
+                "¿Qué pasa después de 90 días?",
+                "¿Cuál es la política de almacenamiento gratuito?"
+              ],
+              "answer_template": "¡Período de almacenamiento gratuito de 90 días! Gestión flexible de inventario para reducir su presión de capital inicial; puede solicitar envío en cualquier momento durante este período. Para períodos que exceden 90 días, podemos discutir planes de renovación por separado. ¡Estamos comprometidos a reducir su presión de capital inicial, ayudándole a comenzar ligero! 💰",
+              "variables": {},
+              "fallback_action": "none"
+            },
+            {
+              "question_key": "smart_restock_alert",
+              "intent": "information",
+              "tags": ["reabastecimiento inteligente", "alertas agotamiento", "monitoreo inventario"],
+              "questions": [
+                "¿Qué pasa si los productos se agotan?",
+                "¿Tienen alertas de reabastecimiento?",
+                "¿Cómo previenen agotamientos?",
+                "¿Cómo funciona el reabastecimiento inteligente?"
+              ],
+              "answer_template": "Servicio de alerta de reabastecimiento inteligente: Monitoreo de ventas en tiempo real con advertencias automáticas para prevenir riesgos de agotamiento. Tenemos recursos de multi-proveedor; si ocurren riesgos de agotamiento, alertaremos prontamente y activaremos proveedores de respaldo. ¡Los vendedores VIP pueden disfrutar 'asignación prioritaria' durante períodos de alta demanda para asegurar que artículos de tendencia nunca se agoten! 🔔",
+              "variables": {},
+              "fallback_action": "none"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "order",
+      "name": "Proceso de Pedido",
+      "description": "Proceso de realización de pedidos, políticas de muestras, cronogramas de envío",
+      "scenes": [
+        {
+          "id": "order_placement",
+          "name": "Proceso de Realización de Pedidos y Cumplimiento",
+          "qa_pairs": [
+            {
+              "question_key": "how_to_place_order",
+              "intent": "process",
+              "tags": ["realizar pedido", "proceso", "automatización"],
+              "questions": [
+                "¿Cómo realizo un pedido?",
+                "¿Qué hago después de que los clientes realicen pedidos?",
+                "¿Cuál es el proceso de pedido?",
+                "¿Cómo funciona el proceso de personalización?"
+              ],
+              "answer_template": "La realización de pedidos es súper simple, proceso totalmente automatizado: 1) Pedidos de clientes en su tienda se sincronizan automáticamente a 'Mis Pedidos' de backend de Tangbuy; 2) Usted confirma producto/solución logística/detalles de costos; 3) Complete pago en línea; 4) Tangbuy automáticamente adquiere + QC + empaca + envía; 5) Números de seguimiento logístico se sincronizan automáticamente de vuelta a su tienda para visualización en tiempo real del cliente. ¡Usted solo necesita 'confirmar + pagar'; el resto está totalmente automatizado! ⚡",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "/order-guide"
+            },
+            {
+              "question_key": "sample_policy",
+              "intent": "policy",
+              "tags": ["muestras", "pruebas", "amigable nuevo vendedor"],
+              "questions": [
+                "¿Puedo pedir muestras antes de pedir en masa?",
+                "¿Cómo se fijan los precios de muestras?",
+                "¿Es reembolsable el envío de muestras?",
+                "¿Qué tan rápido pueden enviarse las muestras?"
+              ],
+              "answer_template": "¡Absolutamente! Fomentamos muestreo antes de pedidos masivos. Política de muestras: 1) Productos a precio regular; 2) Envío a costo real (sin recargo). Bono: Si realiza pedidos masivos de 50+ piezas dentro de 30 días, reembolsaremos el costo del producto de muestra (envío excluido). Las muestras se envían dentro de 24-48 horas, servicio acelerado disponible. ¡Le permite experimentar productos sin riesgo! 🎁",
+              "variables": {},
+              "fallback_action": "none"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "refund",
+      "name": "Políticas de Reembolso y Devolución",
+      "description": "Condiciones de reembolso, políticas de reenvío, manejo de disputas",
+      "scenes": [
+        {
+          "id": "refund_reship_policy",
+          "name": "Detalles de Política Postventa",
+          "qa_pairs": [
+            {
+              "question_key": "refund_reship_policy_detail",
+              "intent": "policy",
+              "tags": ["reembolso", "reenvío", "postventa", "manejo disputas"],
+              "questions": [
+                "¿Cuál es su política de reembolso?",
+                "¿Pueden reenviar si se envían artículos incorrectos?",
+                "¿Cómo solicito postventa para problemas de calidad?",
+                "¿Qué pasa si la logística pierde paquetes?"
+              ],
+              "answer_template": "La política postventa de Tangbuy es transparente: ✅ Admite reembolso/reenvío: 1) Problemas de calidad/artículos incorrectos (solicitar dentro de 7 días de entrega, proporcionar fotos/videos + registros de queja de cliente); 2) Paquetes perdidos por logística/sin actualizaciones por más de 45 días (presentamos reclamos con proveedores logísticos en su nombre + organizamos reenvío/compensación). ❌ No admitido: 1) Dirección incorrecta/rechazo de cliente a aceptar; 2) Devoluciones subjetivas por problemas no de calidad (requiere acuerdo de fábrica y cliente cubre costos de envío de retorno). Todos los productos pasan QC + evidencia de video antes del envío, reduciendo riesgos postventa desde la fuente. 🛡️",
+              "variables": {},
+              "fallback_action": "escalate",
+              "fallback_value": "after_sales_team"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "market_insight",
+      "name": "Información de Mercado",
+      "description": "Selección de productos basada en tendencias, preparación estacional, recomendaciones de categoría",
+      "scenes": [
+        {
+          "id": "trend_selection",
+          "name": "Selección de Productos Basada en Tendencias y Preparación",
+          "qa_pairs": [
+            {
+              "question_key": "market_trend_products",
+              "intent": "information",
+              "tags": ["productos tendencia", "tendencias", "artículos populares", "información mercado"],
+              "questions": [
+                "¿Qué productos están de tendencia ahora?",
+                "¿Qué categorías venden mejor?",
+                "¿Cuáles son las tendencias del mercado?",
+                "¿Tienen recomendaciones de productos populares?"
+              ],
+              "answer_template": "Las tendencias del mercado cambian dinámicamente; actualmente, categorías de artículos para el hogar/herramientas de belleza/accesorios electrónicos/deportes al aire libre están funcionando bien. Tangbuy proporciona soporte de selección de productos basado en tendencias: Sincronización de tendencias de tráfico en tiempo real para ayudar a capturar precisamente puntos de entrada al mercado. ¿No está seguro? Dígame su mercado/categoría objetivo, y le recomendaré 3-5 productos potenciales para su referencia. 📊🔥",
+              "variables": {},
+              "fallback_action": "recommend_feature",
+              "fallback_value": "trend_insights"
+            },
+            {
+              "question_key": "seasonal_preparation",
+              "intent": "information",
+              "tags": ["Halloween", "Navidad", "Black Friday", "preparación estacional"],
+              "questions": [
+                "¿Cuándo deben listarse productos de Halloween?",
+                "¿Cuándo debe comenzar la preparación de inventario de Navidad?",
+                "¿Cuáles son productos populares de Black Friday?",
+                "¿Cómo planificar para productos estacionales?"
+              ],
+              "answer_template": "Los productos estacionales requieren preparación con anticipación: Productos de Halloween recomendados para comenzar preparación en agosto, productos de Navidad en julio-agosto, Black Friday recomendado con 2-3 meses de anticipación. Tangbuy puede ayudar a desarrollar planes de 'abastecimiento previo a festivos + reabastecimiento posterior a festivos', coordinar con proveedores logísticos para reservar capacidad, minimizando impacto de festivos en la entrega. 🎄🧧",
+              "variables": {},
+              "fallback_action": "none"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "advantage",
+      "name": "Ventajas Competitivas",
+      "description": "Ventajas centrales, comparación de precios, propuesta de valor",
+      "scenes": [
+        {
+          "id": "core_advantages",
+          "name": "Por Qué Elegir Tangbuy",
+          "qa_pairs": [
+            {
+              "question_key": "why_choose_tangbuy",
+              "intent": "value_proposition",
+              "tags": ["ventajas", "acelerador de marca", "era IA", "comparación", "razones para elegir"],
+              "questions": [
+                "¿Cuáles son sus ventajas sobre otros proveedores?",
+                "¿Por qué elegir Tangbuy?",
+                "¿Qué es diferente en ustedes comparado con otros?",
+                "¿Cuáles son sus ventajas centrales?",
+                "¿Por qué se definen como un acelerador de marca?"
+              ],
+              "answer_template": "¿Por qué Tangbuy? Porque no somos un intermediario logístico tradicional que depende sobre todo de coordinación manual. Somos un acelerador de marca impulsado por un sistema de cadena de suministro desarrollado internamente: 1) Impulsado por sistema - abastecimiento, QC, almacenamiento en la nube y cumplimiento están estandarizados y visibles; 2) Diseñado para marcas - no para lógica oportunista de corto plazo, sino para vendedores que construyen marcas duraderas; 3) Acompañamiento de extremo a extremo - desde validación de producto hasta personalización y cumplimiento global; 4) Más valioso en la era de la IA - reportes QC, videos y seguimiento ayudan a que la ejecución del back-end se convierta en confianza, reseñas y credibilidad de marca.",
+              "variables": {},
+              "fallback_action": "none"
+            },
+            {
+              "question_key": "price_value_explanation",
+              "intent": "negotiation",
+              "tags": ["precio", "valor", "premium de marca", "ROI"],
+              "questions": [
+                "¿Por qué sus precios son más altos que otros?",
+                "¿Cómo se compara su calidad con otros?",
+                "¿Cuál es el valor en el precio más alto?",
+                "¿Cómo se calcula el ROI general?",
+                "¿Por qué no competir solo con el precio unitario más bajo?",
+                "¿Cómo nos ayudan a crear premium de marca?"
+              ],
+              "answer_template": "Tangbuy no busca ganar simplemente con el costo unitario más bajo. Le ayudamos a lograr un mejor ROI a través de tres capas de valor: 1) Margen preservado - acercarse más al precio de fábrica en China y reducir recargos de distribución innecesarios; 2) Reducción de pérdidas - mediante QC, embalaje y cloud warehouse, reducir reseñas negativas, reembolsos e inestabilidad del cumplimiento; 3) Construcción de premium de marca - mediante personalización de bajo MOQ, convertir gradualmente productos de marca blanca en productos más reconocibles. La comparación real no es solo el costo unitario, sino reseñas, recompra y valor promedio del pedido. 💰✅",
+              "variables": {},
+              "fallback_action": "escalate",
+              "fallback_value": "sales_team"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tech_integration",
+      "name": "Integración Técnica",
+      "description": "Integración de API, integración ERP, plugins Shopify/TikTok",
+      "scenes": [
+        {
+          "id": "api_integration",
+          "name": "Integración de Sistema y Automatización",
+          "qa_pairs": [
+            {
+              "question_key": "system_api_integration",
+              "intent": "technical",
+              "tags": ["API", "ERP", "integración sistema", "automatización"],
+              "questions": [
+                "¿Tienen interfaces API?",
+                "¿Cómo me integro con sistemas ERP?",
+                "¿Cuál es el proceso de integración de sistema de pedidos?",
+                "¿Tienen soluciones digitales?"
+              ],
+              "answer_template": "Nuestra API interna admite integración estándar con Shopify e integración ERP para el procesamiento automatizado de pedidos. Después de autorizar la conexión, puede lograr: sincronización de productos / extracción automática de pedidos / devolución del seguimiento logístico / actualizaciones de inventario en tiempo real. Para necesidades relacionadas con TikTok Shop, póngase en contacto con un experto humano para una evaluación por separado. Documentación técnica: https://b2b.tangbuy.com 🔧",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://b2b.tangbuy.com"
+            },
+            {
+              "question_key": "tiktok_shop_integration",
+              "intent": "technical",
+              "tags": ["TikTok Shop", "plugin", "integración"],
+              "questions": [
+                "¿Admiten TikTok Shop?",
+                "¿Cómo me integro con TikTok?",
+                "¿Pueden sincronizarse automáticamente los pedidos de TikTok?"
+              ],
+              "answer_template": "Por ahora, **las capacidades estándar del sistema no admiten directamente la creación automática, captura ni integración estandarizada del cumplimiento de pedidos de TikTok Shop dentro del sistema**.\n\nSi usted vende en TikTok:\n- le recomendamos contactar directamente a un experto humano para su evaluación\n- aun así, podemos ayudarle, **por otros métodos**, con cumplimiento, compras, control de calidad, empaque y envío de pedidos de TikTok\n- la solución concreta dependerá de su flujo de pedidos, su operación y sus requisitos de servicio\n\n{{RECOMMEND_EXPERT}}",
+              "variables": {},
+              "fallback_action": "escalate",
+              "fallback_value": "tech_support"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sustainability",
+      "name": "Sostenibilidad y Eco-Amigable",
+      "description": "Embalaje eco-amigable, desarrollo sostenible, logística verde",
+      "scenes": [
+        {
+          "id": "eco_friendly",
+          "name": "Eco-Amigable y Desarrollo Sostenible",
+          "qa_pairs": [
+            {
+              "question_key": "eco_packaging_policy",
+              "intent": "information",
+              "tags": ["eco-amigable", "reciclable", "sostenible", "embalaje verde"],
+              "questions": [
+                "¿Son eco-amigables sus productos?",
+                "¿Tienen embalaje sostenible?",
+                "¿Puede personalizarse el embalaje con materiales eco-amigables?",
+                "¿Qué medidas eco-amigables tiene su almacén?"
+              ],
+              "answer_template": "Nos enfocamos en desarrollo sostenible: 1) Usamos cajas reciclables; 2) Bolsas plásticas exteriores de mensajería tienen procesos de reciclaje dedicados; 3) El ambiente de almacén cumple estándares eco-amigables internacionales; 4) Admite personalización de embalaje con materiales eco-amigables (ej. papel certificado FSC/materiales biodegradables). Si tiene requisitos eco-amigables específicos, ¡podemos personalizar soluciones exclusivas! 🌱",
+              "variables": {},
+              "fallback_action": "none"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "affiliate",
+      "name": "Programa de Afiliados y Referidos",
+      "description": "Recompensas de referidos, políticas de comisión, reparto de ingresos",
+      "scenes": [
+        {
+          "id": "affiliate_program",
+          "name": "Detalles del Programa de Referidos",
+          "qa_pairs": [
+            {
+              "question_key": "how_to_join_affiliate",
+              "intent": "information",
+              "tags": ["programa afiliados", "recompensas referidos", "comisión", "reparto ingresos"],
+              "questions": [
+                "¿Cómo me uno al programa de afiliados de Tangbuy?",
+                "¿Hay recompensas por referir nuevos usuarios?",
+                "¿Cómo se calculan las comisiones?",
+                "¿Pueden participar tanto individuos como organizaciones?"
+              ],
+              "answer_template": "¡Bienvenido a unirse al programa de referidos de Tangbuy! 🎁 Ofrecemos planes de comisión personalizados para referidores individuales y organizaciones socias: 1) Gane recompensas de comisión cuando usuarios nuevos referidos exitosamente se registren y generen pedidos; 2) Las tasas de comisión aumentan escalonadas basado en volumen de referidos/escala de pedidos; 3) Admite varios modelos de cooperación incluyendo KOL individuales/agencias MCN/proveedores de servicios. ¿Quiere aprender políticas detalladas? ¡Contáctese con su gerente de cuenta para una solución exclusiva! 🤝",
+              "variables": {},
+              "fallback_action": "escalate",
+              "fallback_value": "affiliate_manager"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "global_fallbacks": {
+    "unknown_question": "No puedo responder esta pregunta con suficiente precisión por ahora. Recomendamos contactar a un experto humano dedicado para obtener una respuesta más ajustada a su escenario de negocio. ¿Hay algo más en lo que pueda ayudarle?",
+    "escalate_to_human": "Entiendo que desea hablar con un especialista humano. Añada al experto 1v1 mostrado abajo y comparta su escenario de negocio y sus objetivos. Un experto real de Tangbuy hará seguimiento detallado.",
+    "variables": {
+      "human_response_hours": "24"
+    }
+  },
+  "conversation_guidelines": {
+    "tone": "Profesional pero accesible, empoderando a vendedores para tener éxito",
+    "response_length": "Mantener respuestas bajo 120 palabras; expandir cuando usuarios soliciten más detalle",
+    "core_principles": [
+      "Basar respuestas en materiales comerciales reales de Tangbuy; no fabricar información",
+      "Destacar el valor de la solución de cadena de suministro de extremo a extremo del acelerador de marca",
+      "Priorizar respuestas alrededor de expansión de marca, construcción de confianza en la era de la IA y entrega estable de la cadena de suministro",
+      "Solo usar contenido que exista explícitamente en la base de conocimiento, sea verificable y no absoluto; no prometer, garantizar, exagerar, exceder autoridad ni inventar hechos",
+      "El lenguaje de precios debe seguir la redacción aprobada: solo decir 'VIP disfruta 5-15% de descuento' o 'volúmenes mayores son negociables'; no ofrecer por cuenta propia descuentos extra, exenciones, precios internos ni ofertas especiales",
+      "El lenguaje sobre costo de envío debe seguir la redacción aprobada: no prometer activamente envío gratis, envío todo incluido ni una política universal de envío gratuito; guiar al usuario a la herramienta de estimación cuando la consulta involucre costos logísticos",
+      "El lenguaje sobre tiempos debe seguir la redacción aprobada: solo indicar 'si hay stock, puede salir tan rápido como en 2 horas', 'el QC y empaque estándar suelen tardar 2-3 días' y 'la entrega a Europa/EE. UU. es de alrededor de 6-12 días hábiles'; no hacer promesas absolutas de salida o llegada",
+      "El lenguaje sobre festivos y temporadas altas debe seguir la redacción aprobada: solo indicar que las fábricas se detienen durante el Año Nuevo chino y que en temporada alta se recomienda preparar stock con anticipación; no prometer ausencia de retrasos festivos ni cumplimiento ininterrumpido todo el año",
+      "El lenguaje sobre velocidad de abastecimiento debe seguir la redacción aprobada y no exagerarse como respuesta instantánea 7x24 o respuesta en tiempo real al segundo",
+      "El lenguaje sobre calidad debe seguir la redacción aprobada: solo decir QC al 100 %, tasa de defectos de alrededor del 2 % y compensación por defectos no detectados; no prometer cero defectos, perfección absoluta ni ausencia total de problemas de calidad",
+      "La responsabilidad postventa debe seguir la redacción aprobada: artículos incorrectos o problemas de calidad pueden admitir reenvío o compensación, mientras que direcciones incorrectas y rechazo del cliente no están cubiertos; no prometer cobertura total, compensación total ni reembolsos incondicionales",
+      "El lenguaje sobre disputas debe seguir la redacción aprobada: solo decir que se pueden proporcionar videos de QC, fotos del producto y evidencia logística; no prometer que una disputa de PayPal o de plataforma se ganará con seguridad",
+      "Precios, tiempos, postventa, cumplimiento e integración con plataformas deben mantenerse dentro de la redacción original; para preguntas desconocidas se debe usar fallback y derivación a experto humano",
+      "Combinar flexiblemente contenido de base de conocimientos; evitar respuestas mecánicas",
+      "Ajustar tono basado en contexto: amigable para nuevos vendedores, técnico para preguntas profesionales",
+      "Usar respuestas abiertas para preguntas desconocidas sin inventar hechos, y guiar hacia expertos humanos cuando sea necesario",
+      "Usar emojis apropiadamente para mejorar accesibilidad (📦✨✅🚀), pero no excederse"
+    ],
+    "proactive_suggestions": [
+      {"trigger_intent": "new_seller_inquiry", "suggestion": "¿Nuevo en dropshipping? ¡Consulte nuestra 'Guía de Inicio en 6 Pasos' para consejos operativos paso a paso, o envíe una solicitud de abastecimiento y déjenos ayudarle a seleccionar productos!"},
+      {"trigger_intent": "pricing_inquiry", "suggestion": "¿Quiere ver cuánto puede ahorrar? ¡Use nuestra calculadora de ganancias para estimar ingresos, o solicite VIP para disfrutar descuentos escalonados!"},
+      {"trigger_intent": "brand_upgrade", "suggestion": "¿Quiere transicionar de marca blanca a marca? ¡Tenemos soluciones de personalización livianas para lograr visuales de marca unificados a bajo costo y aumentar valor promedio de pedido!"},
+      {"trigger_intent": "eu_market", "suggestion": "¿Vende a mercados de la UE? ¡Apoyamos cumplimiento IOSS + desensibilización logística + asistencia de certificación CE para ayudarle a ir global sin preocupaciones! 🇪🇺"},
+      {"trigger_intent": "private_label_customization", "suggestion": "¿Quiere construir su propia marca? ¡El proceso de personalización de marca privada en 6 pasos de Tangbuy le acompaña desde solicitud hasta envío - haga clic para obtener su solución exclusiva! 🎨"}
+    ],
+    "service_commitments_reminder": [
+      "Sin Competencia con Vendedores - Prohibición estricta de filtración interna de selección",
+      "Propiedad del Inventario para Vendedores - El inventario puede devolverse o transferirse en cualquier momento",
+      "Compensación por Defectos No Detectados - Compensación completa de tarifas de procesamiento si se pasan problemas de calidad",
+      "Pedido Gratis por Envío Retrasado - Exención de tarifas si no se envía dentro de 24 horas después de almacenamiento",
+      "Aislamiento de Privacidad de Datos - Datos de vendedor usados solo para cumplimiento, nunca vendidos a terceros"
+    ]
+  },
+  "greetings": [
+    "¡Hola! Gracias por contactar a Tangbuy. Soy su consultor de cadena de suministro, feliz de servirle. 🔍",
+    "¡Hola! Puedo ayudar a responder cualquier pregunta sobre cadenas de suministro traseras de tiendas independientes.",
+    "¡Hola! Bienvenido a conocer los servicios de cadena de suministro de acelerador de marca de Tangbuy. ¿En qué puedo ayudarle hoy?"
+  ],
+  "farewells": [
+    "Espero que la información anterior sea útil. Si tiene otras preguntas, no dude en contactarme en cualquier momento.",
+    "Esperamos comunicarnos más con usted. Si es necesario, podemos discutir detalles vía WhatsApp.",
+    "¡Gracias por su consulta! Si está interesado, podemos organizar una discusión detallada para personalizar una solución para usted."
+  ]
+}

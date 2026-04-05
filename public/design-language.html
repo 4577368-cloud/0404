@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Design language — Tangbuy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* 与全站 index.html 中 --tb-* / --theme-* 命名对齐；主色 #ee1d36 */
+    :root {
+      --tb-brand: #ee1d36;
+      --tb-brand-hover: #c9142a;
+      --tb-brand-light: #ff4d5e;
+      --tb-brand-deep: #b01024;
+      --text: #080808;
+      --text-secondary: #222222;
+      --text-muted: #5a5a5a;
+      --text-placeholder: #ababab;
+      --border: #d8d8d8;
+      --border-hover: #898989;
+      --surface: #ffffff;
+      --surface-subtle: #fafafa;
+
+      --brand: var(--tb-brand);
+      --brand-hover: var(--tb-brand-hover);
+      --brand-light: var(--tb-brand-light);
+      --brand-deep: var(--tb-brand-deep);
+      --brand-tint: rgba(238, 29, 54, 0.1);
+      --brand-tint-strong: rgba(238, 29, 54, 0.16);
+
+      --accent-purple: #7a3dff;
+      --accent-pink: #ed52cb;
+      --accent-green: #00d722;
+      --accent-orange: #ff6b00;
+      --accent-yellow: #ffae13;
+
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --shadow-cascade:
+        rgba(0, 0, 0, 0) 0 84px 24px,
+        rgba(0, 0, 0, 0.01) 0 54px 22px,
+        rgba(0, 0, 0, 0.04) 0 30px 18px,
+        rgba(0, 0, 0, 0.08) 0 13px 13px,
+        rgba(0, 0, 0, 0.09) 0 3px 7px;
+      --shadow-brand-glow:
+        rgba(238, 29, 54, 0) 0 48px 20px,
+        rgba(238, 29, 54, 0.06) 0 28px 14px,
+        rgba(238, 29, 54, 0.12) 0 12px 10px,
+        rgba(238, 29, 54, 0.18) 0 4px 6px;
+
+      --font: "DM Sans", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-font-smoothing: antialiased; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      color: var(--text);
+      background: var(--surface);
+      line-height: 1.5;
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: clamp(32px, 6vw, 72px) clamp(20px, 4vw, 40px) 96px;
+    }
+
+    .eyebrow {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--brand);
+      margin: 0 0 12px;
+    }
+
+    .hero-title {
+      font-size: clamp(40px, 6vw, 72px);
+      font-weight: 600;
+      line-height: 1.04;
+      letter-spacing: -0.8px;
+      margin: 0 0 20px;
+      max-width: 14ch;
+    }
+
+    .hero-lead {
+      font-size: clamp(17px, 2.2vw, 20px);
+      font-weight: 500;
+      line-height: 1.45;
+      color: var(--text-secondary);
+      max-width: 36ch;
+      margin: 0 0 36px;
+    }
+
+    .section-label {
+      font-size: 12.8px;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin: 56px 0 20px;
+      padding-top: 48px;
+      border-top: 1px solid var(--border);
+    }
+
+    .section-label:first-of-type {
+      margin-top: 48px;
+      padding-top: 0;
+      border-top: none;
+    }
+
+    /* Buttons: translate(6px) on hover per DESIGN.md */
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 16px;
+      align-items: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: var(--font);
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 1.6;
+      letter-spacing: -0.16px;
+      padding: 12px 22px;
+      border-radius: var(--radius-sm);
+      border: none;
+      cursor: pointer;
+      transition: transform 0.22s ease, background 0.18s ease, box-shadow 0.18s ease, color 0.18s ease;
+    }
+
+    .btn:active { transform: translate(3px); }
+
+    .btn--primary {
+      background: var(--brand);
+      color: #fff;
+      box-shadow: var(--shadow-brand-glow);
+    }
+    .btn--primary:hover {
+      background: var(--brand-hover);
+      transform: translate(6px);
+    }
+
+    .btn--ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn--ghost:hover {
+      border-color: var(--border-hover);
+      transform: translate(6px);
+    }
+
+    .btn--soft {
+      background: var(--brand-tint);
+      color: var(--brand-deep);
+      font-weight: 600;
+    }
+    .btn--soft:hover {
+      background: var(--brand-tint-strong);
+      transform: translate(6px);
+    }
+
+    /* Color chips */
+    .palette {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 12px;
+    }
+
+    .swatch {
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      background: var(--surface);
+      box-shadow: var(--shadow-cascade);
+    }
+    .swatch__tone {
+      height: 72px;
+    }
+    .swatch__meta {
+      padding: 10px 12px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      letter-spacing: 0.02em;
+    }
+    .swatch__hex {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-placeholder);
+      margin-top: 4px;
+    }
+
+    /* Cards */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      background: var(--surface);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+      border-color: var(--border-hover);
+      box-shadow: var(--shadow-cascade);
+    }
+
+    .card__tag {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      background: var(--brand-tint);
+      color: var(--brand-deep);
+      margin-bottom: 14px;
+    }
+
+    .card h3 {
+      font-size: 22px;
+      font-weight: 600;
+      line-height: 1.3;
+      margin: 0 0 10px;
+    }
+
+    .card p {
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 1.6;
+      letter-spacing: -0.16px;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    /* Accent strip — secondary harmony */
+    .accent-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 28px;
+    }
+    .accent-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      box-shadow: 0 0 0 2px #fff, 0 0 0 3px var(--border);
+    }
+
+    /* Type scale block */
+    .type-sample {
+      border-left: 3px solid var(--brand);
+      padding-left: 20px;
+      margin: 24px 0;
+    }
+    .type-sample .t-display { font-size: 40px; font-weight: 600; line-height: 1.04; letter-spacing: -0.5px; margin-bottom: 8px; }
+    .type-sample .t-section { font-size: 28px; font-weight: 600; line-height: 1.15; margin-bottom: 8px; }
+    .type-sample .t-body { font-size: 16px; font-weight: 400; line-height: 1.6; color: var(--text-secondary); max-width: 52ch; }
+    .type-sample code {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      background: var(--surface-subtle);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    .footer-note {
+      margin-top: 64px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      font-size: 14px;
+      color: var(--text-muted);
+      max-width: 48ch;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <p class="eyebrow">Design system</p>
+    <h1 class="hero-title">清晰、利落、可信</h1>
+    <p class="hero-lead">
+      白底近黑字、克制圆角与层叠阴影，主色贯穿交互。版式可随产品变化，气质来自 token 的一致性。
+    </p>
+
+    <div class="btn-row">
+      <button type="button" class="btn btn--primary">主要操作</button>
+      <button type="button" class="btn btn--ghost">次要 / 透明</button>
+      <button type="button" class="btn btn--soft">浅色强调</button>
+    </div>
+
+    <div class="accent-strip" aria-hidden="true">
+      <span class="accent-dot" style="background: var(--brand);"></span>
+      <span class="accent-dot" style="background: var(--accent-purple);"></span>
+      <span class="accent-dot" style="background: var(--accent-pink);"></span>
+      <span class="accent-dot" style="background: var(--accent-green);"></span>
+      <span class="accent-dot" style="background: var(--accent-orange);"></span>
+      <span class="accent-dot" style="background: var(--accent-yellow);"></span>
+    </div>
+
+    <h2 class="section-label">Color roles</h2>
+    <div class="palette">
+      <div class="swatch">
+        <div class="swatch__tone" style="background: var(--brand);"></div>
+        <div class="swatch__meta">Primary<div class="swatch__hex">#ee1d36</div></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch__tone" style="background: var(--text);"></div>
+        <div class="swatch__meta">Near black<div class="swatch__hex">#080808</div></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch__tone" style="background: var(--border);"></div>
+        <div class="swatch__meta">Border<div class="swatch__hex">#d8d8d8</div></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch__tone" style="background: var(--brand-tint); border-bottom: 1px solid var(--border);"></div>
+        <div class="swatch__meta">Brand tint<div class="swatch__hex">10% red</div></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch__tone" style="background: var(--accent-purple);"></div>
+        <div class="swatch__meta">Accent<div class="swatch__hex">#7a3dff</div></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch__tone" style="background: var(--accent-green);"></div>
+        <div class="swatch__meta">Accent<div class="swatch__hex">#00d722</div></div>
+      </div>
+    </div>
+
+    <h2 class="section-label">Typography</h2>
+    <div class="type-sample">
+      <div class="t-display">Display 级标题</div>
+      <div class="t-section">小节标题 · 500–600</div>
+      <p class="t-body">正文 16px / 1.6，与 <code>DESIGN.md</code> 中的层级一致；大写标签用 10–13px、字间距略宽。西文使用 DM Sans 作为 WF Visual Sans 的替代。</p>
+    </div>
+
+    <h2 class="section-label">Surfaces</h2>
+    <div class="cards">
+      <article class="card">
+        <span class="card__tag">Badge</span>
+        <h3>卡片与边框</h3>
+        <p>1px <code>#d8d8d8</code>，圆角 4–8px。悬停时边框加深并叠五层阴影，保持干净、偏锐的工业感。</p>
+      </article>
+      <article class="card">
+        <span class="card__tag">Depth</span>
+        <h3>层叠阴影</h3>
+        <p>沿用文档中的五段 rgba 阴影栈，仅在需要「浮起」的模块使用，避免满屏糊影。</p>
+      </article>
+      <article class="card">
+        <span class="card__tag">Motion</span>
+        <h3>悬停位移</h3>
+        <p>可点击控件在 hover 时 <code>translate(6px)</code>，与 DESIGN.md 中的交互规范一致。</p>
+      </article>
+    </div>
+
+    <p class="footer-note">
+      本页仅作设计语言参考，不绑定具体业务版式。主色已映射为你的品牌红 <strong style="color: var(--brand);">#ee1d36</strong>；在 Vite 开发服务器下可访问 <code>/design-language.html</code>。
+    </p>
+  </div>
+</body>
+</html>
