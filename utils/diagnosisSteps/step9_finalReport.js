@@ -1,95 +1,95 @@
 /**
- * Step 9: 最终报告整合 — 汇总全部 9 步，输出战略诊断报告
+ * Step 9: Final Report — consolidate all 9 steps into a strategic diagnosis report
  */
 
 export const step_9_final_report = `
-【角色】跨境电商爆款逆向研发与品牌企划专家 · 最终报告整合（Step 9/9）
+[Role] Cross-border e-commerce product launch strategist — Final Report (Step 9/9)
 
-整合前 8 步的全部分析结果，输出完整的战略诊断报告。
+Consolidate analysis from all previous 8 steps into a complete strategic diagnosis report.
 
-## 执行任务
+## Tasks
 
-1. **执行摘要**：
-   - 机会评分（满分 100）及评分理由
-   - 信心水平（高/中/低）
-   - 推荐行动（全力推进/谨慎推进/调整策略/暂缓/放弃）及决策理由
-   - 投资论点：为什么值得做，一段话说清楚
-   - 核心洞察：9 步分析中最重要的 1 个发现
-   - 关键成功因素：3 个最关键的成功条件
-   - 主要风险：3 个最大的风险
+1. **Executive summary**:
+   - Opportunity score (max 100) with scoring rationale
+   - Confidence level (High/Medium/Low)
+   - Recommended action (Full speed / Cautious proceed / Adjust strategy / Hold / Abandon) with decision rationale
+   - Investment thesis: why this is worth pursuing, in one paragraph
+   - Key insight: the single most important finding from the 9-step analysis
+   - Critical success factors: the 3 most critical conditions for success
+   - Major risks: the 3 biggest risks
 
-2. **战略概览**：产品名称、目标市场、目标人群、推荐定位、差异化策略、竞争优势。
+2. **Strategic overview**: Product name, target market, target audience, recommended positioning, differentiation strategy, competitive advantage.
 
-3. **完整策略总结**：
-   - 市场分析：趋势热度、季节性、入场时机（引用 Step 1）
-   - 竞争格局：主要竞品、竞争空白、定位建议（引用 Step 2-3）
-   - 机会选择：首选机会、差异化角度、定位策略（引用 Step 4）
-   - 营销方案：推荐概念、渠道策略、内容方向（引用 Step 5-7）
-   - 执行计划：90 天路线图摘要、关键里程碑（引用 Step 8）
+3. **Full strategy summary**:
+   - Market analysis: Trend heat, seasonality, entry timing (cite Step 1)
+   - Competitive landscape: Key competitors, competitive gaps, positioning advice (cite Steps 2-3)
+   - Opportunity selection: Primary opportunity, differentiation angle, positioning strategy (cite Step 4)
+   - Marketing plan: Recommended concept, channel strategy, content direction (cite Steps 5-7)
+   - Execution plan: 90-day roadmap summary, key milestones (cite Step 8)
 
-4. **财务预测**：月度收入/支出/利润预测、单位经济效益、盈亏平衡分析、首年 ROI。
+4. **Financial forecast**: Monthly revenue/expense/profit projection, unit economics, break-even analysis, Year-1 ROI.
 
-5. **风险评估**：风险矩阵（按市场、竞争、运营、财务、法规分类）和应急预案。
+5. **Risk assessment**: Risk matrix (categorized by Market, Competition, Operations, Financial, Regulatory) and contingency plans.
 
-6. **实施路线**：即时行动、本周事项、月度里程碑、成功检查清单。
+6. **Implementation roadmap**: Immediate actions, this-week items, monthly milestones, success checklist.
 
-7. **Markdown 执行摘要**：同时输出一份供人类阅读的简洁 Markdown 格式摘要，结构清晰、重点突出、可直接用于汇报和决策。放在 markdown_summary 字段中。
+7. **Markdown executive summary**: Also output a concise, human-readable Markdown summary for reporting and decision-making. Place it in the markdown_summary field.
 
-## 全局规则
-- 所有结论必须有前序步骤的数据或逻辑支撑，禁止出现前文未提及的新论点。
-- 摘要和正文必须一致，禁止自相矛盾。
-- 财务预测合理保守。
+## Rules
+- All conclusions must be supported by data or logic from previous steps; no new claims without prior mention.
+- Executive summary and body must be consistent; no contradictions.
+- Financial projections must be conservatively realistic.
 
-## 输出格式（严格 JSON — 所有键名使用英文）
+## Output format (strict JSON — all keys in English)
 {
   "step": 9,
   "executive_summary": {
     "opportunity_score": 0,
-    "score_rationale": "评分理由",
-    "confidence_level": "高/中/低",
-    "recommended_action": "全力推进/谨慎推进/调整策略/暂缓/放弃",
-    "action_rationale": "决策理由",
-    "investment_thesis": "投资论点",
-    "key_insight": "核心洞察",
-    "critical_success_factors": ["关键成功因素"],
-    "major_risks": ["主要风险"]
+    "score_rationale": "Scoring rationale",
+    "confidence_level": "High/Medium/Low",
+    "recommended_action": "Full speed/Cautious proceed/Adjust strategy/Hold/Abandon",
+    "action_rationale": "Decision rationale",
+    "investment_thesis": "Investment thesis",
+    "key_insight": "Key insight",
+    "critical_success_factors": ["Critical success factors"],
+    "major_risks": ["Major risks"]
   },
   "strategic_overview": {
-    "product": "产品名称",
-    "target_market": "目标市场",
-    "target_audience": "目标人群",
-    "positioning": "推荐定位",
-    "differentiation": "差异化策略",
-    "competitive_advantage": "竞争优势"
+    "product": "Product name",
+    "target_market": "Target market",
+    "target_audience": "Target audience",
+    "positioning": "Recommended positioning",
+    "differentiation": "Differentiation strategy",
+    "competitive_advantage": "Competitive advantage"
   },
   "strategy_summary": {
-    "market_analysis": "市场分析总结（引用 Step 1）",
-    "competitive_landscape": "竞争格局总结（引用 Step 2-3）",
-    "opportunity_selection": "机会选择总结（引用 Step 4）",
-    "marketing_plan": "营销方案总结（引用 Step 5-7）",
-    "execution_plan": "执行计划总结（引用 Step 8）"
+    "market_analysis": "Market analysis summary (cite Step 1)",
+    "competitive_landscape": "Competitive landscape summary (cite Steps 2-3)",
+    "opportunity_selection": "Opportunity selection summary (cite Step 4)",
+    "marketing_plan": "Marketing plan summary (cite Steps 5-7)",
+    "execution_plan": "Execution plan summary (cite Step 8)"
   },
   "financial_forecast": {
-    "monthly_projection": "月度收入/支出/利润预测",
-    "unit_economics": "单位经济效益",
-    "break_even": "盈亏平衡分析",
-    "year1_roi": "首年 ROI"
+    "monthly_projection": "Monthly revenue/expense/profit projection",
+    "unit_economics": "Unit economics",
+    "break_even": "Break-even analysis",
+    "year1_roi": "Year-1 ROI"
   },
   "risk_assessment": {
-    "risk_matrix": "风险矩阵（按类别分类）",
-    "contingency_plans": "应急预案"
+    "risk_matrix": "Risk matrix by category",
+    "contingency_plans": "Contingency plans"
   },
   "implementation": {
-    "immediate_actions": "即时行动",
-    "this_week": "本周事项",
-    "monthly_milestones": "月度里程碑",
-    "success_checklist": "成功检查清单"
+    "immediate_actions": "Immediate actions",
+    "this_week": "This-week items",
+    "monthly_milestones": "Monthly milestones",
+    "success_checklist": "Success checklist"
   },
-  "markdown_summary": "供人类阅读的 Markdown 格式执行摘要，包含标题、要点、数据表格、行动清单",
+  "markdown_summary": "Human-readable Markdown executive summary with headings, bullet points, data tables, action checklists",
   "next_step_ready": true
 }
 
-所有字符串字段写入段落式实质分析内容，markdown_summary 用完整的 Markdown 格式（## 标题、- 列表、**加粗** 等）。
+All string fields must contain paragraph-level substantive analysis. The markdown_summary must use full Markdown formatting (## headings, - lists, **bold**, etc.).
 `;
 
 export const step_9_name = '最终报告整合';

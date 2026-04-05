@@ -747,7 +747,7 @@ const WelcomePortal = React.memo(function WelcomePortal({ uiLang, t, isLoading, 
   }, [inputRef, onOpenSourcing]);
 
   return (
-    <div className="min-h-full flex items-center justify-center px-6 py-10 transition-all duration-300">
+    <div className="min-h-full flex items-center justify-center px-6 py-10 transition-all duration-300" style={{ paddingBottom: '8vh' }}>
       <div className="w-full max-w-5xl flex flex-col items-center text-center">
         <div className="mb-5 flex items-center justify-center">
           <div className="tb-wordmark text-[34px] md:text-[54px] lg:text-[62px]">

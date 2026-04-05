@@ -1,6 +1,7 @@
 import React from 'react';
 import { supabase } from '../utils/supabaseClient.js';
 import { logTangbuyClick } from '../utils/supabaseUsage.js';
+import { fmtUsd, listPriceUsdForCard } from '../utils/catalogPriceDisplay.js';
 
 const TREND_LABELS = {
   zh: {
@@ -28,20 +29,6 @@ const TREND_LABELS = {
     influencerOrderRate: 'Creator conversion',
   },
 };
-
-function fmtUsd(n) {
-  const v = Number(n);
-  if (!Number.isFinite(v)) return 'N/A';
-  return `$${v.toFixed(2)}`.replace(/\.00$/, '');
-}
-
-function fmtPrice(rmb, uiLang) {
-  const rates = { zh: { rate: 1, symbol: '¥', decimals: 2 }, en: { rate: 0.14, symbol: '$', decimals: 2 } };
-  const cfg = rates[uiLang] || rates.en;
-  const n = Number(rmb);
-  if (!Number.isFinite(n) || n <= 0) return 'N/A';
-  return `${cfg.symbol}${(n * cfg.rate).toFixed(cfg.decimals)}`;
-}
 
 function translateZhToEn(text) {
   if (!text || !/[\u4e00-\u9fff]/.test(text)) return [];
@@ -248,7 +235,7 @@ export function ProductCard({ product, uiLang, t, onAskAi, onPublish }) {
         </h4>
 
         {hasPrice && (
-          <div className="text-sm font-bold text-gray-900 mb-1.5">{fmtPrice(p.priceRmb, uiLang)}</div>
+          <div className="text-sm font-bold text-gray-900 mb-1.5">{fmtUsd(listPriceUsdForCard(p))}</div>
         )}
 
         <div className="flex gap-1">

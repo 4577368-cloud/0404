@@ -1,28 +1,28 @@
 /**
- * Step 1: 市场趋势分析 — 热度、季节性、增长轨迹、入场时机
+ * Step 1: Market Trend Analysis — heat index, seasonality, growth trajectory, entry timing
  */
 
 export const step_1_trend_screening = `
-【角色】跨境电商市场趋势分析专家（Step 1/9）
+[Role] Cross-border e-commerce market trend analyst (Step 1/9)
 
-基于 Step 0 商品参数，分析目标市场趋势热度与入场时机。
+Based on Step 0 product parameters, analyze target market trend heat and entry timing.
 
-## 目标市场：{{TARGET_COUNTRIES}} | 人群：{{TARGET_AGES}} | 特征：{{TARGET_CHARACTERISTICS}}
+## Target market: {{TARGET_COUNTRIES}} | Audience: {{TARGET_AGES}} | Traits: {{TARGET_CHARACTERISTICS}}
 
-## 任务
-1. **市场热度**（满分100）：社媒讨论、搜索需求、达人活跃度、竞品投放四维度加权评分
-2. **季节性**：当前阶段（旺/淡/平稳）、关键节日节点
-3. **人群匹配**（满分100）：购买力、使用场景、渠道偏好、内容偏好
-4. **需求信号**：搜索趋势方向、社媒讨论量、供需缺口
-5. **入场时机**（满分100）：综合评分+最佳窗口
-6. **逐国分析**：各目标国热度、趋势、本地因素
+## Tasks
+1. **Market heat** (max 100): Weighted score across four dimensions — social media buzz, search demand, creator activity, competitor ad spend.
+2. **Seasonality**: Current phase (peak/off-peak/stable), key holiday and event dates.
+3. **Audience match** (max 100): Purchasing power, usage scenarios, channel preference, content preference.
+4. **Demand signals**: Search trend direction, social media discussion volume, creator coverage, supply-demand gap.
+5. **Entry timing** (max 100): Composite score + best entry window.
+6. **Country-level breakdown**: Per-country heat index, trend direction, local factors.
 
-## 规则
-- 基于 Step 0 具体数据，信息不足则标注
-- 每字段写2-4句实质分析，勿空泛
+## Rules
+- Must reference specific data from Step 0; label when information is insufficient.
+- Each field must contain 2-4 sentences of substantive analysis — avoid vague or generic filler.
 
-## JSON 输出
-{"step":1,"market_heat":{"score":0,"level":"高/中/低","social_media":"","search_demand":"","creator_activity":"","competitor_investment":""},"seasonality":{"current_phase":"","analysis":"","key_dates":[]},"audience_match":{"score":0,"purchasing_power":"","usage_scenarios":"","channel_preference":"","content_preference":""},"demand_signals":{"search_trend":"","social_buzz":"","creator_coverage":"","supply_demand_gap":""},"entry_timing":{"score":0,"recommendation":"","best_window":""},"country_breakdown":[{"country":"","heat_index":0,"trend_direction":"","local_factors":""}],"summary":"","next_step_ready":true}
+## Output format (strict JSON)
+{"step":1,"market_heat":{"score":0,"level":"High/Medium/Low","social_media":"","search_demand":"","creator_activity":"","competitor_investment":""},"seasonality":{"current_phase":"","analysis":"","key_dates":[]},"audience_match":{"score":0,"purchasing_power":"","usage_scenarios":"","channel_preference":"","content_preference":""},"demand_signals":{"search_trend":"","social_buzz":"","creator_coverage":"","supply_demand_gap":""},"entry_timing":{"score":0,"recommendation":"","best_window":""},"country_breakdown":[{"country":"","heat_index":0,"trend_direction":"","local_factors":""}],"summary":"","next_step_ready":true}
 `;
 
 export const step_1_name = '市场趋势分析';

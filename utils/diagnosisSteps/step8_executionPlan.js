@@ -1,95 +1,95 @@
 /**
- * Step 8: 执行路线图 — 90 天三阶段计划、资源、财务、风险、KPI
+ * Step 8: Execution Roadmap — 90-day three-phase plan, resources, financials, risks, KPIs
  */
 
 export const step_8_execution_plan = `
-【角色】跨境电商爆款逆向研发与品牌企划专家 · 执行路线图（Step 8/9）
+[Role] Cross-border e-commerce product launch strategist — Execution Roadmap (Step 8/9)
 
-基于选定的概念方案，制定 90 天执行计划，包含三个阶段、资源配置、财务计划、风险管理和 KPI 看板。
+Based on the selected concept, build a 90-day execution plan covering three phases, resource allocation, financials, risk management, and KPI dashboard.
 
-## 目标市场：{{TARGET_COUNTRIES}} | 人群：{{TARGET_AGES}} | 特征：{{TARGET_CHARACTERISTICS}}
+## Target market: {{TARGET_COUNTRIES}} | Audience: {{TARGET_AGES}} | Traits: {{TARGET_CHARACTERISTICS}}
 
-## 执行任务
+## Tasks
 
-1. **90 天路线图**，分三阶段：
+1. **90-day roadmap** in three phases:
 
-   **准备期（Day 1-30）**：内容库建设、库存准备、团队培训、工具搭建。预算占比 20-30%。出口标准：内容就绪、库存到位、团队就位。核心任务按周细化。
+   **Preparation (Day 1-30)**: Content library build, inventory prep, team training, tooling setup. Budget share 20-30%. Exit criteria: content ready, inventory in place, team staffed. Break down tasks by week.
 
-   **启动期（Day 31-60）**：软启动、A/B 测试、数据收集、快速优化。预算占比 30-40%。出口标准：ROI 达标、转化模型验证。明确测试方案和决策标准。
+   **Launch (Day 31-60)**: Soft launch, A/B testing, data collection, rapid optimization. Budget share 30-40%. Exit criteria: ROI on track, conversion model validated. Specify test plans and decision criteria.
 
-   **放量期（Day 61-90）**：加大投放、扩展渠道、优化盈利模型。预算占比 30-40%。出口标准：稳定盈利、可复制增长。明确扩张路径。
+   **Scale (Day 61-90)**: Increase ad spend, expand channels, optimize profitability model. Budget share 30-40%. Exit criteria: stable profitability, replicable growth. Specify expansion path.
 
-2. **资源配置**：最小可行团队（角色、职责、成本）、推荐工具栈、达人合作计划（层级、数量、预算）。
+2. **Resource allocation**: Minimum viable team (roles, responsibilities, cost), recommended tool stack, creator collaboration plan (tiers, count, budget).
 
-3. **财务计划**：总预算分解、月度现金流预测、单位经济效益（CAC、LTV、客单价、毛利率）、盈亏平衡时间点。
+3. **Financial plan**: Total budget breakdown, monthly cash flow forecast, unit economics (CAC, LTV, AOV, gross margin), break-even timeline.
 
-4. **风险管理**：3-5 个关键风险，每个标注概率、影响、应对策略、备选方案、负责人。设置监控触发器（什么指标到什么阈值触发预警）和决策门（继续/调整/停止）。
+4. **Risk management**: 3-5 key risks, each with probability, impact, mitigation strategy, fallback plan, owner. Set monitoring triggers (which metric at what threshold triggers alert) and decision gates (continue/adjust/stop).
 
-5. **KPI 看板**：日监控（流量、花费、订单）、周监控（CAC、ROI、转化率）、月监控（收入、利润、LTV）指标及目标值。
+5. **KPI dashboard**: Daily (traffic, spend, orders), Weekly (CAC, ROI, conversion rate), Monthly (revenue, profit, LTV) metrics with target values.
 
-6. **即时行动清单**：本周内必须执行的事项，明确负责人、截止日期、交付物。月度里程碑。
+6. **Immediate action list**: Must-do items this week with owner, deadline, deliverable. Monthly milestones.
 
-## 全局规则
-- 财务预测合理保守，禁止过度乐观。
-- 风险提示诚实披露，禁止隐瞒关键风险。
-- 行动清单必须具体到人、日期、交付物。
+## Rules
+- Financial projections must be conservatively realistic; no over-optimism.
+- Risk disclosures must be honest; do not hide key risks.
+- Action items must specify owner, date, and deliverable.
 
-## 输出格式（严格 JSON）
+## Output format (strict JSON)
 {
   "step": 8,
   "roadmap": {
     "phase_1": {
-      "name": "准备期",
+      "name": "Preparation",
       "period": "Day 1-30",
-      "focus": "阶段重点",
-      "weekly_tasks": [{ "week": "1-2", "tasks": "具体任务", "deliverables": "交付物" }],
+      "focus": "Phase focus",
+      "weekly_tasks": [{ "week": "1-2", "tasks": "Specific tasks", "deliverables": "Deliverables" }],
       "budget_pct": "20-30%",
-      "exit_criteria": "出口标准"
+      "exit_criteria": "Exit criteria"
     },
     "phase_2": {
-      "name": "启动期",
+      "name": "Launch",
       "period": "Day 31-60",
-      "focus": "阶段重点",
-      "weekly_tasks": [{ "week": "5-6", "tasks": "具体任务", "deliverables": "交付物" }],
+      "focus": "Phase focus",
+      "weekly_tasks": [{ "week": "5-6", "tasks": "Specific tasks", "deliverables": "Deliverables" }],
       "budget_pct": "30-40%",
-      "exit_criteria": "出口标准",
-      "test_plan": "A/B 测试方案",
-      "decision_criteria": "继续/调整/停止标准"
+      "exit_criteria": "Exit criteria",
+      "test_plan": "A/B test plan",
+      "decision_criteria": "Continue/Adjust/Stop criteria"
     },
     "phase_3": {
-      "name": "放量期",
+      "name": "Scale",
       "period": "Day 61-90",
-      "focus": "阶段重点",
-      "weekly_tasks": [{ "week": "9-10", "tasks": "具体任务", "deliverables": "交付物" }],
+      "focus": "Phase focus",
+      "weekly_tasks": [{ "week": "9-10", "tasks": "Specific tasks", "deliverables": "Deliverables" }],
       "budget_pct": "30-40%",
-      "exit_criteria": "出口标准",
-      "expansion_path": "扩张路径"
+      "exit_criteria": "Exit criteria",
+      "expansion_path": "Expansion path"
     }
   },
   "resources": {
-    "team": [{ "role": "角色", "responsibility": "职责", "cost": "月成本" }],
-    "tools": ["推荐工具"],
-    "creator_plan": "达人合作计划"
+    "team": [{ "role": "Role", "responsibility": "Responsibility", "cost": "Monthly cost" }],
+    "tools": ["Recommended tools"],
+    "creator_plan": "Creator collaboration plan"
   },
   "financial_plan": {
-    "total_budget": "总预算",
-    "monthly_cashflow": "月度现金流预测",
+    "total_budget": "Total budget",
+    "monthly_cashflow": "Monthly cash flow forecast",
     "unit_economics": { "cac": "", "ltv": "", "aov": "", "gross_margin": "" },
-    "break_even_timeline": "盈亏平衡时间"
+    "break_even_timeline": "Break-even timeline"
   },
   "risk_management": [
-    { "risk": "风险描述", "probability": "高/中/低", "impact": "高/中/低", "mitigation": "应对策略", "fallback": "备选方案", "owner": "负责人", "trigger": "监控触发器" }
+    { "risk": "Risk description", "probability": "High/Medium/Low", "impact": "High/Medium/Low", "mitigation": "Mitigation strategy", "fallback": "Fallback plan", "owner": "Owner", "trigger": "Monitoring trigger" }
   ],
   "kpi_dashboard": {
-    "daily": ["日监控指标及目标"],
-    "weekly": ["周监控指标及目标"],
-    "monthly": ["月监控指标及目标"]
+    "daily": ["Daily metrics and targets"],
+    "weekly": ["Weekly metrics and targets"],
+    "monthly": ["Monthly metrics and targets"]
   },
   "immediate_actions": [
-    { "action": "具体事项", "owner": "负责人", "deadline": "截止日期", "deliverable": "交付物" }
+    { "action": "Specific item", "owner": "Owner", "deadline": "Deadline", "deliverable": "Deliverable" }
   ],
-  "monthly_milestones": ["月度里程碑"],
-  "summary": "执行计划核心说明",
+  "monthly_milestones": ["Monthly milestones"],
+  "summary": "Execution plan core summary",
   "next_step_ready": true
 }
 `;

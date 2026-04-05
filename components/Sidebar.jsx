@@ -1,6 +1,14 @@
 import React from 'react';
 import { isAnonymousUser } from '../utils/supabaseAuth.js';
 import { createPortal } from 'react-dom';
+import { GoogleGIcon, FacebookIcon, TikTokIcon, YouTubeIcon, WhatsAppIcon } from './BrandSocialIcons.jsx';
+
+const FIND_US_LINKS = [
+  { key: 'tiktok', ariaLabel: 'TikTok', href: 'https://www.tiktok.com/@tangbuy_com', Icon: TikTokIcon },
+  { key: 'youtube', ariaLabel: 'YouTube', href: 'https://www.youtube.com/@TangbuyDropshipping', Icon: YouTubeIcon },
+  { key: 'facebook', ariaLabel: 'Facebook', href: 'https://www.facebook.com/profile.php?id=61579006720346', Icon: FacebookIcon },
+  { key: 'whatsapp', ariaLabel: 'WhatsApp', href: 'https://api.whatsapp.com/message/KSHZRLSWZN5HB1?autoload=1&app_absent=0', Icon: WhatsAppIcon },
+];
 
 const INTENT_RULES = [
   { re: /https?:\/\/[^\s]+/i, fn: (m) => { try { return '🔍 ' + new URL(m.match(/https?:\/\/[^\s]+/)[0]).hostname.replace('www.', ''); } catch { return '🔍 网站分析'; } } },
@@ -100,11 +108,9 @@ function generateSmartName(messages) {
   return cleaned.length <= 20 ? cleaned : cleaned.slice(0, 18) + '…';
 }
 
-const ABOUT_URL = 'https://dropshipping.tangbuy.com';
-
 export default function Sidebar({
   conversations, activeId, onSelect, onNew, onDelete, onRename, isOpen, onClose, onHotProducts, onSourcing, onAIReports, activeView, uiLang, collapsed, onToggleCollapse,
-  supabaseReady, authUser, onOpenAuthModal, onLinkGoogle, onSignOut, onSwitchAccount,
+  supabaseReady, authUser, onOpenAuthModal, onLinkGoogle, onLinkFacebook, onSignOut, onSwitchAccount,
 }) {
   const [editingId, setEditingId] = React.useState(null);
   const [editValue, setEditValue] = React.useState('');
@@ -114,6 +120,7 @@ export default function Sidebar({
   const convPickerBtnRef = React.useRef(null);
   const [userMenuOpen, setUserMenuOpen] = React.useState(false);
   const userChipRef = React.useRef(null);
+  const asideRef = React.useRef(null);
   const [userMenuPos, setUserMenuPos] = React.useState({ bottom: 80, left: 16, width: 240 });
 
   const isGuest = authUser && isAnonymousUser(authUser);
@@ -130,14 +137,28 @@ export default function Sidebar({
     : (userDisplayName || '?').slice(0, 1).toUpperCase();
 
   const updateUserMenuPos = React.useCallback(() => {
-    const el = userChipRef.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    const w = Math.min(260, window.innerWidth - 16);
+    const chip = userChipRef.current;
+    const aside = asideRef.current;
+    if (!chip || !aside) return;
+    const ar = aside.getBoundingClientRect();
+    const cr = chip.getBoundingClientRect();
+    const bottom = window.innerHeight - cr.top + 8;
+    const pad = 6;
+    const maxInSidebar = Math.max(160, ar.width - pad * 2);
+    // 收起为窄栏时：菜单贴在侧栏右侧展开，避免内容挤在 60px 内
+    if (ar.width < 120) {
+      const w = Math.min(260, window.innerWidth - ar.right - 16);
+      setUserMenuPos({
+        bottom,
+        left: ar.right + 8,
+        width: Math.max(200, w),
+      });
+      return;
+    }
     setUserMenuPos({
-      bottom: window.innerHeight - r.top + 8,
-      left: Math.max(8, Math.min(r.left, window.innerWidth - w - 8)),
-      width: w,
+      bottom,
+      left: ar.left + pad,
+      width: Math.min(248, maxInSidebar),
     });
   }, []);
 
@@ -224,7 +245,7 @@ export default function Sidebar({
         />
       )}
 
-      <aside style={{
+      <aside ref={asideRef} style={{
         width: collapsed ? 60 : 260, flexShrink: 0, display: 'flex', flexDirection: 'column',
         background: 'var(--theme-bg-secondary)', borderRight: '1px solid var(--theme-border)',
         transition: 'width 0.25s ease, transform 0.25s ease, background 0.3s', zIndex: 90, overflow: 'hidden',
@@ -525,11 +546,14 @@ export default function Sidebar({
                 }}
                 title={uiLang === 'zh' ? '登录' : 'Sign in'}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden style={{ flexShrink: 0, opacity: 0.85 }}>
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-                {!collapsed && <span>{uiLang === 'zh' ? '登录 / Sign in' : 'Sign in'}</span>}
+                {collapsed ? (
+                  <GoogleGIcon size={22} />
+                ) : (
+                  <>
+                    <GoogleGIcon size={18} />
+                    <span>{uiLang === 'zh' ? '登录 / Sign in' : 'Sign in'}</span>
+                  </>
+                )}
               </button>
             )}
             {supabaseReady && authUser && (
@@ -553,20 +577,27 @@ export default function Sidebar({
                 }}
                 title={isGuest ? notSignedInLabel : (authUser.email || '')}
               >
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                {collapsed ? (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden style={{ flexShrink: 0, color: 'var(--theme-text-secondary)' }}>
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
                 ) : (
-                  <span style={{
-                    width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
-                    background: 'color-mix(in srgb, var(--brand-primary-fixed) 20%, transparent)',
-                    color: 'var(--brand-primary-fixed)', fontSize: 12, fontWeight: 700,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>{userInitial}</span>
-                )}
-                {!collapsed && (
-                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--theme-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
-                    {userDisplayName}
-                  </span>
+                  <>
+                    {avatarUrl ? (
+                      <img src={avatarUrl} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                    ) : (
+                      <span style={{
+                        width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+                        background: 'color-mix(in srgb, var(--brand-primary-fixed) 20%, transparent)',
+                        color: 'var(--brand-primary-fixed)', fontSize: 12, fontWeight: 700,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>{userInitial}</span>
+                    )}
+                    <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--theme-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+                      {userDisplayName}
+                    </span>
+                  </>
                 )}
               </button>
             )}
@@ -608,6 +639,7 @@ export default function Sidebar({
             left: userMenuPos.left,
             bottom: userMenuPos.bottom,
             width: userMenuPos.width,
+            maxWidth: userMenuPos.width,
             zIndex: 150,
             borderRadius: 12,
             border: '1px solid var(--theme-border)',
@@ -615,11 +647,13 @@ export default function Sidebar({
             boxShadow: '0 12px 32px rgba(0,0,0,0.14)',
             padding: '8px 0',
             maxHeight: 'min(320px, 70vh)',
-            overflow: 'auto',
+            overflow: 'hidden',
+            overflowY: 'auto',
+            boxSizing: 'border-box',
           }}
         >
           {!isGuest && (
-            <div style={{ padding: '8px 14px 10px', borderBottom: '1px solid var(--theme-border)', fontSize: 11, color: 'var(--theme-text-muted)', wordBreak: 'break-all' }}>
+            <div style={{ padding: '8px 12px 10px', borderBottom: '1px solid var(--theme-border)', fontSize: 11, color: 'var(--theme-text-muted)', wordBreak: 'break-all', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {authUser.email}
             </div>
           )}
@@ -627,20 +661,105 @@ export default function Sidebar({
             <button
               type="button"
               onClick={() => { setUserMenuOpen(false); onLinkGoogle(); }}
-              style={{ width: '100%', textAlign: 'left', padding: '10px 14px', fontSize: 13, border: 'none', background: 'transparent', color: 'var(--brand-primary-fixed)', fontWeight: 600, cursor: 'pointer' }}
+              style={{
+                width: '100%',
+                maxWidth: '100%',
+                boxSizing: 'border-box',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '10px 12px',
+                fontSize: 12,
+                border: 'none',
+                background: 'transparent',
+                color: 'var(--theme-text)',
+                fontWeight: 600,
+                cursor: 'pointer',
+                textAlign: 'left',
+              }}
             >
-              {uiLang === 'zh' ? '使用 Google 登录' : 'Sign in with Google'}
+              <GoogleGIcon size={18} />
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{uiLang === 'zh' ? '使用 Google 登录' : 'Sign in with Google'}</span>
             </button>
           )}
-          <a
-            href={ABOUT_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => setUserMenuOpen(false)}
-            style={{ display: 'block', padding: '10px 14px', fontSize: 13, color: 'var(--theme-text)', textDecoration: 'none' }}
+          {isGuest && onLinkFacebook && (
+            <button
+              type="button"
+              onClick={() => { setUserMenuOpen(false); onLinkFacebook(); }}
+              style={{
+                width: '100%',
+                maxWidth: '100%',
+                boxSizing: 'border-box',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '10px 12px',
+                fontSize: 12,
+                border: 'none',
+                background: 'transparent',
+                color: 'var(--theme-text)',
+                fontWeight: 600,
+                cursor: 'pointer',
+                textAlign: 'left',
+              }}
+            >
+              <FacebookIcon size={18} />
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{uiLang === 'zh' ? '使用 Facebook 登录' : 'Sign in with Facebook'}</span>
+            </button>
+          )}
+          <div
+            role="toolbar"
+            aria-label={uiLang === 'zh' ? '找到我们 · 社交媒体' : 'Find us · Social links'}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 14,
+              padding: '10px 12px',
+              width: '100%',
+              maxWidth: '100%',
+              boxSizing: 'border-box',
+              color: 'var(--theme-text)',
+            }}
           >
-            {uiLang === 'zh' ? '关于我们' : 'About us'}
-          </a>
+            <span
+              style={{
+                fontSize: 13,
+                fontWeight: 700,
+                color: 'var(--theme-text)',
+                flexShrink: 0,
+                lineHeight: 1.2,
+              }}
+            >
+              {uiLang === 'zh' ? '找到我们' : 'Find us'}
+            </span>
+            {FIND_US_LINKS.map(({ key, href, Icon, ariaLabel }) => (
+              <a
+                key={key}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={ariaLabel}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 28,
+                  height: 28,
+                  border: 'none',
+                  outline: 'none',
+                  background: 'transparent',
+                  padding: 0,
+                  cursor: 'pointer',
+                  lineHeight: 0,
+                  flexShrink: 0,
+                }}
+              >
+                <Icon size={20} />
+              </a>
+            ))}
+          </div>
           {!isGuest && (
             <button
               type="button"
@@ -650,13 +769,15 @@ export default function Sidebar({
               {uiLang === 'zh' ? '切换账号' : 'Switch account'}
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => { setUserMenuOpen(false); onSignOut?.(); }}
-            style={{ width: '100%', textAlign: 'left', padding: '10px 14px', fontSize: 13, border: 'none', borderTop: '1px solid var(--theme-border)', background: 'transparent', color: '#b91c1c', cursor: 'pointer' }}
-          >
-            {uiLang === 'zh' ? '退出登录' : 'Sign out'}
-          </button>
+          {!isGuest && (
+            <button
+              type="button"
+              onClick={() => { setUserMenuOpen(false); onSignOut?.(); }}
+              style={{ width: '100%', textAlign: 'left', padding: '10px 14px', fontSize: 13, border: 'none', borderTop: '1px solid var(--theme-border)', background: 'transparent', color: '#b91c1c', cursor: 'pointer' }}
+            >
+              {uiLang === 'zh' ? '退出' : 'Log Out'}
+            </button>
+          )}
         </div>,
         document.body
       )}

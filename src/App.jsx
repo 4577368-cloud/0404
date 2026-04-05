@@ -138,15 +138,31 @@ export default function App() {
     return () => { cancelled = true; };
   }, [authUser]);
 
+  const oauthRedirectTo = React.useCallback(
+    () => `${window.location.origin}${window.location.pathname || '/'}`,
+    []
+  );
+
   const handleSignInGoogle = React.useCallback(async () => {
     if (!supabase) return;
-    const redirectTo = `${window.location.origin}${window.location.pathname || '/'}`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo },
+      options: { redirectTo: oauthRedirectTo() },
     });
     if (error) console.error('[auth] Google sign-in:', error.message);
-  }, []);
+  }, [oauthRedirectTo]);
+
+  const handleSignInFacebook = React.useCallback(async () => {
+    if (!supabase) return;
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'facebook',
+      options: {
+        redirectTo: oauthRedirectTo(),
+        scopes: 'email,public_profile',
+      },
+    });
+    if (error) console.error('[auth] Facebook sign-in:', error.message);
+  }, [oauthRedirectTo]);
 
   const handleSignOut = React.useCallback(async () => {
     if (!supabase) return;
@@ -377,6 +393,7 @@ export default function App() {
         authUser={authUser}
         onOpenAuthModal={() => setAuthModalOpen(true)}
         onLinkGoogle={handleSignInGoogle}
+        onLinkFacebook={handleSignInFacebook}
         onSignOut={handleSignOut}
         onSwitchAccount={handleSwitchAccount}
       />
@@ -453,6 +470,7 @@ export default function App() {
         onClose={() => setAuthModalOpen(false)}
         uiLang={lang}
         onGoogleSignIn={handleSignInGoogle}
+        onFacebookSignIn={handleSignInFacebook}
         supabaseReady={isSupabaseConfigured()}
       />
     </div>

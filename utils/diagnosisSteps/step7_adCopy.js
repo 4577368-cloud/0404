@@ -1,89 +1,89 @@
 /**
- * Step 7: 广告文案套件 — 核心信息、标题、正文、CTA、平台适配
+ * Step 7: Ad Copy Kit — core messaging, headlines, body copy, CTAs, platform adaptation
  */
 
 export const step_7_ad_copy = `
-【角色】跨境电商爆款逆向研发与品牌企划专家 · 广告文案套件（Step 7/9）
+[Role] Cross-border e-commerce product launch strategist — Ad Copy Kit (Step 7/9)
 
-基于 Step 5 推荐概念和 Step 6 视觉方向，生成多平台广告文案体系。
+Based on the recommended concept from Step 5 and visual direction from Step 6, generate a multi-platform ad copy system.
 
-## 目标市场：{{TARGET_COUNTRIES}} | 人群：{{TARGET_AGES}} | 特征：{{TARGET_CHARACTERISTICS}}
+## Target market: {{TARGET_COUNTRIES}} | Audience: {{TARGET_AGES}} | Traits: {{TARGET_CHARACTERISTICS}}
 
-## 执行任务
+## Tasks
 
-1. **核心信息**：大创意（Big Idea）、核心承诺（Core Promise）、支撑证据（Proof Points）。
+1. **Core messaging**: Big Idea, Core Promise, Proof Points.
 
-2. **标题文案**（每类 2-3 个变体）：
-   - 好奇型：引发求知欲
-   - 稀缺型：制造紧迫感
-   - 社交证明型：利用从众心理
-   - 痛点解决型：直击核心痛点
-   - 利益型：明确承诺好处
-   - 紧迫型：限时限量
-   每个标题标注适用场景和目标情绪。
+2. **Headlines** (2-3 variants per type):
+   - Curiosity: Sparks desire to know more
+   - Scarcity: Creates urgency
+   - Social proof: Leverages herd mentality
+   - Pain-point: Directly addresses core pain
+   - Benefit: Clearly promises value
+   - Urgency: Limited-time/quantity
+   Label each with use case and target emotion.
 
-3. **正文文案**（短/中/长三个版本）：
-   - 短版（50-100 字）：适合 TikTok、Stories
-   - 中版（150-300 字）：适合 Instagram Feed、Facebook
-   - 长版（500+ 字）：适合详情页、邮件
-   按文案结构分类（痛点→方案、AIDA、功能→优势→利益），标注针对的痛点和强调的利益。
+3. **Body copy** (3 versions):
+   - Short (50-100 words): For TikTok, Stories
+   - Medium (150-300 words): For Instagram Feed, Facebook
+   - Long (500+ words): For detail pages, email
+   Note the copywriting structure (Pain→Solution, AIDA, Feature→Advantage→Benefit), targeted pain point, and emphasized benefit.
 
-4. **行动号召（CTA）**：包含行动动词 + 价值重申 + 紧迫元素，给出 5-8 个变体和建议按钮样式。
+4. **CTAs**: Action verb + Value restatement + Urgency element. Provide 5-8 variants with suggested button styles.
 
-5. **话题标签**：按品牌类、类目类、趋势类、社群类、活动类分组，每组 5-10 个。
+5. **Hashtags**: Grouped by Brand, Category, Trending, Community, Campaign — 5-10 per group.
 
-6. **平台适配文案**：
-   - TikTok：轻松口语化，50-150 字符，3-5 个标签
-   - Instagram：生活方式感，首段 125 字符抓注意，标签放评论区
-   - Facebook：清晰价值主张，标题 40-80 字符，明确 CTA
+6. **Platform-adapted copy**:
+   - TikTok: Casual and conversational, 50-150 characters, 3-5 hashtags
+   - Instagram: Lifestyle feel, first paragraph grabs within 125 characters, hashtags in comments
+   - Facebook: Clear value proposition, headline 40-80 characters, explicit CTA
 
-7. **A/B 测试计划**：2-3 组测试方案，明确测试变量、对照组、成功指标、测试优先级。
+7. **A/B test plan**: 2-3 test schemes with test variable, control group, success metric, priority.
 
-8. **文案指南**：品牌声音特质、语言风格、文化适配要点、禁用词清单。
+8. **Copy guidelines**: Brand voice traits, language style, cultural adaptation notes, forbidden words list.
 
-## 全局规则
-- 文案语言必须匹配目标市场的本地语言习惯，避免直译中文。
-- 所有文案必须与 Step 5/6 的品牌调性一致。
+## Rules
+- Copy language MUST match the target market's local language conventions; avoid literal translations.
+- All copy must align with the brand tone from Steps 5-6.
 
-## 输出格式（严格 JSON）
+## Output format (strict JSON)
 {
   "step": 7,
   "core_message": {
-    "big_idea": "大创意",
-    "core_promise": "核心承诺",
-    "proof_points": ["支撑证据"]
+    "big_idea": "Big idea",
+    "core_promise": "Core promise",
+    "proof_points": ["Proof points"]
   },
   "headlines": [
-    { "type": "好奇/稀缺/社交证明/痛点/利益/紧迫", "text": "标题文案", "use_case": "适用场景", "target_emotion": "目标情绪" }
+    { "type": "Curiosity/Scarcity/Social-proof/Pain-point/Benefit/Urgency", "text": "Headline copy", "use_case": "Use case", "target_emotion": "Target emotion" }
   ],
   "body_copy": [
-    { "length": "短/中/长", "structure": "文案结构", "text": "完整正文", "pain_point": "针对的痛点", "benefit": "强调的利益" }
+    { "length": "Short/Medium/Long", "structure": "Copywriting structure", "text": "Full body copy", "pain_point": "Targeted pain point", "benefit": "Emphasized benefit" }
   ],
   "ctas": [
-    { "text": "CTA 文案", "button_style": "按钮样式建议" }
+    { "text": "CTA copy", "button_style": "Button style suggestion" }
   ],
   "hashtags": {
-    "brand": ["品牌标签"],
-    "category": ["类目标签"],
-    "trending": ["趋势标签"],
-    "community": ["社群标签"],
-    "campaign": ["活动标签"]
+    "brand": ["Brand tags"],
+    "category": ["Category tags"],
+    "trending": ["Trending tags"],
+    "community": ["Community tags"],
+    "campaign": ["Campaign tags"]
   },
   "platform_copy": {
-    "tiktok": "TikTok 文案",
-    "instagram": "Instagram 文案",
-    "facebook": "Facebook 文案"
+    "tiktok": "TikTok copy",
+    "instagram": "Instagram copy",
+    "facebook": "Facebook copy"
   },
   "ab_test_plan": [
-    { "test_name": "测试名称", "variable": "测试变量", "control": "对照组", "success_metric": "成功指标", "priority": "优先级" }
+    { "test_name": "Test name", "variable": "Test variable", "control": "Control group", "success_metric": "Success metric", "priority": "Priority" }
   ],
   "copy_guidelines": {
-    "brand_voice": "品牌声音特质",
-    "style": "语言风格",
-    "cultural_notes": "文化适配要点",
-    "forbidden_words": ["禁用词"]
+    "brand_voice": "Brand voice traits",
+    "style": "Language style",
+    "cultural_notes": "Cultural adaptation notes",
+    "forbidden_words": ["Forbidden words"]
   },
-  "summary": "文案体系核心说明",
+  "summary": "Copy system core summary",
   "next_step_ready": true
 }
 `;

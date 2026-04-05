@@ -13,7 +13,7 @@ const STEP_TOKEN_LIMITS = {
   2: 4800,
   3: 4200,
   4: 4000,
-  5: 4000,
+  5: 4800,
   6: 3200,
   7: 3200,
   8: 4200,
@@ -177,10 +177,10 @@ export function compressStepOutput(stepNumber, fullOutput) {
  */
 function outputLanguageBlock(uiLang = 'en') {
   const map = {
-    zh: '\n\n【输出语言】JSON 的键名（key）保持英文；所有面向读者的分析正文、列表项、表格单元格中的自然语言必须使用简体中文。',
-    en: '\n\n【Output language】Keep JSON keys in English; all human-readable analysis text, list items, and table cells MUST be in English.',
-    es: '\n\n【Idioma de salida】Mantén las claves JSON en inglés; todo el texto analítico legible debe estar en español.',
-    fr: '\n\n【Langue de sortie】Gardez les clés JSON en anglais ; tout le texte d\'analyse lisible doit être en français.',
+    zh: '\n\n## CRITICAL — Output Language Rule\nJSON keys MUST stay in English. ALL human-readable text (analysis paragraphs, list items, table cells, descriptions) MUST be written entirely in **Simplified Chinese (简体中文)**. Do NOT mix English words into Chinese sentences except for proper nouns, brand names, and standard acronyms (ROI, CAC, SKU, etc.).',
+    en: '\n\n## CRITICAL — Output Language Rule\nJSON keys MUST stay in English. ALL human-readable text (analysis paragraphs, list items, table cells, descriptions) MUST be written entirely in **English**. Do NOT mix Chinese characters into the output.',
+    es: '\n\n## CRITICAL — Output Language Rule\nJSON keys MUST stay in English. ALL human-readable text MUST be written entirely in **Spanish (Español)**. Do NOT mix English or Chinese into Spanish sentences except for proper nouns and standard acronyms.',
+    fr: '\n\n## CRITICAL — Output Language Rule\nJSON keys MUST stay in English. ALL human-readable text MUST be written entirely in **French (Français)**. Do NOT mix English or Chinese into French sentences except for proper nouns and standard acronyms.',
   };
   return map[uiLang] || map.en;
 }
@@ -220,7 +220,7 @@ export function buildStepContext(stepNumber, productData, targetMarket, previous
   if (previousStates && previousStates.length > 0) {
     const stateContext = buildCompressedPreviousContext(previousStates, prevBudget);
 
-    filledPrompt += `\n\n【前序步骤关键洞察摘要】\n\n${stateContext}\n\n请基于上述前序分析结果，继续执行当前步骤任务。`;
+    filledPrompt += `\n\n## Previous Steps — Key Insights Summary\n\n${stateContext}\n\nBased on the above prior analysis, proceed with the current step.`;
   }
 
   return `${filledPrompt}${outputLanguageBlock(uiLang)}`;

@@ -1,14 +1,9 @@
 import React from 'react';
 import { supabase } from '../utils/supabaseClient.js';
 import { logTangbuyClick } from '../utils/supabaseUsage.js';
+import { fmtUsd, listPriceUsdForCard, tangbuyUsdForCard } from '../utils/catalogPriceDisplay.js';
 
 const PLACEHOLDER = 'https://via.placeholder.com/300?text=No+Image';
-
-function fmtPrice(n) {
-  const v = Number(n);
-  if (!Number.isFinite(v) || v <= 0) return '—';
-  return `$${v.toFixed(2)}`.replace(/\.00$/, '');
-}
 
 function wsrvEncode(u) {
   const s = String(u || '').trim();
@@ -71,6 +66,8 @@ export default function ChatHotProductCard({ p, uiLang, onAskAi }) {
     const pct = Math.max(0, (1 - tr / pr) * 100);
     if (pct > 0) savePctText = `-${Math.round(pct)}%`;
   }
+  const listUsd = listPriceUsdForCard(p);
+  const tangbuyUsd = tangbuyUsdForCard(p);
 
   return (
     <div
@@ -105,7 +102,7 @@ export default function ChatHotProductCard({ p, uiLang, onAskAi }) {
               {uiLang === 'zh' ? '售价' : 'Price'}
             </div>
             <div className="text-[12px] font-bold leading-tight" style={{ color: 'var(--theme-text)' }}>
-              {fmtPrice(p.priceRmb)}
+              {fmtUsd(listUsd)}
             </div>
           </div>
           <div style={{ width: 1, height: 20, background: 'var(--theme-border)' }} />
@@ -123,7 +120,7 @@ export default function ChatHotProductCard({ p, uiLang, onAskAi }) {
               <div className="text-[8px] font-semibold uppercase" style={{ color: 'var(--theme-text-muted)' }}>
                 Tangbuy
               </div>
-              <div className="text-[12px] font-bold text-[var(--secondary)] leading-tight">{fmtPrice(p.tangbuyPriceRmb)}</div>
+              <div className="text-[12px] font-bold text-[var(--secondary)] leading-tight">{fmtUsd(tangbuyUsd)}</div>
             </div>
           ) : (
             <div>
