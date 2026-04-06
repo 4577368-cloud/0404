@@ -161,8 +161,8 @@ export default function AIReportViewer({ reportId, uiLang, onNewDiagnosis }) {
           maxWidth: 400,
         }}>
           {uiLang === 'zh' 
-            ? '从左侧列表选择一份 AI 诊断报告，查看完整的 9 步分析结果' 
-            : 'Select an AI diagnosis report from the list to view complete 9-step analysis results'}
+            ? '从左侧列表选择一份报告：商品 9 步诊断，或品牌 / SEO / GEO 分析输出' 
+            : 'Pick a report: 9-step product diagnosis, or brand / SEO / GEO analysis'}
         </p>
         
         <button
@@ -199,6 +199,7 @@ export default function AIReportViewer({ reportId, uiLang, onNewDiagnosis }) {
   }
 
   const stepNames = STEP_NAMES[uiLang] || STEP_NAMES.en;
+  const isAnalysisReport = report?.kind === 'analysis' && typeof report?.analysisMarkdown === 'string';
 
   // 获取当前显示的实际步骤号
   const getActualStep = (displayIndex) => STEP_MAPPING[displayIndex];
@@ -261,6 +262,30 @@ ${REPORT_STYLES}
 
   const renderStepContent = () => {
     if (!report) return null;
+
+    if (isAnalysisReport) {
+      const cleanReport = deepDecodeEntities(report);
+      const markdownContent = decodeHtmlEntities(generateMarkdownReport(cleanReport, uiLang, null) || '');
+      const rawHtml = marked.parse(markdownContent);
+      let html = DOMPurify.sanitize(highlightNumericInReportHtml(markStepHeadings(rawHtml)), {
+        ADD_ATTR: ['target', 'rel', 'class'],
+      });
+      html = html.replace(/&#39;/g, "'").replace(/&amp;#39;/g, "'").replace(/&#34;/g, '"').replace(/&amp;#34;/g, '"');
+      return (
+        <div style={{ padding: '20px 24px', background: '#ffffff' }}>
+          <div style={{
+            padding: '28px 32px',
+            borderRadius: 12,
+            background: '#ffffff',
+            border: '1px solid #e5e5e5',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+          }}>
+            <div className="report-body" dangerouslySetInnerHTML={{ __html: html }} />
+            <style>{REPORT_STYLES}</style>
+          </div>
+        </div>
+      );
+    }
 
     const actualStep = getActualStep(activeStep);
     const stepOutput = report.stepOutputs?.find(s => s.step === actualStep);
@@ -382,7 +407,7 @@ ${REPORT_STYLES}
                 <span className="icon-calendar" style={{ marginRight: 4 }} />
                 {formatReportDate(report.createdAt, uiLang)}
               </span>
-              {report.targetMarket?.countries && (
+              {!isAnalysisReport && report.targetMarket?.countries && (
                 <span>
                   <span className="icon-globe" style={{ marginRight: 4 }} />
                   {report.targetMarket.countries}
@@ -412,6 +437,7 @@ ${REPORT_STYLES}
         </div>
 
         {/* Step Navigation */}
+        {!isAnalysisReport && (
         <div style={{
           display: 'flex',
           gap: 8,
@@ -466,6 +492,7 @@ ${REPORT_STYLES}
             );
           })}
         </div>
+        )}
       </div>
 
       {/* Report Content */}

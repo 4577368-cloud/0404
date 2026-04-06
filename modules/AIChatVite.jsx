@@ -9,7 +9,7 @@ import { consumeChatTurn, claimVipRemote } from '../utils/supabaseUsage.js';
 import { extractUrlsFromText } from '../utils/urlExtract.js';
 import { DIAGNOSIS_PROMPTS, fillPrompt } from '../utils/diagnosisPrompts.js';
 import { DiagnosisWorkflow } from '../utils/diagnosisWorkflow.js';
-import { createAIReport } from '../utils/aiReports.js';
+import { createAIReport, createAnalysisAIReport } from '../utils/aiReports.js';
 import {
   percentAfterCompletingStep,
   percentWhileRunningStep,
@@ -17,6 +17,10 @@ import {
 } from '../utils/workflowProgress.js';
 import OverlayModal from '../components/OverlayModal.jsx';
 import GEOIntakePanel, { buildGeoIntakeUserMessage } from '../components/GEOIntakePanel.jsx';
+import SimpleModeIntakePanel, {
+  buildDiagnosisIntakeUserMessage,
+  buildSeoIntakeUserMessage,
+} from '../components/SimpleModeIntakePanel.jsx';
 import ChatHotProductCard from '../components/ChatHotProductCard.jsx';
 import { ProductCard } from '../components/ProductCard.jsx';
 import {
@@ -37,6 +41,7 @@ import {
   loadProductCatalog,
   loadTrendCatalogOnly,
   shouldRecommendProducts,
+  shouldAttachTangbuyHotFromModelTrendAnalysis,
   isProductConfirmation,
   parseCatalogProductJsonFromMarkdown,
   maskStreamingProductJsonBlock,
@@ -739,7 +744,7 @@ const ProgressiveProductList = React.memo(function ProgressiveProductList({ item
   );
 });
 
-const WelcomePortal = React.memo(function WelcomePortal({ uiLang, t, isLoading, mode, onModeChange, modeIcons, modeLabels, modeColors, modeMenuRef, inputRef, onSend, onOpenSourcing, geoIntakeSlot }) {
+const WelcomePortal = React.memo(function WelcomePortal({ uiLang, t, isLoading, mode, onModeChange, modeIcons, modeLabels, modeColors, modeMenuRef, inputRef, onSend, onOpenSourcing, portalIntakeSlot }) {
   const cards = React.useMemo(() => getShortcutCards(uiLang), [uiLang]);
 
   const handleCardClick = React.useCallback((card) => {
@@ -765,8 +770,8 @@ const WelcomePortal = React.memo(function WelcomePortal({ uiLang, t, isLoading, 
           Built for Brands That Want to Scale
         </div>
 
-        {geoIntakeSlot ? (
-          <div className="w-full max-w-4xl mb-5 text-left">{geoIntakeSlot}</div>
+        {portalIntakeSlot ? (
+          <div className="w-full max-w-4xl mb-5 text-left">{portalIntakeSlot}</div>
         ) : null}
 
         <div className="w-full max-w-2xl mb-6 transition-all duration-300">
@@ -874,10 +879,18 @@ export function ModuleAIChat({
   );
   const [geoIntake, setGeoIntake] = React.useState(() => ({ ...emptyGeoIntake }));
   const [geoIntakeSubmitted, setGeoIntakeSubmitted] = React.useState(false);
+  const [diagnosisIntakeUrl, setDiagnosisIntakeUrl] = React.useState('');
+  const [seoIntakeUrl, setSeoIntakeUrl] = React.useState('');
+  const [diagnosisIntakeSubmitted, setDiagnosisIntakeSubmitted] = React.useState(false);
+  const [seoIntakeSubmitted, setSeoIntakeSubmitted] = React.useState(false);
 
   React.useEffect(() => {
     setGeoIntake({ ...emptyGeoIntake });
     setGeoIntakeSubmitted(false);
+    setDiagnosisIntakeUrl('');
+    setSeoIntakeUrl('');
+    setDiagnosisIntakeSubmitted(false);
+    setSeoIntakeSubmitted(false);
   }, [conversationId, emptyGeoIntake]);
 
   const [showVipModal, setShowVipModal] = React.useState(false);
@@ -1350,8 +1363,8 @@ export function ModuleAIChat({
       const textWithoutJson = (catalogFromAi.strippedText || '').trim();
       const picksHeading =
         uiLang === 'zh'
-          ? '### 📦 Tangbuy 同款推荐\n'
-          : '### 📦 Tangbuy Picks\n';
+          ? '### 📦 Picks\n'
+          : '### 📦 Picks\n';
       const combinedContent =
         textWithoutJson.length > 0 ? `${textWithoutJson}\n\n${picksHeading}` : picksHeading.trimEnd();
       const hotSliceFromAi = catalogFromAi.products.slice(0, 5);
@@ -1487,15 +1500,17 @@ export function ModuleAIChat({
         parseCatalogProductJsonFromMarkdown(streamResult?.finalText || '')?.products?.length > 0
       );
 
-      const likelyProductRelated =
-        hasAiHotProducts ||
-        shouldRecommendProducts(txt, messages, streamResult?.finalText) ||
-        detectedIntent === 'product' ||
-        /https?:\/\//i.test(txt) ||
-        /(分析|推荐|选品|找|look.*for|search.*for|sourcing|采购|商品|产品|类目|category)/i.test(txt);
+      /** 用户显式要推荐，或模型回复属商品/品牌/趋势分析时可附横向 Tangbuy 同款；目录补全另需 hasAiHotProducts */
+      const userWantsProductRecommendations = shouldRecommendProducts(txt, messages, streamResult?.finalText);
+      const tangbuyHotFromModelAnalysis = shouldAttachTangbuyHotFromModelTrendAnalysis(
+        txt,
+        streamResult?.finalText
+      );
+      const needProductCatalog =
+        hasAiHotProducts || userWantsProductRecommendations || tangbuyHotFromModelAnalysis;
 
       let catalog = allProducts;
-      if (catalog.length === 0 && likelyProductRelated) {
+      if (catalog.length === 0 && needProductCatalog) {
         try {
           catalog = await loadProductCatalog();
           if (catalog.length) setAllProducts(catalog);
@@ -1517,42 +1532,43 @@ export function ModuleAIChat({
           return next;
         });
       }
-      const userWantsProductContext = shouldRecommendProducts(txt, messages, streamResult?.finalText);
-
-      const userAnalyzingProduct =
-        detectedIntent === 'product' ||
-        /https?:\/\//i.test(txt) ||
-        /(分析|推荐|选品|找|look.*for|search.*for|sourcing|采购|商品|产品|类目|category)/i.test(txt);
-      const wantTangbuyMatch = userWantsProductContext || userAnalyzingProduct || hasAiHotProducts;
-      const wantTrendOrSearchExtras = userWantsProductContext || userAnalyzingProduct || hasAiHotProducts;
-
       const extraCtx = snapshot || '';
       const isImageInput = /\[Image\]\(/i.test(txt) || isImageUrl;
       let searchQuery = txt;
       if (streamResult?.finalText) {
-        const aiResponse = streamResult.finalText.slice(0, 500);
+        const aiSnippetLen =
+          userWantsProductRecommendations || tangbuyHotFromModelAnalysis ? 1200 : 500;
+        const aiResponse = streamResult.finalText.slice(0, aiSnippetLen);
         searchQuery = isImageInput ? (streamResult?.finalSearchText || txt) : `${txt} ${aiResponse}`;
       }
 
-      if (wantTangbuyMatch && catalog.length) {
+      const showTangbuyHotCarousel =
+        catalog.length && !hasAiHotProducts && (userWantsProductRecommendations || tangbuyHotFromModelAnalysis);
+
+      if (showTangbuyHotCarousel) {
         const { matched, isExact } = smartSearch(searchQuery, extraCtx, catalog);
         const { hot: hotMatched } = partitionHotAndTrendMatches(matched);
         const hotWithRealImage = hotMatched.filter((p) => p.image && /^https?:\/\//i.test(p.image) && !/placeholder/i.test(p.image));
         const hotSlice = hotWithRealImage.slice(0, 5);
 
-        if (!hasAiHotProducts && hotSlice.length > 0) {
-          const hotLabel = isExact
+        if (hotSlice.length > 0) {
+          const analysisOnly = tangbuyHotFromModelAnalysis && !userWantsProductRecommendations;
+          const hotLabel = analysisOnly
             ? uiLang === 'zh'
-              ? '### 📦 根据您的需求，为您匹配到以下 Tangbuy 同款商品'
-              : '### 📦 Tangbuy matching picks'
-            : uiLang === 'zh'
-              ? '### 📦 为您推荐以下 Tangbuy 同款热门商品\n\n更精准选品可前往 [Tangbuy Dropshipping](https://dropshipping.tangbuy.com)。'
-              : '### 📦 Tangbuy similar picks\n\nFor precise sourcing: [Tangbuy Dropshipping](https://dropshipping.tangbuy.com).';
+              ? '### 📦 Picks（结合当前商品/品牌与趋势分析）\n\n查看可跳转货源站或按标题搜索。'
+              : '### 📦 Picks (from this product/brand trend analysis)\n\nView opens the listing or a search for this title.'
+            : isExact
+              ? uiLang === 'zh'
+                ? '### 📦 Picks'
+                : '### 📦 Picks'
+              : uiLang === 'zh'
+                ? '### 📦 Picks\n\n以下为参考款式，查看可跳转或搜索。'
+                : '### 📦 Picks\n\nReference styles — View opens listing or search.';
           setMessages((p) => [...p, { role: 'ai', type: 'products_hot', content: hotLabel, data: hotSlice }]);
         }
       }
 
-      if (wantTrendOrSearchExtras) {
+      if (userWantsProductRecommendations) {
         const trendCatalog = await loadTrendCatalogOnly();
         if (trendCatalog.length) {
           const { matched: trendMatched } = smartSearch(searchQuery, extraCtx, trendCatalog);
@@ -1560,6 +1576,22 @@ export function ModuleAIChat({
           if (slice.length > 0) {
             setMessages((p) => [...p, { role: 'ai', type: 'products_trend', content: '', data: slice }]);
           }
+        }
+      }
+
+      const ar = opts?.analysisReport;
+      if (ar?.kind && streamResult?.finalText) {
+        const rawMd = (streamResult.textPart || streamResult.finalText || '').trim();
+        const stripped = parseCatalogProductJsonFromMarkdown(rawMd);
+        const analysisMarkdown = (stripped?.strippedText || rawMd).trim();
+        if (analysisMarkdown.length) {
+          const newReport = createAnalysisAIReport({
+            analysisType: ar.kind,
+            userPrompt: txt,
+            analysisMarkdown,
+            uiLang,
+          });
+          onReportCreated?.(newReport);
         }
       }
     } catch (err) {
@@ -1575,11 +1607,23 @@ export function ModuleAIChat({
       setIsLoading(false);
     }
     return true;
-  }, [isLoading, uiLang, messages, knownSite, knownContentLang, mode, allProducts, buildSystemMessage, smartSearch, onQuotaChange, t, isVip, authUser, conversationId]);
+  }, [isLoading, uiLang, messages, knownSite, knownContentLang, mode, allProducts, buildSystemMessage, smartSearch, onQuotaChange, onReportCreated, t, isVip, authUser, conversationId]);
 
   // ── Mode switch ──
   const switchMode = (newMode) => {
     if (newMode === mode) { setShowModeMenu(false); return; }
+    if (newMode === 'page') {
+      setGeoIntake({ ...emptyGeoIntake });
+      setGeoIntakeSubmitted(false);
+    }
+    if (newMode === 'diagnosis') {
+      setDiagnosisIntakeUrl('');
+      setDiagnosisIntakeSubmitted(false);
+    }
+    if (newMode === 'seo') {
+      setSeoIntakeUrl('');
+      setSeoIntakeSubmitted(false);
+    }
     setMode(newMode);
     setShowModeMenu(false);
     setKnownSite(null);
@@ -1604,7 +1648,11 @@ export function ModuleAIChat({
   const modeIcons = { auto: 'icon-sparkles', diagnosis: 'icon-activity', seo: 'icon-search-check', page: 'icon-globe' };
   const isPortalView = messages.length === 0;
   const geoIntakeLabels = t.chat?.geoIntake;
+  const diagnosisIntakeLabels = t.chat?.diagnosisIntake;
+  const seoIntakeLabels = t.chat?.seoIntake;
   const showGeoIntakePanel = mode === 'page' && !geoIntakeSubmitted && !!geoIntakeLabels;
+  const showDiagnosisIntakePanel = mode === 'diagnosis' && !diagnosisIntakeSubmitted && !!diagnosisIntakeLabels;
+  const showSeoIntakePanel = mode === 'seo' && !seoIntakeSubmitted && !!seoIntakeLabels;
 
   const handleGeoField = React.useCallback((key, value) => {
     setGeoIntake((prev) => ({ ...prev, [key]: value }));
@@ -1613,9 +1661,32 @@ export function ModuleAIChat({
   const handleGeoSubmit = React.useCallback(async () => {
     if (!geoIntakeLabels || isLoading) return;
     const msg = buildGeoIntakeUserMessage(geoIntake, geoIntakeLabels.payloadHeader, geoIntakeLabels.payloadFooter);
-    const ok = await send(msg);
-    if (ok) setGeoIntakeSubmitted(true);
-  }, [geoIntake, geoIntakeLabels, isLoading, send]);
+    const ok = await send(msg, { analysisReport: { kind: 'geo' } });
+    if (ok) {
+      setGeoIntakeSubmitted(true);
+      setGeoIntake({ ...emptyGeoIntake });
+    }
+  }, [geoIntake, geoIntakeLabels, isLoading, send, emptyGeoIntake]);
+
+  const handleDiagnosisSubmit = React.useCallback(async () => {
+    if (!diagnosisIntakeLabels || isLoading) return;
+    const msg = buildDiagnosisIntakeUserMessage(diagnosisIntakeLabels, diagnosisIntakeUrl);
+    const ok = await send(msg, { analysisReport: { kind: 'diagnosis' } });
+    if (ok) {
+      setDiagnosisIntakeSubmitted(true);
+      setDiagnosisIntakeUrl('');
+    }
+  }, [diagnosisIntakeLabels, diagnosisIntakeUrl, isLoading, send]);
+
+  const handleSeoSubmit = React.useCallback(async () => {
+    if (!seoIntakeLabels || isLoading) return;
+    const msg = buildSeoIntakeUserMessage(seoIntakeLabels, seoIntakeUrl);
+    const ok = await send(msg, { analysisReport: { kind: 'seo' } });
+    if (ok) {
+      setSeoIntakeSubmitted(true);
+      setSeoIntakeUrl('');
+    }
+  }, [seoIntakeLabels, seoIntakeUrl, isLoading, send]);
 
   const geoIntakePortalSlot =
     showGeoIntakePanel && isPortalView ? (
@@ -1627,6 +1698,32 @@ export function ModuleAIChat({
         disabled={isLoading}
       />
     ) : null;
+
+  const diagnosisIntakePortalSlot =
+    showDiagnosisIntakePanel && isPortalView ? (
+      <SimpleModeIntakePanel
+        variant="diagnosis"
+        labels={diagnosisIntakeLabels}
+        value={diagnosisIntakeUrl}
+        onChange={setDiagnosisIntakeUrl}
+        onSubmit={handleDiagnosisSubmit}
+        disabled={isLoading}
+      />
+    ) : null;
+
+  const seoIntakePortalSlot =
+    showSeoIntakePanel && isPortalView ? (
+      <SimpleModeIntakePanel
+        variant="seo"
+        labels={seoIntakeLabels}
+        value={seoIntakeUrl}
+        onChange={setSeoIntakeUrl}
+        onSubmit={handleSeoSubmit}
+        disabled={isLoading}
+      />
+    ) : null;
+
+  const portalIntakeSlot = geoIntakePortalSlot || diagnosisIntakePortalSlot || seoIntakePortalSlot;
 
   const shortcutCards = React.useMemo(() => getShortcutCards(uiLang), [uiLang]);
   const restoredReplayMsg = React.useMemo(() => {
@@ -2111,7 +2208,7 @@ export function ModuleAIChat({
             inputRef={chatInputRef}
             onSend={send}
             onOpenSourcing={onOpenSourcing}
-            geoIntakeSlot={geoIntakePortalSlot}
+            portalIntakeSlot={portalIntakeSlot}
           />
         ) : (
         <div className="max-w-5xl mx-auto px-4 md:px-6 pt-2 pb-4 space-y-5 transition-all duration-300">
@@ -2258,19 +2355,82 @@ export function ModuleAIChat({
         )}
       </div>
 
-      {/* GEO: dock above input so the form stays visible (not lost above scroll) */}
+      {/* GEO：提交后折叠；输入区上方右侧保留「GEO 表单」快捷展开（空白新表） */}
       {!isPortalView && mode === 'page' && geoIntakeSubmitted && geoIntakeLabels ? (
         <div
-          className="flex-shrink-0 flex justify-end max-w-5xl w-full mx-auto px-4 md:px-6 pt-1.5 pb-0"
+          className="flex-shrink-0 relative max-w-5xl w-full mx-auto min-h-[44px] px-4 md:px-6 py-2"
           style={{ borderTop: '1px solid var(--theme-border)', background: 'var(--theme-card-bg, var(--theme-surface))' }}
         >
           <button
             type="button"
-            onClick={() => setGeoIntakeSubmitted(false)}
-            className="text-[11px] font-medium underline-offset-2 hover:underline py-1"
-            style={{ color: 'var(--chip-geo)', background: 'none', border: 'none', cursor: 'pointer' }}
+            onClick={() => {
+              setGeoIntake({ ...emptyGeoIntake });
+              setGeoIntakeSubmitted(false);
+            }}
+            className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold shadow-sm transition-opacity hover:opacity-95 z-10"
+            style={{
+              background: 'var(--chip-geo)',
+              color: '#fff',
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+            }}
+            title={geoIntakeLabels.refillBtn}
           >
-            {geoIntakeLabels.refillBtn}
+            <span className="icon-globe text-[13px]" aria-hidden />
+            {geoIntakeLabels.expandShortcut || geoIntakeLabels.refillBtn}
+          </button>
+        </div>
+      ) : null}
+      {!isPortalView && mode === 'diagnosis' && diagnosisIntakeSubmitted && diagnosisIntakeLabels ? (
+        <div
+          className="flex-shrink-0 relative max-w-5xl w-full mx-auto min-h-[44px] px-4 md:px-6 py-2"
+          style={{ borderTop: '1px solid var(--theme-border)', background: 'var(--theme-card-bg, var(--theme-surface))' }}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              setDiagnosisIntakeUrl('');
+              setDiagnosisIntakeSubmitted(false);
+            }}
+            className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold shadow-sm transition-opacity hover:opacity-95 z-10"
+            style={{
+              background: 'var(--chip-diagnosis)',
+              color: '#fff',
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+            }}
+            title={diagnosisIntakeLabels.refillBtn}
+          >
+            <span className="icon-activity text-[13px]" aria-hidden />
+            {diagnosisIntakeLabels.expandShortcut || diagnosisIntakeLabels.refillBtn}
+          </button>
+        </div>
+      ) : null}
+      {!isPortalView && mode === 'seo' && seoIntakeSubmitted && seoIntakeLabels ? (
+        <div
+          className="flex-shrink-0 relative max-w-5xl w-full mx-auto min-h-[44px] px-4 md:px-6 py-2"
+          style={{ borderTop: '1px solid var(--theme-border)', background: 'var(--theme-card-bg, var(--theme-surface))' }}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              setSeoIntakeUrl('');
+              setSeoIntakeSubmitted(false);
+            }}
+            className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold shadow-sm transition-opacity hover:opacity-95 z-10"
+            style={{
+              background: 'var(--chip-seo)',
+              color: '#fff',
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+            }}
+            title={seoIntakeLabels.refillBtn}
+          >
+            <span className="icon-search-check text-[13px]" aria-hidden />
+            {seoIntakeLabels.expandShortcut || seoIntakeLabels.refillBtn}
           </button>
         </div>
       ) : null}
@@ -2288,6 +2448,46 @@ export function ModuleAIChat({
             values={geoIntake}
             onFieldChange={handleGeoField}
             onSubmit={handleGeoSubmit}
+            disabled={isLoading}
+            compact
+            rootClassName="!mb-0"
+          />
+        </div>
+      ) : null}
+      {!isPortalView && showDiagnosisIntakePanel ? (
+        <div
+          className="flex-shrink-0 max-w-5xl w-full mx-auto px-4 md:px-6 py-2"
+          style={{
+            borderTop: '1px solid var(--theme-border)',
+            background: 'var(--theme-card-bg, var(--theme-surface))',
+          }}
+        >
+          <SimpleModeIntakePanel
+            variant="diagnosis"
+            labels={diagnosisIntakeLabels}
+            value={diagnosisIntakeUrl}
+            onChange={setDiagnosisIntakeUrl}
+            onSubmit={handleDiagnosisSubmit}
+            disabled={isLoading}
+            compact
+            rootClassName="!mb-0"
+          />
+        </div>
+      ) : null}
+      {!isPortalView && showSeoIntakePanel ? (
+        <div
+          className="flex-shrink-0 max-w-5xl w-full mx-auto px-4 md:px-6 py-2"
+          style={{
+            borderTop: '1px solid var(--theme-border)',
+            background: 'var(--theme-card-bg, var(--theme-surface))',
+          }}
+        >
+          <SimpleModeIntakePanel
+            variant="seo"
+            labels={seoIntakeLabels}
+            value={seoIntakeUrl}
+            onChange={setSeoIntakeUrl}
+            onSubmit={handleSeoSubmit}
             disabled={isLoading}
             compact
             rootClassName="!mb-0"

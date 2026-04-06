@@ -689,11 +689,37 @@ export function maskStreamingProductJsonBlock(text, _uiLang) {
   return stripStreamingLooseCatalogJsonTail(t);
 }
 
+/**
+ * 模型回复内容像在讨论 **商品/品牌/类目/平台趋势或选品分析** 时，允许在回复后附带横向 Tangbuy 同款（宽松于用户显式「推荐商品」）。
+ * 仅用于 tangbuy-product 横滑卡片，不用于 Product/Best-selling 长列表。
+ */
+export function shouldAttachTangbuyHotFromModelTrendAnalysis(userText, aiText) {
+  const u = String(userText || '').trim();
+  const a = String(aiText || '').trim();
+  if (a.length < 90) return false;
+
+  const userStrong =
+    /(趋势分析|品牌分析|选品|爆款|热销|竞品|分析.*(趋势|品牌|商品)|商品.*趋势|品牌.*趋势|trend analysis|brand analysis|product trend|best seller|winning product|market analysis|analyze (the )?(brand|product|trend))/i.test(
+      u
+    );
+
+  const al = a.toLowerCase();
+  let dim = 0;
+  if (/趋势|爆款|选品|热销|同款|竞品|类目|细分市场|赛道|蓝海|红海|品牌|对标|listing|亚马逊|tiktok|抖音|独立站|跨境|销量|转化|流量/.test(a)) dim += 1;
+  if (/trend|bestseller|category|niche|sourcing|competitor|market|product|brand|amazon|tiktok|shopify|seller|listing|winning/i.test(al)) dim += 1;
+  if (/tiktok|亚马逊|amazon|独立站|shopify|平台|跨境|dropship|1688|货源/.test(a)) dim += 1;
+
+  if (userStrong && dim >= 1 && a.length >= 100) return true;
+  if (dim >= 2 && a.length >= 140) return true;
+  return false;
+}
+
 export function shouldRecommendProducts(text, prevMessages, _aiResponse = '') {
   const t = String(text || '').trim();
 
-  // 1) Explicit product / trend request — user actively asks for products
-  if (/(推荐商品|推荐产品|给我推荐|帮我选品|帮我找货|帮我找商品|推荐一些|有什么.*商品|有什么.*产品|给我看.*商品|show me products|recommend products|find products|suggest products|give me products|show trending|list products)/i.test(t)) return true;
+  // 仅当用户明确要「看商品 / 选品 / 趋势款」等时才在回复后附带商品卡片；普通诊断、SEO、闲聊不应触发
+  // 1) Explicit product / trend request
+  if (/(推荐商品|推荐产品|给我推荐|帮我选品|帮我找货|帮我找商品|推荐一些|有什么.*商品|有什么.*产品|给我看.*商品|帮我挑|想看点.*货|想找.*爆款|show me products|recommend products|find products|suggest products|give me products|show trending|list products|product ideas|winning products)/i.test(t)) return true;
   if (/(趋势商品|趋势选品|找趋势|热销商品|爆款推荐|热卖推荐|trending products|best sellers|hot products)/i.test(t)) return true;
 
   // 2) User confirms after AI asked a follow-up about products

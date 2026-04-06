@@ -2,7 +2,7 @@ import React from 'react';
 import { supabase } from '../utils/supabaseClient.js';
 import { logTangbuyClick } from '../utils/supabaseUsage.js';
 import { fmtUsd, listPriceUsdForCard, tangbuyUsdForCard } from '../utils/catalogPriceDisplay.js';
-import { tangbuySearchUrlForTrendCategory } from '../utils/tangbuyKnowledge.js';
+import { tangbuySearchUrlForTrendCategory, pickViewHrefForChatPicks } from '../utils/tangbuyKnowledge.js';
 
 const PLACEHOLDER = 'https://via.placeholder.com/300?text=No+Image';
 
@@ -56,9 +56,10 @@ const MAX_STAGE = 4;
  * @param {'hot'|'trend'|'knowledge'} retailVariant
  *   hot  = tangbuy-product 同款：PRICE | SOLD | TANGBUY（有折扣角标）
  *   trend / knowledge = 趋势/Top1000/知识：PRICE | SOLD | RATING（无折扣角标）
- * @param {'view_ai'|'view_addlist'|'view_publish'} trendFooter
+ * @param {'view_ai'|'view_addlist'|'view_publish'|'view_only'} trendFooter
  *   view_addlist = View + Add to List（热销页全部 Tab）
- *   view_ai     = View + AI Diagnose（聊天内卡片）
+ *   view_ai     = View + AI Diagnose（热销页等）
+ *   view_only   = 仅 View（聊天横排 Picks：有链接直达，无则按标题/类目搜索）
  *   view_publish = View + Publish（My Lists 页）
  */
 export function CompactRetailProductCard({
@@ -94,13 +95,20 @@ export function CompactRetailProductCard({
   const ratingText = Number.isFinite(ratingVal) ? ratingVal.toFixed(1).replace(/\.0$/, '') : '—';
 
   const viewHref =
-    retailVariant === 'hot'
-      ? p.tangbuyUrl || p.url
-      : tangbuySearchUrlForTrendCategory(p) || p.url || p.tangbuyUrl;
+    trendFooter === 'view_only'
+      ? pickViewHrefForChatPicks(p)
+      : retailVariant === 'hot'
+        ? p.tangbuyUrl || p.url
+        : tangbuySearchUrlForTrendCategory(p) || p.url || p.tangbuyUrl;
 
   const logView = () => {
     const u = viewHref || '';
-    if (retailVariant === 'hot') {
+    if (trendFooter === 'view_only') {
+      logTangbuyClick(supabase, p.tangbuyUrl ? 'chat_picks_view_tangbuy' : 'chat_picks_view_search', u, {
+        productId: p.id,
+        name: p.name,
+      });
+    } else if (retailVariant === 'hot') {
       logTangbuyClick(supabase, p.tangbuyUrl ? 'compact_hot_tangbuy' : 'compact_hot_source', u, {
         productId: p.id,
         name: p.name,
@@ -114,7 +122,7 @@ export function CompactRetailProductCard({
 
   const priceLabel = uiLang === 'zh' ? '售价' : 'Price';
   const soldLabel = uiLang === 'zh' ? '月销' : 'Sold';
-  const tangbuyLabel = 'Tangbuy';
+  const tangbuyLabel = trendFooter === 'view_only' ? (uiLang === 'zh' ? '参考价' : 'Ref.') : 'Tangbuy';
   const ratingLabel = uiLang === 'zh' ? '评分' : 'Rating';
 
   return (
@@ -193,14 +201,14 @@ export function CompactRetailProductCard({
             )}
           </div>
         </div>
-        <div className="flex gap-1.5 mt-auto pt-0.5">
+        <div className={`flex gap-1.5 mt-auto pt-0.5 ${trendFooter === 'view_only' ? 'w-full' : ''}`}>
           {viewHref && viewHref !== '#' ? (
             <a
               href={viewHref}
               target="_blank"
               rel="noreferrer"
               onClick={logView}
-              className="flex-1 text-[10px] text-center py-1.5 rounded-lg transition-all font-semibold hover:brightness-105 flex items-center justify-center gap-1"
+              className={`text-[10px] text-center py-1.5 rounded-lg transition-all font-semibold hover:brightness-105 flex items-center justify-center gap-1 ${trendFooter === 'view_only' ? 'w-full flex-1' : 'flex-1'}`}
               style={{
                 background: 'var(--brand-primary-fixed)',
                 color: '#fff',
@@ -214,7 +222,7 @@ export function CompactRetailProductCard({
           ) : (
             <div className="flex-1" />
           )}
-          {trendFooter === 'view_addlist' ? (
+          {trendFooter === 'view_only' ? null : trendFooter === 'view_addlist' ? (
             <button
               type="button"
               className="flex-1 text-[10px] text-center py-1.5 rounded-lg transition-all font-semibold hover:brightness-105 flex items-center justify-center gap-1"

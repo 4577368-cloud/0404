@@ -11,6 +11,10 @@ import { translateCategory } from './aiReports.js';
 export function generateMarkdownReport(report, uiLang = 'zh', targetStep = null) {
   if (!report) return '';
 
+  if (report.kind === 'analysis' && typeof report.analysisMarkdown === 'string') {
+    return report.analysisMarkdown;
+  }
+
   const stepNames = uiLang === 'zh' ? STEP_NAMES_ZH : STEP_NAMES_EN;
   const stepOutputs = report.stepOutputs || [];
 

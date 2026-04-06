@@ -28,6 +28,25 @@ export function tangbuySearchUrlForTrendCategory(product) {
   return buildTangbuyDropshippingSearchUrl(kw);
 }
 
+/**
+ * 聊天横排「Picks」：有 tangbuy 商品链接则直达；否则用商品标题优先、再类目关键词做 Dropshipping 搜索
+ */
+export function pickViewHrefForChatPicks(product) {
+  const p = product || {};
+  const tb = String(p.tangbuyUrl || '').trim();
+  if (tb && /^https?:\/\//i.test(tb)) return tb;
+  const name = String(p.name || '').trim();
+  if (name.length >= 2) {
+    const q = name.length > 180 ? `${name.slice(0, 180)}…` : name;
+    return buildTangbuyDropshippingSearchUrl(q);
+  }
+  const fromCat = tangbuySearchUrlForTrendCategory(p);
+  if (fromCat) return fromCat;
+  const u = String(p.url || '').trim();
+  if (u && /^https?:\/\//i.test(u)) return u;
+  return buildTangbuyDropshippingSearchUrl('sourcing');
+}
+
 const KB_FILES = {
   zh: 'knowledgeBase_CN.json',
   en: 'knowledgeBase_EN.json',

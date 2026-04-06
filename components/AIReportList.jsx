@@ -1,5 +1,5 @@
 import React from 'react';
-import { loadAIReports, deleteAIReport, formatReportDate, getExecutiveSummary } from '../utils/aiReports.js';
+import { loadAIReports, deleteAIReport, formatReportDate, getExecutiveSummary, getAnalysisReportBadgeLabel } from '../utils/aiReports.js';
 
 export default function AIReportList({ 
   activeReportId, 
@@ -96,8 +96,8 @@ export default function AIReportList({
             <span className="icon-inbox" style={{ fontSize: 32, opacity: 0.5 }} />
             <p style={{ marginTop: 12, fontSize: 13 }}>
               {uiLang === 'zh'
-                ? '在「商品搜索」趋势页点击「AI 诊断」可生成报告'
-                : 'Use AI Diagnose on the Product Search → Trend tab to generate reports'}
+                ? '商品诊断：趋势页「AI 诊断」。品牌 / SEO / GEO：在对应模式下完成表单分析后也会保存到这里。'
+                : 'Product diagnosis: Trend tab → AI Diagnose. Brand / SEO / GEO: submit the intake form in each mode to save reports here.'}
             </p>
           </div>
         ) : (
@@ -131,7 +131,17 @@ export default function AIReportList({
                       {formatReportDate(report.createdAt, uiLang)}
                     </div>
                   </div>
-                  {score > 0 && (
+                  {report.kind === 'analysis' && report.analysisType ? (
+                    <div style={{
+                      padding: '2px 8px', borderRadius: 12,
+                      background: 'color-mix(in srgb, var(--brand-primary-fixed) 12%, transparent)',
+                      color: 'var(--brand-primary-fixed)',
+                      fontSize: 10, fontWeight: 600, flexShrink: 0, maxWidth: 88,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }} title={getAnalysisReportBadgeLabel(report.analysisType, uiLang)}>
+                      {getAnalysisReportBadgeLabel(report.analysisType, uiLang)}
+                    </div>
+                  ) : score > 0 ? (
                     <div style={{
                       padding: '2px 8px', borderRadius: 12,
                       background: `${scoreColor}20`, color: scoreColor,
@@ -139,7 +149,7 @@ export default function AIReportList({
                     }}>
                       {score}
                     </div>
-                  )}
+                  ) : null}
                 </div>
                 <div style={{
                   display: 'flex', justifyContent: 'flex-end', marginTop: 8,

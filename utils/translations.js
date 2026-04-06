@@ -29,8 +29,8 @@ export const TRANSLATIONS = {
             },
             greetings: {
                 auto: "Hi! I'm your cross-border e-commerce AI assistant. I can help with:\n\n- **Store diagnosis** — paste a URL for an audit\n- **SEO & product page** — titles, meta, PDP copy, and paste-ready HTML\n- **GEO** — content tuned for AI answers & generative search\n- **Ads & social** — Facebook, TikTok, Google Ads ideas\n- **Sourcing** — trending picks on Amazon & TikTok\n\nType a question or paste a link to start. Replies follow your **top-right language**.",
-                diagnosis: "### 🧭 What I can help you with\n\n- **Audit your homepage / landing page** and highlight conversion bottlenecks.\n- **Suggest concrete changes** to copy, layout, social proof, and offers.\n- **Prioritize actions** into P0 / P1 / P2 so you know what to do first.\n\n### 🚀 How to start\n\n1. Paste your **store URL** (homepage or product page).\n2. Or paste **existing copy** you want to improve.\n3. Optionally describe your target country / audience.\n\nI will return a structured diagnosis + action checklist you can send directly to your designer or operator.",
-                seo: "### 🔍 SEO & product detail (one flow)\n\n- **Search layer:** titles, meta, URL handle, FAQ for Google-style SEO.\n- **PDP layer:** conversion diagnosis + semantic HTML for Shopify (===HTML=== block when you share a URL or copy).\n\n### 🚀 How to start\n\n1. Paste a **product URL**, **store URL**, or **existing title / copy**.\n2. Name your **main market** (e.g. US / EU / LATAM).\n3. I’ll answer in your **UI language** (top-right).",
+                diagnosis: "### 🧭 What I can help you with\n\n- **Audit your homepage / landing page** and highlight conversion bottlenecks.\n- **Suggest concrete changes** to copy, layout, social proof, and offers.\n- **Prioritize actions** into P0 / P1 / P2 so you know what to do first.\n\n### 🚀 How to start\n\nUse the **form above** (empty chat) or the **panel above the input** (after messages): enter your **website domain or URL**, then **Start**. You can still type in the chat box anytime.",
+                seo: "### 🔍 SEO & product detail (one flow)\n\n- **Search layer:** titles, meta, URL handle, FAQ for Google-style SEO.\n- **PDP layer:** conversion diagnosis + semantic HTML for Shopify (===HTML=== block when you share a URL or copy).\n\n### 🚀 How to start\n\nUse the **form above**: enter a **product page URL**, then **Start**. You can add market notes in the chat if needed.",
                 page: "### 🌐 GEO (generative search)\n\n- Make content **clear and quotable** for AI overviews and answer engines.\n- Use the **context form** when you start GEO (or after switching mode in chat): fill **at least 3** fields, then **Start GEO analysis**.\n- You can still paste a **URL** or notes in the chat box anytime.\n\nReplies follow your **UI language** (top-right)."
             },
             geoIntake: {
@@ -39,6 +39,7 @@ export const TRANSLATIONS = {
                 progress: "{{n}} / 8 · minimum {{min}}",
                 startBtn: "Start GEO analysis",
                 refillBtn: "Edit context form",
+                expandShortcut: "GEO form",
                 payloadHeader: "# GEO context (from intake form)",
                 payloadFooter: "\n\nUsing the context above, produce the full GEO Master Blueprint (all five dimensions) and the execution roadmap per your system role. If the store URL is missing, infer carefully from the other fields and state assumptions briefly.",
                 fields: {
@@ -61,7 +62,31 @@ export const TRANSLATIONS = {
                     competitors: "2–3 competitor URLs or brand names",
                     marketingStatus: "e.g. Heavy Meta ads, no organic SEO",
                 },
-            }
+            },
+            diagnosisIntake: {
+                title: "Store diagnosis",
+                subtitle: "Enter your site domain or full URL, then start the analysis.",
+                fieldLabel: "Website / store domain",
+                placeholder: "yourbrand.com or https://yourbrand.com",
+                startBtn: "Start",
+                refillBtn: "Edit URL",
+                expandShortcut: "Store form",
+                payloadHeader: "# Store diagnosis (from intake form)",
+                payloadFooter:
+                    "\n\nUsing the URL above, produce a structured store / landing page diagnosis and prioritized action checklist per your system role. Fetch or infer page context as needed.",
+            },
+            seoIntake: {
+                title: "SEO & product page",
+                subtitle: "Paste a product detail page link, then start the analysis.",
+                fieldLabel: "Product page URL",
+                placeholder: "https://your-store.com/products/...",
+                startBtn: "Start",
+                refillBtn: "Edit URL",
+                expandShortcut: "SEO form",
+                payloadHeader: "# SEO & PDP analysis (from intake form)",
+                payloadFooter:
+                    "\n\nUsing the URL above, deliver SEO + PDP improvements per your system role (titles, meta, conversion notes, and ===HTML=== where appropriate).",
+            },
         },
         finder: {
             all: "All Platforms",
@@ -166,8 +191,8 @@ export const TRANSLATIONS = {
             },
             greetings: {
                 auto: "你好！我是你的跨境电商 AI 助手，可以帮你：\n\n- **独立站诊断** — 贴网址做拆解\n- **SEO 与详情页** — 标题、Meta、详情文案与可粘贴 HTML\n- **GEO 优化** — 面向 AI 问答与生成式搜索的内容\n- **广告与社媒** — 投放与内容思路\n- **选品** — Amazon / TikTok 热销参考\n\n输入问题或贴链接即可；**回复语言与右上角界面语言一致**。",
-                diagnosis: "### 🧭 我能帮你做什么\n\n- **全局拆解你的首页 / 落地页**，指出转化瓶颈和信任缺口。\n- **给出可直接落地的改版建议**（文案、结构、信任背书、优惠组合）。\n- **按 P0 / P1 / P2 排优先级**，让你知道今天先改哪几块最划算。\n\n### 🚀 建议这样开始\n\n1. 贴上你的 **独立站网址**（首页或详情页都可以）。\n2. 或者粘贴一段你正在用的 **产品文案 / 模板**。\n3. 也可以简单说明 **目标国家 / 人群**（例如：美国 25–45 岁女性）。\n\n我会输出一份结构化诊断 + 行动清单，你可以直接转给设计 / 运营同事执行。",
-                seo: "### 🔍 SEO 与详情页（同一模式）\n\n- **搜索侧**：标题、Meta、URL、FAQ 等传统 SEO。\n- **详情页侧**：转化诊断 + 语义化 HTML（提供链接或文案时用 ===HTML=== 分段给出）。\n\n### 🚀 建议这样开始\n\n1. 粘贴 **商品/店铺链接** 或 **现有标题、文案**。\n2. 说明 **主售市场**。\n3. 回复语言与 **右上角界面语言** 一致。",
+                diagnosis: "### 🧭 我能帮你做什么\n\n- **全局拆解你的首页 / 落地页**，指出转化瓶颈和信任缺口。\n- **给出可直接落地的改版建议**（文案、结构、信任背书、优惠组合）。\n- **按 P0 / P1 / P2 排优先级**，让你知道今天先改哪几块最划算。\n\n### 🚀 建议这样开始\n\n在上方 **表单** 中填写 **网站域名或完整链接**，点击 **开始**（有对话记录时表单在输入框上方）。也可在输入框补充说明目标国家 / 人群。",
+                seo: "### 🔍 SEO 与详情页（同一模式）\n\n- **搜索侧**：标题、Meta、URL、FAQ 等传统 SEO。\n- **详情页侧**：转化诊断 + 语义化 HTML（提供链接或文案时用 ===HTML=== 分段给出）。\n\n### 🚀 建议这样开始\n\n在上方 **表单** 中填写 **商品详情页链接**，点击 **开始**。需要时可在输入框补充主售市场等信息。",
                 page: "### 🌐 GEO 优化（生成式搜索）\n\n- 让内容更易被 **AI 摘要、问答、推荐** 引用。\n- 开始 GEO 时可用下方 **信息表单**（或在对话中切换到 GEO 后使用）：至少填写 **3 项**，再点 **开始 GEO 分析**。\n- 仍可在底部输入框随时粘贴 **链接** 或补充说明。\n\n回复语言与 **右上角界面语言** 一致。"
             },
             geoIntake: {
@@ -176,6 +201,7 @@ export const TRANSLATIONS = {
                 progress: "已填 {{n}} / 8 · 至少 {{min}} 项",
                 startBtn: "开始 GEO 分析",
                 refillBtn: "重新编辑表单",
+                expandShortcut: "GEO 表单",
                 payloadHeader: "# GEO context (from intake form)",
                 payloadFooter: "\n\nUsing the context above, produce the full GEO Master Blueprint (all five dimensions) and the execution roadmap per your system role. If the store URL is missing, infer carefully from the other fields and state assumptions briefly.",
                 fields: {
@@ -198,7 +224,31 @@ export const TRANSLATIONS = {
                     competitors: "2–3 个竞品网址或品牌名",
                     marketingStatus: "例如：主要靠 Meta 广告、自然搜索很少",
                 },
-            }
+            },
+            diagnosisIntake: {
+                title: "独立站诊断",
+                subtitle: "填写网站域名或完整链接，点击开始即可分析。",
+                fieldLabel: "网站域名 / 店铺链接",
+                placeholder: "yourbrand.com 或 https://yourbrand.com",
+                startBtn: "开始",
+                refillBtn: "重新填写",
+                expandShortcut: "品牌诊断",
+                payloadHeader: "# Store diagnosis (from intake form)",
+                payloadFooter:
+                    "\n\nUsing the URL above, produce a structured store / landing page diagnosis and prioritized action checklist per your system role. Fetch or infer page context as needed.",
+            },
+            seoIntake: {
+                title: "SEO 与详情页",
+                subtitle: "填写商品详情页链接，点击开始即可分析。",
+                fieldLabel: "商品链接",
+                placeholder: "https://你的店铺.com/products/...",
+                startBtn: "开始",
+                refillBtn: "重新填写",
+                expandShortcut: "SEO 表单",
+                payloadHeader: "# SEO & PDP analysis (from intake form)",
+                payloadFooter:
+                    "\n\nUsing the URL above, deliver SEO + PDP improvements per your system role (titles, meta, conversion notes, and ===HTML=== where appropriate).",
+            },
         },
         finder: {
             all: "全部平台",
@@ -313,6 +363,7 @@ export const TRANSLATIONS = {
                 progress: "{{n}} / 8 · mín. {{min}}",
                 startBtn: "Iniciar análisis GEO",
                 refillBtn: "Editar formulario",
+                expandShortcut: "Formulario GEO",
                 payloadHeader: "# GEO context (from intake form)",
                 payloadFooter: "\n\nUsing the context above, produce the full GEO Master Blueprint (all five dimensions) and the execution roadmap per your system role. If the store URL is missing, infer carefully from the other fields and state assumptions briefly.",
                 fields: {
@@ -335,7 +386,31 @@ export const TRANSLATIONS = {
                     competitors: "2–3 URLs o nombres de marca",
                     marketingStatus: "p. ej., mucho Meta Ads, poco SEO orgánico",
                 },
-            }
+            },
+            diagnosisIntake: {
+                title: "Diagnóstico de tienda",
+                subtitle: "Introduce el dominio o la URL completa y pulsa Iniciar.",
+                fieldLabel: "Dominio / URL de la tienda",
+                placeholder: "tutienda.com o https://tutienda.com",
+                startBtn: "Iniciar",
+                refillBtn: "Editar URL",
+                expandShortcut: "Formulario tienda",
+                payloadHeader: "# Store diagnosis (from intake form)",
+                payloadFooter:
+                    "\n\nUsing the URL above, produce a structured store / landing page diagnosis and prioritized action checklist per your system role. Fetch or infer page context as needed.",
+            },
+            seoIntake: {
+                title: "SEO y ficha de producto",
+                subtitle: "Pega el enlace de la ficha de producto y pulsa Iniciar.",
+                fieldLabel: "URL de la ficha de producto",
+                placeholder: "https://tu-tienda.com/products/...",
+                startBtn: "Iniciar",
+                refillBtn: "Editar URL",
+                expandShortcut: "Formulario SEO",
+                payloadHeader: "# SEO & PDP analysis (from intake form)",
+                payloadFooter:
+                    "\n\nUsing the URL above, deliver SEO + PDP improvements per your system role (titles, meta, conversion notes, and ===HTML=== where appropriate).",
+            },
         },
         finder: {
             all: "Todas las Plataformas",
@@ -450,6 +525,7 @@ export const TRANSLATIONS = {
                 progress: "{{n}} / 8 · min. {{min}}",
                 startBtn: "Lancer l’analyse GEO",
                 refillBtn: "Modifier le formulaire",
+                expandShortcut: "Formulaire GEO",
                 payloadHeader: "# GEO context (from intake form)",
                 payloadFooter: "\n\nUsing the context above, produce the full GEO Master Blueprint (all five dimensions) and the execution roadmap per your system role. If the store URL is missing, infer carefully from the other fields and state assumptions briefly.",
                 fields: {
@@ -472,7 +548,31 @@ export const TRANSLATIONS = {
                     competitors: "2–3 URLs ou noms de marques",
                     marketingStatus: "ex. : beaucoup de Meta Ads, peu de SEO organique",
                 },
-            }
+            },
+            diagnosisIntake: {
+                title: "Diagnostic boutique",
+                subtitle: "Saisissez le domaine ou l’URL complète, puis lancez l’analyse.",
+                fieldLabel: "Domaine / URL de la boutique",
+                placeholder: "votre-marque.com ou https://votre-marque.com",
+                startBtn: "Démarrer",
+                refillBtn: "Modifier l’URL",
+                expandShortcut: "Formulaire boutique",
+                payloadHeader: "# Store diagnosis (from intake form)",
+                payloadFooter:
+                    "\n\nUsing the URL above, produce a structured store / landing page diagnosis and prioritized action checklist per your system role. Fetch or infer page context as needed.",
+            },
+            seoIntake: {
+                title: "SEO & fiche produit",
+                subtitle: "Collez le lien de la fiche produit, puis lancez l’analyse.",
+                fieldLabel: "URL de la fiche produit",
+                placeholder: "https://votre-boutique.com/products/...",
+                startBtn: "Démarrer",
+                refillBtn: "Modifier l’URL",
+                expandShortcut: "Formulaire SEO",
+                payloadHeader: "# SEO & PDP analysis (from intake form)",
+                payloadFooter:
+                    "\n\nUsing the URL above, deliver SEO + PDP improvements per your system role (titles, meta, conversion notes, and ===HTML=== where appropriate).",
+            },
         },
         finder: {
             all: "Toutes les Plateformes",

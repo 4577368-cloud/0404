@@ -113,6 +113,78 @@ export function createAIReport(productData, targetMarket, stepOutputs, uiLang = 
   return report;
 }
 
+/** @typedef {'diagnosis'|'seo'|'geo'} AnalysisReportType */
+
+/**
+ * Pull a short hint from intake user message (URL or first line) for report naming.
+ */
+export function extractAnalysisHintFromUserPrompt(txt) {
+  if (!txt || typeof txt !== 'string') return '';
+  const geoLine = txt.match(/\*\*Store\/Brand URL:\*\*\s*([^\n]+)/i);
+  if (geoLine) return geoLine[1].trim().slice(0, 48);
+  const webUrl = txt.match(/https?:\/\/[^\s)\]]+/i);
+  if (webUrl) {
+    try {
+      const u = new URL(webUrl[0]);
+      return (u.hostname + u.pathname).replace(/\/$/, '').slice(0, 48);
+    } catch (_) {
+      return webUrl[0].slice(0, 48);
+    }
+  }
+  const line = txt.split('\n').map((l) => l.trim()).find(Boolean) || '';
+  return line.replace(/\*\*/g, '').replace(/^[-*#]\s*/, '').slice(0, 48);
+}
+
+const ANALYSIS_PREFIX = {
+  zh: { diagnosis: '品牌诊断', seo: 'SEO 分析', geo: 'GEO 分析' },
+  en: { diagnosis: 'Brand diagnosis', seo: 'SEO analysis', geo: 'GEO analysis' },
+};
+
+/**
+ * Report title: analysis type + subject hint + date (YYYYMMDD).
+ */
+export function generateAnalysisReportName(analysisType, hintText, uiLang = 'zh') {
+  const date = new Date();
+  const dateStr = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
+  const lang = uiLang === 'zh' ? 'zh' : 'en';
+  const prefix = ANALYSIS_PREFIX[lang][analysisType] || ANALYSIS_PREFIX[lang].diagnosis;
+  let hint = (hintText || '').replace(/\s+/g, ' ').trim();
+  if (hint.length > 28) hint = `${hint.slice(0, 26)}…`;
+  const core = hint || prefix;
+  if (lang === 'zh') {
+    return `${prefix} · ${core} ${dateStr}`;
+  }
+  return `${prefix} · ${core} ${dateStr}`;
+}
+
+/**
+ * Persist a chat analysis (品牌/独立站诊断、SEO、GEO) as a single Markdown report.
+ */
+export function createAnalysisAIReport({ analysisType, userPrompt, analysisMarkdown, uiLang = 'zh' }) {
+  const hint = extractAnalysisHintFromUserPrompt(userPrompt);
+  const report = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    kind: 'analysis',
+    analysisType,
+    name: generateAnalysisReportName(analysisType, hint, uiLang),
+    createdAt: new Date().toISOString(),
+    analysisMarkdown: String(analysisMarkdown || '').trim(),
+    status: 'completed',
+    version: '2.1',
+  };
+  const existing = loadAIReports();
+  saveAIReports([report, ...existing]);
+  return report;
+}
+
+/**
+ * Short label for list UI (analysis reports).
+ */
+export function getAnalysisReportBadgeLabel(analysisType, uiLang = 'zh') {
+  const lang = uiLang === 'zh' ? 'zh' : 'en';
+  return ANALYSIS_PREFIX[lang][analysisType] || ANALYSIS_PREFIX[lang].diagnosis;
+}
+
 /**
  * Delete an AI report
  */
@@ -175,6 +247,7 @@ export default {
   loadAIReports,
   saveAIReports,
   createAIReport,
+  createAnalysisAIReport,
   deleteAIReport,
   getAIReportById,
   updateAIReport,
