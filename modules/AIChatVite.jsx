@@ -96,6 +96,29 @@ function renderUserMarkdown(text) {
   }
 }
 
+function extractFaqHtmlBlock(text) {
+  const src = String(text || '');
+  if (!/FAQPage/i.test(src)) return { cleanText: src, faqHtml: '' };
+
+  const fenced = src.match(/```html\s*([\s\S]*?FAQPage[\s\S]*?)```/i);
+  if (fenced) {
+    const faqHtml = fenced[1].trim();
+    const cleanText = src.replace(fenced[0], '').replace(/\n{3,}/g, '\n\n').trim();
+    return { cleanText, faqHtml };
+  }
+
+  const faqIdx = src.search(/itemtype\s*=\s*["']https?:\/\/schema\.org\/FAQPage["']/i);
+  if (faqIdx < 0) return { cleanText: src, faqHtml: '' };
+  const h2Idx = src.lastIndexOf('<h2', faqIdx);
+  const start = h2Idx >= 0 ? h2Idx : src.lastIndexOf('<div', faqIdx);
+  if (start < 0) return { cleanText: src, faqHtml: '' };
+  const tail = src.slice(start).trim();
+  const nextHeading = tail.search(/\n#{2,6}\s+/);
+  const faqHtml = (nextHeading > 0 ? tail.slice(0, nextHeading) : tail).trim();
+  const cleanText = (src.slice(0, start) + (nextHeading > 0 ? tail.slice(nextHeading) : '')).replace(/\n{3,}/g, '\n\n').trim();
+  return { cleanText, faqHtml };
+}
+
 // ── Constants ──
 const DROPSHIPPING_PREFIX = 'https://dropshipping.tangbuy.com/zh-CN/product/';
 const TANGBUY_DISPLAY_MULT = 1.7;
@@ -1350,17 +1373,22 @@ export function ModuleAIChat({
   // ── SSE streaming response ──
   const streamResponse = async (apiMessages) => {
     let res;
+    const abortCtrl = new AbortController();
+    const timeoutId = setTimeout(() => abortCtrl.abort(), 180000);
     try {
       res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: abortCtrl.signal,
         body: JSON.stringify({ messages: apiMessages, stream: true, max_tokens: 4000, temperature: 0.7 }),
       });
     } catch (e) {
+      clearTimeout(timeoutId);
       const detail = e?.message || 'Network request failed';
       throw new Error(`Chat service connection failed. Please check whether the Vite dev server and the upstream VLLM service are reachable. Detail: ${detail}`);
     }
     if (!res.ok || !res.body) {
+      clearTimeout(timeoutId);
       let detail = '';
       try { detail = await res.text(); } catch (_) {}
       throw new Error(`API ${res.status}: ${detail || res.statusText}`);
@@ -1375,33 +1403,39 @@ export function ModuleAIChat({
     let fullContent = '';
     let lastProcessedLength = 0;
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
 
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed || !trimmed.startsWith('data:')) continue;
-        const data = trimmed.slice(5).trim();
-        if (data === '[DONE]') continue;
-        try {
-          const parsed = JSON.parse(data);
-          const delta = parsed.choices?.[0]?.delta?.content;
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || !trimmed.startsWith('data:')) continue;
+          const data = trimmed.slice(5).trim();
+          if (data === '[DONE]') continue;
+          try {
+            const parsed = JSON.parse(data);
+            const delta = parsed.choices?.[0]?.delta?.content;
             if (delta) {
-            fullContent += delta;
-            const newContent = fullContent.slice(lastProcessedLength);
-            const cleanedDelta = polishAssistantText(newContent);
-            if (cleanedDelta || lastProcessedLength === 0) {
-              lastProcessedLength = fullContent.length;
-              const cleanedFull = maskStreamingProductJsonBlock(polishAssistantText(fullContent), uiLang);
-              setMessages((prev) => prev.map((m) => (m._streamId === streamId ? { ...m, content: cleanedFull } : m)));
+              fullContent += delta;
+              const newContent = fullContent.slice(lastProcessedLength);
+              const cleanedDelta = polishAssistantText(newContent);
+              if (cleanedDelta || lastProcessedLength === 0) {
+                lastProcessedLength = fullContent.length;
+                const cleanedFull = maskStreamingProductJsonBlock(polishAssistantText(fullContent), uiLang);
+                setMessages((prev) => prev.map((m) => (m._streamId === streamId ? { ...m, content: cleanedFull } : m)));
+              }
             }
-          }
-        } catch (_) {}
+          } catch (_) {}
+        }
       }
+    } catch (e) {
+      console.warn('[stream] interrupted, return partial content:', e?.message || e);
+    } finally {
+      clearTimeout(timeoutId);
     }
 
     const finalContent = polishAssistantText(fullContent);
@@ -1562,6 +1596,38 @@ export function ModuleAIChat({
       const apiMessages = [systemMessage, ...(tangbuyRetrievalMessage ? [tangbuyRetrievalMessage] : []), ...contextMessages];
 
       const streamResult = await streamResponse(apiMessages);
+
+      if (mode === 'seo' && streamResult?.finalText && !/===HTML===/i.test(streamResult.finalText)) {
+        try {
+          const followUpMessages = [
+            systemMessage,
+            ...(tangbuyRetrievalMessage ? [tangbuyRetrievalMessage] : []),
+            ...contextMessages,
+            {
+              role: 'user',
+              content: 'Continue only with section 8 (HTML Refactor Plan) and then output an `===HTML===` block. Keep concise.',
+            },
+          ];
+          const followRes = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages: followUpMessages, stream: false, max_tokens: 2200, temperature: 0.2 }),
+          });
+          if (followRes.ok) {
+            const data = await followRes.json();
+            const extra = polishAssistantText(data?.choices?.[0]?.message?.content || '');
+            if (extra) {
+              const parts2 = extra.split(HTML_SPLIT_DELIM);
+              const text2 = (parts2[0] || '').trim();
+              const html2 = parts2.length > 1 ? parts2.slice(1).join(HTML_SPLIT_DELIM).trim() : '';
+              if (text2) setMessages((p) => [...p, { role: 'ai', type: 'text', content: text2 }]);
+              if (html2) setMessages((p) => [...p, { role: 'ai', type: 'html', content: html2 }]);
+            }
+          }
+        } catch (e) {
+          console.warn('[seo-followup] failed:', e?.message || e);
+        }
+      }
 
       const hasAiHotProducts = !!(
         parseCatalogProductJsonFromMarkdown(streamResult?.finalText || '')?.products?.length > 0
@@ -2408,14 +2474,43 @@ export function ModuleAIChat({
             }
 
             const { cleanText, suggestions } = extractSuggestions(msg.content);
-            const aiBody = (cleanText || '').trim();
-            if (!msg._streamId && !aiBody && suggestions.length === 0) return null;
+            const { cleanText: cleanNoFaq, faqHtml } = extractFaqHtmlBlock(cleanText || '');
+            const aiBody = (cleanNoFaq || '').trim();
+            if (!msg._streamId && !aiBody && !faqHtml && suggestions.length === 0) return null;
 
             return (
               <div key={msgKey} className="flex flex-col items-start gap-2">
                 {aiBody ? (
                   <div className="max-w-[85%] md:max-w-[75%] rounded-2xl px-4 py-3 text-sm" style={{ background: 'var(--theme-bubble-ai)', border: '1px solid var(--theme-border)', color: 'var(--theme-bubble-ai-text)' }}>
-                    <div className="md-body" dangerouslySetInnerHTML={{ __html: renderMarkdown(cleanText) }} />
+                    <div className="md-body" dangerouslySetInnerHTML={{ __html: renderMarkdown(cleanNoFaq) }} />
+                  </div>
+                ) : null}
+                {faqHtml ? (
+                  <div className="max-w-[85%] md:max-w-[75%] rounded-2xl px-4 py-3 text-sm" style={{ background: 'var(--theme-bubble-ai)', border: '1px solid var(--theme-border)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <strong style={{ fontSize: 12, color: 'var(--theme-text-secondary)' }}>
+                        {uiLang === 'zh' ? 'FAQ 预览' : 'FAQ Preview'}
+                      </strong>
+                      <button
+                        type="button"
+                        onClick={async () => { try { await navigator.clipboard.writeText(faqHtml); } catch (_) {} }}
+                        className="text-[11px] underline"
+                        style={{ color: 'var(--secondary)' }}
+                      >
+                        {uiLang === 'zh' ? '复制代码' : 'Copy code'}
+                      </button>
+                    </div>
+                    <div
+                      className="md-body"
+                      dangerouslySetInnerHTML={{
+                        __html: stripLiquidTemplateRefs(
+                          DOMPurify.sanitize(faqHtml, {
+                            ADD_ATTR: ['itemprop', 'itemscope', 'itemtype', 'target', 'rel'],
+                            ALLOW_DATA_ATTR: true,
+                          }),
+                        ),
+                      }}
+                    />
                   </div>
                 ) : null}
                 {suggestions.length > 0 && !msg._streamId && (
