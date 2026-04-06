@@ -1408,7 +1408,7 @@ export function ModuleAIChat({
 
   // ── Send message ──
   /** @returns {Promise<boolean>} true if the message was accepted (quota OK) and sent to the model */
-  const send = React.useCallback(async (txt) => {
+  const send = React.useCallback(async (txt, opts = {}) => {
     if (!txt || isLoading) return false;
 
     // Clear shown product IDs when user sends a new message
@@ -1581,9 +1581,18 @@ export function ModuleAIChat({
 
       const ar = opts?.analysisReport;
       if (ar?.kind && streamResult?.finalText) {
-        const rawMd = (streamResult.textPart || streamResult.finalText || '').trim();
-        const stripped = parseCatalogProductJsonFromMarkdown(rawMd);
-        const analysisMarkdown = (stripped?.strippedText || rawMd).trim();
+        const full = String(streamResult.finalText || '').trim();
+        let body = String(streamResult.textPart || '').trim();
+        if (streamResult.htmlPart?.trim()) {
+          body = body ? `${body}\n\n---\n\n${streamResult.htmlPart.trim()}` : streamResult.htmlPart.trim();
+        }
+        if (!body) body = full;
+        const stripped = parseCatalogProductJsonFromMarkdown(body);
+        let analysisMarkdown = (stripped?.strippedText || body).trim();
+        if (!analysisMarkdown) analysisMarkdown = full;
+        if (!analysisMarkdown) {
+          analysisMarkdown = full.replace(/```(?:json)?\s*[\s\S]*?```/gi, '').trim() || full;
+        }
         if (analysisMarkdown.length) {
           const newReport = createAnalysisAIReport({
             analysisType: ar.kind,
@@ -1592,6 +1601,11 @@ export function ModuleAIChat({
             uiLang,
           });
           onReportCreated?.(newReport);
+          const savedHint =
+            uiLang === 'zh'
+              ? '✅ **报告已保存** — 请到侧栏 **AI 报告** 查看完整内容与下载；也可在此继续对话。'
+              : '✅ **Report saved** — Open **AI Reports** in the sidebar to view and download; you can also keep chatting here.';
+          setMessages((p) => [...p, { role: 'ai', type: 'text', content: savedHint, _reportSaved: true }]);
         }
       }
     } catch (err) {

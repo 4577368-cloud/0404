@@ -441,18 +441,17 @@ export default function App() {
   }, [activeView, activeReportId, reports, guestFeatureLocked, requireOAuthToastAndModal]);
 
   const handleReportCreated = React.useCallback((newReport) => {
-    if (guestFeatureLocked) {
-      requireOAuthToastAndModal('report_created_gate');
-      return;
-    }
-    setReports(prev => [newReport, ...prev]);
+    setReports((prev) => [newReport, ...prev.filter((r) => r.id !== newReport.id)]);
     setActiveReportId(newReport.id);
     setReportListVisible(false);
     setWorkflowProgress({ isRunning: false, stepName: '', percent: 100, step: 9, justCompleted: true });
-    setActiveView('aiReports');
-    setSidebarCollapsed(true);
-    sidebarAutoCollapsedRef.current = true;
-  }, [guestFeatureLocked, requireOAuthToastAndModal]);
+    const isChatAnalysisReport = newReport?.kind === 'analysis';
+    if (!isChatAnalysisReport) {
+      setActiveView('aiReports');
+      setSidebarCollapsed(true);
+      sidebarAutoCollapsedRef.current = true;
+    }
+  }, []);
 
   const handleToggleSidebarCollapse = React.useCallback(() => {
     sidebarAutoCollapsedRef.current = false;
