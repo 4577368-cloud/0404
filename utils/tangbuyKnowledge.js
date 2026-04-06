@@ -125,6 +125,7 @@ export function extractProductKeywordsForTangbuy(aiText, userText = '') {
   const blob = `${u}\n${raw}`;
 
   const out = [];
+  let hasEnglishPhrase = false;
   const push = (s) => {
     const x = String(s || '').trim().replace(/[：:，,。.!！?？、]+$/g, '');
     if (!isLikelyProductKeyword(x)) return;
@@ -151,11 +152,28 @@ export function extractProductKeywordsForTangbuy(aiText, userText = '') {
   }
 
   // 英文常见品类词
+  // Prefer full phrase from AI conclusion, e.g. "low-rise cargo jeans".
+  const enPhrase =
+    /\b([a-z][a-z-]{1,20}(?:\s+[a-z][a-z-]{1,20}){0,3}\s+(?:jeans|joggers|shorts|dress|hoodie|sneakers|earbuds|backpack|phone case))\b/gi;
+  while ((m = enPhrase.exec(blob)) !== null) {
+    const phrase = m[1].trim();
+    if (phrase.split(/\s+/).length >= 2) {
+      hasEnglishPhrase = true;
+      push(phrase);
+    }
+  }
+
   const en = /\b(high[- ]waist|ripped|distressed|skinny|wide[- ]leg|baggy)\s+(jeans|joggers|shorts)\b/gi;
-  while ((m = en.exec(blob)) !== null) push(m[0].trim());
+  while ((m = en.exec(blob)) !== null) {
+    hasEnglishPhrase = true;
+    push(m[0].trim());
+  }
 
   const en2 = /\b(jeans|sneakers|hoodie|dress|earbuds|backpack|phone case)\b/gi;
-  while ((m = en2.exec(blob)) !== null) push(m[0].trim());
+  // Only fall back to generic category word if we did not capture a full phrase.
+  if (!hasEnglishPhrase) {
+    while ((m = en2.exec(blob)) !== null) push(m[0].trim());
+  }
 
   return out.slice(0, 12);
 }

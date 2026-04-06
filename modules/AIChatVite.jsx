@@ -60,14 +60,23 @@ mdRenderer.link = function ({ href, title, text }) {
   const titleAttr = title ? ` title="${title}"` : '';
   return `<a href="${href}"${titleAttr} target="_blank" rel="noopener noreferrer" class="underline underline-offset-2 transition-opacity hover:opacity-80" style="color:var(--secondary)">${text}</a>`;
 };
+
+function stripLiquidTemplateRefs(html) {
+  if (!html) return html;
+  return String(html)
+    .replace(/<img\b[^>]*\bsrc\s*=\s*["'][^"']*(?:\{\{|\{%)[^"']*["'][^>]*>/gi, '')
+    .replace(/\b(?:href|src)\s*=\s*["'][^"']*(?:\{\{|\{%)[^"']*["']/gi, '');
+}
+
 function renderMarkdown(text) {
   if (!text) return '';
   try {
     const cleaned = decodeHtmlEntities(String(text));
     const raw = marked.parse(cleaned, { breaks: true, gfm: true, renderer: mdRenderer });
-    return DOMPurify.sanitize(raw, { ADD_ATTR: ['target', 'rel', 'class'], ALLOW_DATA_ATTR: true });
+    const safe = DOMPurify.sanitize(raw, { ADD_ATTR: ['target', 'rel', 'class'], ALLOW_DATA_ATTR: true });
+    return stripLiquidTemplateRefs(safe);
   } catch (_) {
-    return DOMPurify.sanitize(String(text));
+    return stripLiquidTemplateRefs(DOMPurify.sanitize(String(text)));
   }
 }
 
@@ -864,6 +873,7 @@ export function ModuleAIChat({
   t, uiLang, theme, messages: propMessages, setMessages: propSetMessages, draft, setDraft, onPublish, onQuotaChange, onReportCreated, onWorkflowProgressChange, onOpenSourcing,
   authUser = null, conversationId = '', isVip = false,
   guestFeatureLocked = false,
+  allowLocalVipUnlock = false,
   onGuestFeatureBlocked,
   onOpenAuthModal,
   oauthMaxFreeQuota = MAX_FREE_QUOTA,
@@ -1030,7 +1040,8 @@ export function ModuleAIChat({
 
   const tryUnlockVip = React.useCallback(async () => {
     const key = vipKeyInput.trim();
-    if (supabase && authUser) {
+    // Local-dev bypass: allow local unlock even with Supabase/anonymous session.
+    if (!allowLocalVipUnlock && supabase && authUser) {
       const res = await claimVipRemote(supabase, key);
       if (res?.ok) {
         track(AnalyticsEvent.VIP_CODE_SUBMIT, { success: true, mode: 'remote' });
@@ -1053,7 +1064,7 @@ export function ModuleAIChat({
       track(AnalyticsEvent.VIP_CODE_SUBMIT, { success: false, mode: 'local' });
       setVipKeyError(uiLang === 'zh' ? '密钥无效，请重试。' : 'Invalid key, please try again.');
     }
-  }, [vipKeyInput, uiLang, onQuotaChange, authUser, supabase]);
+  }, [vipKeyInput, uiLang, onQuotaChange, authUser, supabase, allowLocalVipUnlock]);
 
   const prevShowVipModalRef = React.useRef(false);
   React.useEffect(() => {
@@ -1065,6 +1076,19 @@ export function ModuleAIChat({
 
   const isFirstRender = React.useRef(true);
   const prevMessagesRef = React.useRef(propMessages);
+  const msgKeyMapRef = React.useRef(new WeakMap());
+  const msgKeySeqRef = React.useRef(0);
+
+  const getStableMsgKey = React.useCallback((msg, idx) => {
+    if (msg && typeof msg === 'object') {
+      const hit = msgKeyMapRef.current.get(msg);
+      if (hit) return hit;
+      const next = `m_${++msgKeySeqRef.current}`;
+      msgKeyMapRef.current.set(msg, next);
+      return next;
+    }
+    return `m_fallback_${idx}`;
+  }, []);
 
   React.useEffect(() => {
     if (prevMessagesRef.current !== propMessages) {
@@ -1544,11 +1568,32 @@ export function ModuleAIChat({
       );
 
       const userWantsProductRecommendations = shouldRecommendProducts(txt, messages, streamResult?.finalText);
+      let trendListAppended = false;
+
+      // Restore original long-list trigger logic: explicit recommendation requests
+      if (userWantsProductRecommendations) {
+        const trendCatalog = await loadTrendCatalogOnly();
+        if (trendCatalog.length) {
+          const trendQuery = `${txt} ${(streamResult?.finalText || '').slice(0, 1200)}`;
+          const { matched: trendMatched } = smartSearch(trendQuery, snapshot || '', trendCatalog);
+          let slice = trendMatched.slice(0, 18);
+          if (slice.length === 0) {
+            // smartSearch is tuned for mixed hot catalogs; trend-only pool may score empty.
+            slice = trendCatalog.slice(0, 18);
+          }
+          if (slice.length > 0) {
+            setMessages((p) => [...p, { role: 'ai', type: 'products_trend', content: '', data: slice }]);
+            trendListAppended = true;
+          }
+        }
+      }
+
       const finalForKeyword = String(streamResult?.textPart || streamResult?.finalText || '').slice(0, 1800);
       const userForKeyword = String(txt || '').slice(0, 300);
       const extractedKws = extractProductKeywordsForTangbuy(finalForKeyword, userForKeyword);
       const showTangbuySearchPicks =
         !hasAiHotProducts &&
+        !trendListAppended &&
         shouldAttachTangbuySearchPicks({
           userWantsProductRecommendations,
           aiText: streamResult?.finalText,
@@ -1564,19 +1609,6 @@ export function ModuleAIChat({
               ? '### 📦 Tangbuy 货源搜索\n\n以下是可点击的款式/品类关键词：'
               : '### 📦 Tangbuy sourcing\n\nTap a product/category keyword:';
           setMessages((p) => [...p, { role: 'ai', type: 'search_picks', content: hotLabel, data: picks }]);
-        }
-      }
-
-      // Restore original long-list trigger logic: explicit recommendation requests
-      if (userWantsProductRecommendations) {
-        const trendCatalog = await loadTrendCatalogOnly();
-        if (trendCatalog.length) {
-          const trendQuery = `${txt} ${(streamResult?.finalText || '').slice(0, 1200)}`;
-          const { matched: trendMatched } = smartSearch(trendQuery, snapshot || '', trendCatalog);
-          const slice = trendMatched.slice(0, 18);
-          if (slice.length > 0) {
-            setMessages((p) => [...p, { role: 'ai', type: 'products_trend', content: '', data: slice }]);
-          }
         }
       }
 
@@ -2226,14 +2258,15 @@ export function ModuleAIChat({
             portalIntakeSlot={portalIntakeSlot}
           />
         ) : (
-        <div className="max-w-5xl mx-auto px-4 md:px-6 pt-2 pb-4 space-y-5 transition-all duration-300">
+        <div className="max-w-5xl mx-auto px-4 md:px-6 pt-2 pb-4 space-y-5">
           {messages.map((msg, i) => {
+            const msgKey = getStableMsgKey(msg, i);
             if (msg._streamId && !msg.content) return null;
 
             if (msg.type === 'search_picks') {
               const links = Array.isArray(msg.data) ? msg.data : [];
               return (
-                <div key={i} className="flex justify-start w-full min-w-0">
+                <div key={msgKey} className="flex justify-start w-full min-w-0">
                   <div
                     className="rounded-2xl p-3 max-w-full w-full min-w-0"
                     style={{ background: 'var(--theme-bubble-ai)', border: '1px solid var(--theme-border)' }}
@@ -2277,7 +2310,7 @@ export function ModuleAIChat({
                 msg.type === 'products' ? partitionHotAndTrendMatches(raw) : { hot: raw, trend: [] };
               const hotData = (msg.type === 'products_hot' ? raw : hot).slice(0, 5);
               return (
-                <div key={i} className="flex justify-start w-full min-w-0">
+                <div key={msgKey} className="flex justify-start w-full min-w-0">
                   <div className="rounded-2xl p-3 max-w-full w-full min-w-0" style={{ background: 'var(--theme-bubble-ai)', border: '1px solid var(--theme-border)' }}>
                     {msg.content && (
                       <div className="text-sm mb-3 font-medium md-body" style={{ color: 'var(--theme-bubble-ai-text)' }} dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }} />
@@ -2324,7 +2357,7 @@ export function ModuleAIChat({
             if (msg.type === 'products_trend') {
               const tdata = msg.data || [];
               return (
-                <div key={i} className="flex justify-start w-full min-w-0">
+                <div key={msgKey} className="flex justify-start w-full min-w-0">
                   <div className="rounded-2xl p-3 max-w-full w-full min-w-0" style={{ background: 'var(--theme-bubble-ai)', border: '1px solid var(--theme-border)' }}>
                     {msg.content && (
                       <div className="text-sm mb-3 font-medium md-body" style={{ color: 'var(--theme-bubble-ai-text)' }} dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }} />
@@ -2351,7 +2384,7 @@ export function ModuleAIChat({
 
             if (msg.type === 'html') {
               return (
-                <div key={i} className="flex justify-start">
+                <div key={msgKey} className="flex justify-start">
                   <div className="w-full max-w-[800px] rounded-2xl overflow-hidden" style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)' }}>
                     <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(msg.content, { ADD_ATTR: ['target', 'rel', 'data-label'], ALLOW_DATA_ATTR: true }) }} />
                   </div>
@@ -2362,7 +2395,7 @@ export function ModuleAIChat({
             if (msg.role === 'user') {
               const userRaw = String(msg.content ?? '').trim();
               return (
-                <div key={i} className="flex justify-end">
+                <div key={msgKey} className="flex justify-end">
                   <div className="max-w-[85%] md:max-w-[75%] rounded-2xl px-4 py-2.5 text-sm bg-[var(--primary)]" style={{ color: '#fff' }}>
                     <div
                       className="[&_p]:m-0 [&_p+p]:mt-2 [&_ul]:my-0 [&_ol]:my-0 [&_li]:my-0"
@@ -2379,7 +2412,7 @@ export function ModuleAIChat({
             if (!msg._streamId && !aiBody && suggestions.length === 0) return null;
 
             return (
-              <div key={i} className="flex flex-col items-start gap-2">
+              <div key={msgKey} className="flex flex-col items-start gap-2">
                 {aiBody ? (
                   <div className="max-w-[85%] md:max-w-[75%] rounded-2xl px-4 py-3 text-sm" style={{ background: 'var(--theme-bubble-ai)', border: '1px solid var(--theme-border)', color: 'var(--theme-bubble-ai-text)' }}>
                     <div className="md-body" dangerouslySetInnerHTML={{ __html: renderMarkdown(cleanText) }} />

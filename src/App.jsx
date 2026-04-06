@@ -122,6 +122,17 @@ function loadActiveId(convs) {
 }
 
 export default function App() {
+  const devAuthBypass =
+    !!import.meta.env.DEV &&
+    (import.meta.env.VITE_LOCAL_DEV_BYPASS === '1' ||
+      (typeof window !== 'undefined' && /^(localhost|127\.0\.0\.1)$/i.test(window.location.hostname)));
+
+  const applyLocalDevQuotaState = React.useCallback(() => {
+    const vip = getIsVipUnlocked();
+    setIsVip(vip);
+    setRemainingQuota(vip ? MAX_FREE_QUOTA : getRemainingQuota(MAX_GUEST_QUOTA));
+  }, []);
+
   const [lang, setLang] = React.useState('en');
   const [theme, setTheme] = React.useState(() => localStorage.getItem('tb_theme') || 'light');
   const [remainingQuota, setRemainingQuota] = React.useState(MAX_GUEST_QUOTA);
@@ -163,8 +174,9 @@ export default function App() {
   }, []);
 
   /** 会话未从 Supabase 恢复完成前不拦截侧栏，避免误挡已登录用户 */
-  const guestFeatureLocked =
+  const guestFeatureLockedRaw =
     authSessionReady && (!authUser || isAnonymousUser(authUser));
+  const guestFeatureLocked = devAuthBypass ? false : guestFeatureLockedRaw;
   const maxFreeQuotaForUser = guestFeatureLocked ? MAX_GUEST_QUOTA : MAX_FREE_QUOTA;
 
   /** 无 OAuth 会话时自动匿名登录，使未「登录」用户也有 auth.uid()，额度与日志进 Supabase */
@@ -197,6 +209,10 @@ export default function App() {
 
   /** OAuth：服务端额度；匿名 / 无 Supabase：仅本地 10 次（与 incrementQuota 一致） */
   React.useEffect(() => {
+    if (devAuthBypass) {
+      applyLocalDevQuotaState();
+      return undefined;
+    }
     if (!supabase) {
       setRemainingQuota(getRemainingQuota(MAX_GUEST_QUOTA));
       setIsVip(getIsVipUnlocked());
@@ -223,7 +239,7 @@ export default function App() {
       setRemainingQuota(remainingFromStats(row, false));
     });
     return () => { cancelled = true; };
-  }, [authUser]);
+  }, [authUser, devAuthBypass, applyLocalDevQuotaState]);
 
   const oauthRedirectTo = React.useCallback(
     () => `${window.location.origin}${window.location.pathname || '/'}`,
@@ -472,6 +488,10 @@ export default function App() {
   }, [activeView, sidebarCollapsed]);
 
   const refreshQuota = React.useCallback(() => {
+    if (devAuthBypass) {
+      applyLocalDevQuotaState();
+      return;
+    }
     if (!supabase) {
       setRemainingQuota(getRemainingQuota(MAX_GUEST_QUOTA));
       setIsVip(getIsVipUnlocked());
@@ -496,7 +516,7 @@ export default function App() {
       setIsVip(!!row.is_vip);
       setRemainingQuota(remainingFromStats(row, false));
     });
-  }, [authUser]);
+  }, [authUser, devAuthBypass, applyLocalDevQuotaState]);
 
   React.useEffect(() => () => { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); }, []);
 
@@ -670,6 +690,7 @@ export default function App() {
               conversationId={activeId}
               isVip={isVip}
               guestFeatureLocked={guestFeatureLocked}
+              allowLocalVipUnlock={devAuthBypass}
               onGuestFeatureBlocked={() => requireOAuthToastAndModal('chat_ai_diagnose')}
               onOpenAuthModal={() => openAuthModal('quota_modal')}
               oauthMaxFreeQuota={MAX_FREE_QUOTA}

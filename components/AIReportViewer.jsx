@@ -89,6 +89,15 @@ function markStepHeadings(html) {
   });
 }
 
+/** Remove unresolved Shopify Liquid refs so browser won't request `{{ ... }}` URLs. */
+function stripLiquidTemplateRefs(html) {
+  if (!html) return html;
+  return String(html)
+    .replace(/<img\b[^>]*\bsrc\s*=\s*["'][^"']*(?:\{\{|\{%)[^"']*["'][^>]*>/gi, '')
+    .replace(/<a\b([^>]*\bhref\s*=\s*["'][^"']*(?:\{\{|\{%)[^"']*["'])([^>]*)>/gi, '<a$1$2 data-invalid-liquid-ref="1">')
+    .replace(/\b(?:href|src)\s*=\s*["'][^"']*(?:\{\{|\{%)[^"']*["']/gi, '');
+}
+
 export default function AIReportViewer({ reportId, uiLang, onNewDiagnosis }) {
   const [report, setReport] = React.useState(null);
   const [activeStep, setActiveStep] = React.useState(0); // 默认显示执行摘要(Step 9)
@@ -213,6 +222,7 @@ export default function AIReportViewer({ reportId, uiLang, onNewDiagnosis }) {
       highlightNumericInReportHtml(markStepHeadings(typeof rawHtml === 'string' ? rawHtml : '')) || '',
       { ADD_ATTR: ['target', 'rel', 'class'] },
     );
+    bodyHtml = stripLiquidTemplateRefs(bodyHtml);
     bodyHtml = bodyHtml
       .replace(/&#39;/g, "'").replace(/&amp;#39;/g, "'")
       .replace(/&#34;/g, '"').replace(/&amp;#34;/g, '"');
@@ -270,6 +280,7 @@ ${REPORT_STYLES}
       let html = DOMPurify.sanitize(highlightNumericInReportHtml(markStepHeadings(rawHtml)), {
         ADD_ATTR: ['target', 'rel', 'class'],
       });
+      html = stripLiquidTemplateRefs(html);
       html = html.replace(/&#39;/g, "'").replace(/&amp;#39;/g, "'").replace(/&#34;/g, '"').replace(/&amp;#34;/g, '"');
       return (
         <div style={{ padding: '20px 24px', background: '#ffffff' }}>
@@ -321,6 +332,7 @@ ${REPORT_STYLES}
     let html = DOMPurify.sanitize(highlightNumericInReportHtml(markStepHeadings(rawHtml)), {
       ADD_ATTR: ['target', 'rel', 'class'],
     });
+    html = stripLiquidTemplateRefs(html);
     html = html.replace(/&#39;/g, "'").replace(/&amp;#39;/g, "'").replace(/&#34;/g, '"').replace(/&amp;#34;/g, '"');
 
     if (!html.trim()) {
