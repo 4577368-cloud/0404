@@ -47,6 +47,178 @@ export function pickViewHrefForChatPicks(product) {
   return buildTangbuyDropshippingSearchUrl('sourcing');
 }
 
+/** 闲聊/指令碎片，不可作为货源搜索词 */
+const JUNK_SEARCH_PHRASES_ZH = [
+  '分析一下', '分析', '好的', '请提供', '请', '是否需要', '是否', '可以选择', '选择', '以下', '如下', '信息',
+  '链接', '网址', '总结', '首先', '其次', '另外', '建议', '注意', '说明', '你好', '您好', '用户', '可以',
+  '如果', '那么', '因为', '所以', '例如', '比如', '方面', '问题', '回答', '内容', '步骤', '第', '章',
+];
+const JUNK_EXACT_ZH = new Set([
+  '信息', '链接', '分析', '好的', '可以', '选择', '以下', '建议', '用户', '内容', '步骤', '方面', '问题',
+]);
+
+function isJunkSearchKeyword(s) {
+  const t = String(s || '').trim();
+  if (t.length < 3 || t.length > 64) return true;
+  if (/\n|https?:\/\/|[|]/i.test(t)) return true;
+  if (/[:：]/.test(t) && t.length > 10) return true;
+  if (/\d{4}/.test(t)) return true;
+  if (JUNK_EXACT_ZH.has(t)) return true;
+  for (const j of JUNK_SEARCH_PHRASES_ZH) {
+    if (t === j || t.startsWith(j + '，') || t.startsWith(j + '。')) return true;
+  }
+  if (/^(请|如果|是否|可以|需要|能否)/.test(t) && t.length < 12) return true;
+  if (/市场|规模|增长|竞争|时效|物流|成本|分析|建议|方向|差异化|用户|结论/.test(t) && t.length >= 8) return true;
+  return false;
+}
+
+function isLikelyProductKeyword(raw) {
+  const t = String(raw || '').trim();
+  if (!t || isJunkSearchKeyword(t)) return false;
+  if (/[，。！？,.]/.test(t) && t.length > 10) return false;
+  if (t.length > 24) return false;
+  const zhCat = /(牛仔裤|休闲裤|运动裤|短裤|阔腿裤|直筒裤|连衣裙|半身裙|T恤|卫衣|开衫|外套|羽绒服|棉服|大衣|风衣|手机壳|耳机|背包|斜挎包|台灯|收纳|口红|面膜|眼影|假睫毛)$/;
+  const enCat = /\b(jeans|joggers|shorts|dress|hoodie|sneakers|earbuds|backpack|phone case)\b/i;
+  if (zhCat.test(t)) return true;
+  if (enCat.test(t)) return true;
+  return false;
+}
+
+function toEnglishTangbuyKeyword(raw) {
+  const src = String(raw || '').trim();
+  if (!src) return '';
+  let s = src
+    .replace(/高腰/g, 'high waist ')
+    .replace(/低腰/g, 'low waist ')
+    .replace(/破洞/g, 'ripped ')
+    .replace(/直筒/g, 'straight ')
+    .replace(/阔腿/g, 'wide leg ')
+    .replace(/紧身/g, 'skinny ')
+    .replace(/宽松/g, 'loose fit ');
+
+  if (/[\u4e00-\u9fff]/.test(s)) {
+    const translated = translateZhToEn(s)
+      .map((x) => String(x || '').trim())
+      .filter(Boolean)
+      .join(' ');
+    s = translated || s;
+  }
+
+  s = s
+    .replace(/[^\x00-\x7F]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+
+  if (!s || s.length < 2) return '';
+  return s.slice(0, 80);
+}
+
+/**
+ * 从 AI / 用户话术中抽取「像商品/款式」的搜索词（不整段分词，避免「好的请提供」等）。
+ */
+export function extractProductKeywordsForTangbuy(aiText, userText = '') {
+  const raw = String(aiText || '')
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+  const u = String(userText || '').replace(/https?:\/\/[^\s]+/g, ' ');
+  const blob = `${u}\n${raw}`;
+
+  const out = [];
+  const push = (s) => {
+    const x = String(s || '').trim().replace(/[：:，,。.!！?？、]+$/g, '');
+    if (!isLikelyProductKeyword(x)) return;
+    const low = x.toLowerCase();
+    if (out.some((e) => e.toLowerCase() === low)) return;
+    out.push(x);
+  };
+
+  // 中文：修饰词 + 品类（高腰牛仔裤、破洞牛仔…）
+  const zhClass =
+    /([\u4e00-\u9fff\d\w·]{0,10})(牛仔裤|休闲裤|运动裤|短裤|阔腿裤|直筒裤|连衣裙|半身裙|T恤|卫衣|开衫|外套|羽绒服|棉服|大衣|风衣|手机壳|耳机|背包|斜挎包|台灯|收纳|口红|面膜|眼影|假睫毛)/g;
+  let m;
+  while ((m = zhClass.exec(blob)) !== null) {
+    const phrase = `${m[1] || ''}${m[2]}`.trim();
+    if (phrase.length >= 3) push(phrase);
+  }
+
+  // 列表行：- 破洞牛仔裤 / 1. xxx裤
+  for (const line of blob.split(/\n+/)) {
+    const cleaned = line.replace(/^[\s*\-•\d.、]+/, '').trim();
+    if (cleaned.length >= 3 && cleaned.length <= 24 && /裤|裙|鞋|包|壳|表|灯|膜|红|衫|衣|帽/.test(cleaned) && !/[|:：，。！？,.]/.test(cleaned)) {
+      push(cleaned);
+    }
+  }
+
+  // 英文常见品类词
+  const en = /\b(high[- ]waist|ripped|distressed|skinny|wide[- ]leg|baggy)\s+(jeans|joggers|shorts)\b/gi;
+  while ((m = en.exec(blob)) !== null) push(m[0].trim());
+
+  const en2 = /\b(jeans|sneakers|hoodie|dress|earbuds|backpack|phone case)\b/gi;
+  while ((m = en2.exec(blob)) !== null) push(m[0].trim());
+
+  return out.slice(0, 12);
+}
+
+/**
+ * 是否应在回复后展示 Tangbuy 搜索：须能抽出至少 2 个有效商品词，且用户显式要推荐或 AI 明显在举款式。
+ */
+export function shouldAttachTangbuySearchPicks({ userWantsProductRecommendations, aiText, extractedKeywords }) {
+  const kws = Array.isArray(extractedKeywords) ? extractedKeywords : [];
+  if (kws.length < 2) return false;
+  return !!userWantsProductRecommendations;
+}
+
+/**
+ * 由已过滤的关键词生成 Tangbuy 搜索项；**label 仅展示关键词**（点击跳转，不外露长 URL）。
+ */
+export function buildTangbuySearchPicksFromKeywords(keywords, uiLang = 'zh', max = 8) {
+  const n = Math.min(12, Math.max(1, Number(max) || 5));
+  const list = (Array.isArray(keywords) ? keywords : []).filter((k) => isLikelyProductKeyword(k)).slice(0, n);
+  const out = [];
+  const seen = new Set();
+  for (const keyword of list) {
+    const enKeyword = toEnglishTangbuyKeyword(keyword);
+    if (!enKeyword || seen.has(enKeyword)) continue;
+    seen.add(enKeyword);
+    out.push({
+      label: keyword,
+      keyword: enKeyword,
+      href: buildTangbuyDropshippingSearchUrl(enKeyword),
+    });
+  }
+  return out;
+}
+
+/**
+ * 从对话上下文生成 Tangbuy 搜索（优先种子商品名 + 抽取的商品词，**不再**对全文随意分词）。
+ */
+export function buildTangbuySearchPicksFromContext(opts = {}) {
+  const {
+    userText = '',
+    aiText = '',
+    seedNames = [],
+    uiLang = 'zh',
+    max = 5,
+  } = opts;
+
+  const fromSeeds = (Array.isArray(seedNames) ? seedNames : [])
+    .map((s) => String(s || '').trim())
+    .filter((s) => s.length >= 3 && !isJunkSearchKeyword(s));
+
+  const extracted = extractProductKeywordsForTangbuy(aiText, userText);
+  const merged = [];
+  const seen = new Set();
+  for (const x of [...fromSeeds, ...extracted]) {
+    const low = x.toLowerCase();
+    if (seen.has(low)) continue;
+    seen.add(low);
+    merged.push(x);
+  }
+
+  return buildTangbuySearchPicksFromKeywords(merged, uiLang, max);
+}
+
 const KB_FILES = {
   zh: 'knowledgeBase_CN.json',
   en: 'knowledgeBase_EN.json',

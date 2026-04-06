@@ -2,12 +2,13 @@ import React from 'react';
 import { isAnonymousUser } from '../utils/supabaseAuth.js';
 import { createPortal } from 'react-dom';
 import { GoogleGIcon, FacebookIcon, TikTokIcon, YouTubeIcon, WhatsAppIcon } from './BrandSocialIcons.jsx';
+import { FIND_US_WHATSAPP_URL } from '../utils/socialLinks.js';
 
 const FIND_US_LINKS = [
   { key: 'tiktok', ariaLabel: 'TikTok', href: 'https://www.tiktok.com/@tangbuy_com', Icon: TikTokIcon },
   { key: 'youtube', ariaLabel: 'YouTube', href: 'https://www.youtube.com/@TangbuyDropshipping', Icon: YouTubeIcon },
   { key: 'facebook', ariaLabel: 'Facebook', href: 'https://www.facebook.com/profile.php?id=61579006720346', Icon: FacebookIcon },
-  { key: 'whatsapp', ariaLabel: 'WhatsApp', href: 'https://api.whatsapp.com/message/KSHZRLSWZN5HB1?autoload=1&app_absent=0', Icon: WhatsAppIcon },
+  { key: 'whatsapp', ariaLabel: 'WhatsApp', href: FIND_US_WHATSAPP_URL, Icon: WhatsAppIcon },
 ];
 
 const INTENT_RULES = [
@@ -58,7 +59,7 @@ function conversationHasAiResponse(conv) {
   const msgs = conv?.messages || [];
   return msgs.some((m) => {
     if (m.role !== 'ai') return false;
-    if (m.type === 'products_hot' || m.type === 'products_trend') {
+    if (m.type === 'products_hot' || m.type === 'products_trend' || m.type === 'search_picks') {
       const hasData = m.data && (Array.isArray(m.data) ? m.data.length > 0 : Object.keys(m.data || {}).length > 0);
       const hasText = typeof m.content === 'string' && m.content.trim().length > 0;
       return hasData || hasText;
@@ -148,8 +149,8 @@ function generateSmartName(messages, uiLang = 'zh') {
     const m = ais[i];
     const aiContent = m.content || m.text || '';
     if (isGenericAiGreeting(aiContent)) continue;
-    if (m.type === 'products_hot' || m.type === 'products_trend') {
-      return uiLang === 'zh' ? '🛒 选品推荐' : '🛒 Product picks';
+    if (m.type === 'products_hot' || m.type === 'products_trend' || m.type === 'search_picks') {
+      return uiLang === 'zh' ? '🛒 Tangbuy 搜索推荐' : '🛒 Tangbuy search picks';
     }
     const fromAi = titleFromAiContent(aiContent);
     if (fromAi) return fromAi;

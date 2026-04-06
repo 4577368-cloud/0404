@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { incrementQuota, getRemainingQuota, MAX_GUEST_QUOTA, MAX_FREE_QUOTA } from '../utils/quota.js';
+import { isAnonymousUser } from '../utils/supabaseAuth.js';
+import { FIND_US_WHATSAPP_URL, FIND_US_WHATSAPP_LABEL } from '../utils/socialLinks.js';
 import { track, AnalyticsEvent } from '../utils/analytics.js';
 import { supabase } from '../utils/supabaseClient.js';
 import { consumeChatTurn, claimVipRemote } from '../utils/supabaseUsage.js';
@@ -29,6 +31,10 @@ import {
   shouldInjectTangbuyKnowledge,
   buildTangbuyKnowledgeContext,
   ensureKnowledgeBasesLoaded,
+  buildTangbuySearchPicksFromContext,
+  buildTangbuySearchPicksFromKeywords,
+  extractProductKeywordsForTangbuy,
+  shouldAttachTangbuySearchPicks,
 } from '../utils/tangbuyKnowledge.js';
 import {
   translateZhToEn,
@@ -41,12 +47,10 @@ import {
   loadProductCatalog,
   loadTrendCatalogOnly,
   shouldRecommendProducts,
-  shouldAttachTangbuyHotFromModelTrendAnalysis,
   isProductConfirmation,
   parseCatalogProductJsonFromMarkdown,
   maskStreamingProductJsonBlock,
   partitionHotAndTrendMatches,
-  enrichHotProductsWithCatalog,
 } from '../utils/productSearch.js';
 import { decodeHtmlEntities, buildAggregatedSupplyChainBackbone } from '../utils/reportFormatter.js';
 import { PROMPTS } from '../utils/systemPrompts.js';
@@ -250,7 +254,11 @@ async function getUrlSnapshot(url, retryCount = 0) {
   }
 }
 
-// ── Extract follow-up suggestions from AI text ──
+/** 仅当 AI 明确写出「快捷追问 / You might also ask」区块时，才把下列行抽成点击填入输入框的 chip；绝不根据「最后几行」自动剥离，避免把 AI 反问用户的话当成快捷输入 */
+const SUGGESTION_BLOCK_START =
+  /^(你可能还想|你还可以|相关问题|延伸问题|推荐问题|继续探索|快捷追问|Related questions|Follow[- ]?up questions|Suggested (?:next )?(?:questions|prompts)|You (?:might|may|can) also (?:ask|try))/i;
+
+// ── Extract optional quick-reply chips (user phrasing to send back), NOT AI’s questions to the user ──
 function extractSuggestions(text) {
   if (!text) return { cleanText: text, suggestions: [] };
   const lines = text.split('\n');
@@ -262,23 +270,40 @@ function extractSuggestions(text) {
     const line = lines[i];
     const trimmed = line.trim();
 
-    if (/^(你可能还想|你还可以|相关问题|延伸问题|推荐问题|继续探索|Related|Follow.?up|Suggested|You (?:might|may|can) also)/i.test(trimmed)) {
+    if (SUGGESTION_BLOCK_START.test(trimmed)) {
       inSuggestionBlock = true;
       continue;
     }
 
-    if (inSuggestionBlock || i >= lines.length - 6) {
-      const qMatch = trimmed.match(/^(?:[-•*>\d]+[.)：:\s]*|[🔹🔸▸▶➤→]+\s*)(.{8,}[?？])\s*$/);
-      if (qMatch) { suggestions.push(qMatch[1].trim()); continue; }
+    if (inSuggestionBlock) {
+      const qMatch = trimmed.match(/^(?:[-•*>\d]+[.)：:\s]*|[🔹🔸▸▶➤→]+\s*)(.{8,})\s*$/);
+      if (qMatch) {
+        suggestions.push(qMatch[1].trim());
+        continue;
+      }
       const numbered = trimmed.match(/^(?:\d+[.)：:\s]+)(.{8,})\s*$/);
-      if (inSuggestionBlock && numbered) { suggestions.push(numbered[1].trim()); continue; }
+      if (numbered) {
+        suggestions.push(numbered[1].trim());
+        continue;
+      }
+      if (trimmed.length > 0) {
+        keep.push(line);
+        inSuggestionBlock = false;
+      }
+      continue;
     }
 
     keep.push(line);
-    if (!inSuggestionBlock && trimmed.length > 0) inSuggestionBlock = false;
   }
 
   return { cleanText: keep.join('\n').replace(/\n{3,}/g, '\n\n').trimEnd(), suggestions: suggestions.slice(0, 4) };
+}
+
+function isTrivialGreetingOnly(text) {
+  const t = String(text || '').trim();
+  if (!t || t.length > 80) return false;
+  if (/https?:\/\//i.test(t)) return false;
+  return /^(你好|您好|嗨|哈喽|在吗|早上好|下午好|晚上好|hi|hello|hey)(\s*[!！?？。,.，])*$/i.test(t);
 }
 
 // ════════════════════════════════════════════════════
@@ -832,8 +857,8 @@ const WelcomePortal = React.memo(function WelcomePortal({ uiLang, t, isLoading, 
 // ════════════════════════════════════════════════════
 const VIP_KEY = 'Tangbuydropshipping2026';
 const VIP_FLAG_KEY = 'tb_ai_vip_unlocked_v1';
-const WHATSAPP_URL = 'https://wa.me/8613409738176';
-const WHATSAPP_NUMBER = '+86 13409738176';
+const WHATSAPP_URL = FIND_US_WHATSAPP_URL;
+const WHATSAPP_NUMBER = FIND_US_WHATSAPP_LABEL;
 
 export function ModuleAIChat({
   t, uiLang, theme, messages: propMessages, setMessages: propSetMessages, draft, setDraft, onPublish, onQuotaChange, onReportCreated, onWorkflowProgressChange, onOpenSourcing,
@@ -850,7 +875,7 @@ export function ModuleAIChat({
   const setMessages = propSetMessages || localSetMessages;
   const initialMessageCountRef = React.useRef(Array.isArray(propMessages) ? propMessages.length : 0);
   const initialLastMessageIsProductsRef = React.useRef(Array.isArray(propMessages) && propMessages.length > 0
-    ? ['products', 'products_hot', 'products_trend'].includes(propMessages[propMessages.length - 1]?.type)
+    ? ['products', 'products_hot', 'products_trend', 'search_picks'].includes(propMessages[propMessages.length - 1]?.type)
     : false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [allProducts, setAllProducts] = React.useState([]);
@@ -1287,7 +1312,15 @@ export function ModuleAIChat({
       ? `\n\n[AI diagnosis — target market]\n${diagnosisContext.prompt}\n\nPrioritize that market’s shopper preferences, purchasing power, and competitive landscape.\n`
       : '';
 
-    return { role: 'system', content: activePrompt + tangbuyBaseGuidance + tangbuyKnowledgeCtx + langConstraint + yearConstraint + siteCtx + diagnosisCtx };
+    const tangbuyExecutionHint = ['diagnosis', 'seo', 'page'].includes(activeSkill)
+      ? `\n\n[Tangbuy execution reminder]\n- Keep the main analysis first.\n- If the answer touches product recommendations, sourcing, fulfillment, shipping/logistics, supplier choice, or inventory risk, add **one concise execution paragraph** on how Tangbuy Dropshipping can implement it (procurement, QC, warehousing, packing, shipping, after-sales coordination).\n- Use natural advisory tone; no hard sell.\n`
+      : '';
+
+    const greetingHint = isTrivialGreetingOnly(currentInput)
+      ? `\n\n[Brief greeting — user has not asked a concrete question yet]\n- Reply warmly in a few sentences. You may use a short bullet list of **what you can help with** (e.g. 独立站诊断、SEO、选品思路).\n- Do **not** ask the user to “provide a product URL / category” or similar intake-style questions. Do **not** use numbered “请提供…” questionnaires.\n- End with a single open line such as: 有具体问题或链接时直接发我即可 — not a list of demands.\n`
+      : '';
+
+    return { role: 'system', content: activePrompt + tangbuyBaseGuidance + tangbuyKnowledgeCtx + langConstraint + yearConstraint + siteCtx + diagnosisCtx + tangbuyExecutionHint + greetingHint };
   }, [mode, knownSite, uiLang, uiLangLabel, diagnosisContext]);
 
   // ── SSE streaming response ──
@@ -1361,24 +1394,33 @@ export function ModuleAIChat({
 
     if (catalogFromAi?.products?.length) {
       const textWithoutJson = (catalogFromAi.strippedText || '').trim();
+      const seeds = catalogFromAi.products.map((p) => p.name || p.title).filter(Boolean);
+      const picksData = buildTangbuySearchPicksFromContext({
+        userText: '',
+        aiText: textWithoutJson,
+        seedNames: seeds,
+        uiLang,
+        max: 5,
+      });
       const picksHeading =
         uiLang === 'zh'
-          ? '### 📦 Picks\n'
-          : '### 📦 Picks\n';
+          ? '### 📦 Tangbuy 搜索\n\n点击下列**款式关键词**直达货源搜索（不展开链接）：'
+          : '### 📦 Tangbuy search\n\nTap a product keyword to search on Tangbuy:';
       const combinedContent =
         textWithoutJson.length > 0 ? `${textWithoutJson}\n\n${picksHeading}` : picksHeading.trimEnd();
-      const hotSliceFromAi = catalogFromAi.products.slice(0, 5);
       setMessages((prev) => {
         const without = prev.filter((m) => m._streamId !== streamId);
-        const messages = [
-          ...without,
-          {
+        const messages = [...without];
+        if (picksData.length >= 2) {
+          messages.push({
             role: 'ai',
-            type: 'products_hot',
+            type: 'search_picks',
             content: combinedContent,
-            data: hotSliceFromAi,
-          },
-        ];
+            data: picksData,
+          });
+        } else if (textWithoutJson.trim()) {
+          messages.push({ role: 'ai', type: 'text', content: textWithoutJson.trim() });
+        }
         if (htmlPart) messages.push({ role: 'ai', type: 'html', content: htmlPart });
         return messages;
       });
@@ -1419,7 +1461,8 @@ export function ModuleAIChat({
 
     const urls = extractUrlsFromText(txt);
 
-    if (supabase && authUser) {
+    const useServerQuota = supabase && authUser && !isAnonymousUser(authUser);
+    if (useServerQuota) {
       const res = await consumeChatTurn(supabase, {
         conversationId,
         content: txt,
@@ -1500,78 +1543,36 @@ export function ModuleAIChat({
         parseCatalogProductJsonFromMarkdown(streamResult?.finalText || '')?.products?.length > 0
       );
 
-      /** 用户显式要推荐，或模型回复属商品/品牌/趋势分析时可附横向 Tangbuy 同款；目录补全另需 hasAiHotProducts */
       const userWantsProductRecommendations = shouldRecommendProducts(txt, messages, streamResult?.finalText);
-      const tangbuyHotFromModelAnalysis = shouldAttachTangbuyHotFromModelTrendAnalysis(
-        txt,
-        streamResult?.finalText
-      );
-      const needProductCatalog =
-        hasAiHotProducts || userWantsProductRecommendations || tangbuyHotFromModelAnalysis;
-
-      let catalog = allProducts;
-      if (catalog.length === 0 && needProductCatalog) {
-        try {
-          catalog = await loadProductCatalog();
-          if (catalog.length) setAllProducts(catalog);
-        } catch (e) {
-          console.error('[catalog] reload on send failed', e);
-        }
-      }
-
-      if (hasAiHotProducts && catalog.length > 0) {
-        setMessages((prev) => {
-          const next = [...prev];
-          for (let ri = next.length - 1; ri >= 0; ri--) {
-            const m = next[ri];
-            if (m.type === 'products_hot' && m.role === 'ai' && Array.isArray(m.data) && m.data.length) {
-              next[ri] = { ...m, data: enrichHotProductsWithCatalog(m.data, catalog) };
-              break;
-            }
-          }
-          return next;
+      const finalForKeyword = String(streamResult?.textPart || streamResult?.finalText || '').slice(0, 1800);
+      const userForKeyword = String(txt || '').slice(0, 300);
+      const extractedKws = extractProductKeywordsForTangbuy(finalForKeyword, userForKeyword);
+      const showTangbuySearchPicks =
+        !hasAiHotProducts &&
+        shouldAttachTangbuySearchPicks({
+          userWantsProductRecommendations,
+          aiText: streamResult?.finalText,
+          extractedKeywords: extractedKws,
         });
-      }
-      const extraCtx = snapshot || '';
-      const isImageInput = /\[Image\]\(/i.test(txt) || isImageUrl;
-      let searchQuery = txt;
-      if (streamResult?.finalText) {
-        const aiSnippetLen =
-          userWantsProductRecommendations || tangbuyHotFromModelAnalysis ? 1200 : 500;
-        const aiResponse = streamResult.finalText.slice(0, aiSnippetLen);
-        searchQuery = isImageInput ? (streamResult?.finalSearchText || txt) : `${txt} ${aiResponse}`;
-      }
 
-      const showTangbuyHotCarousel =
-        catalog.length && !hasAiHotProducts && (userWantsProductRecommendations || tangbuyHotFromModelAnalysis);
-
-      if (showTangbuyHotCarousel) {
-        const { matched, isExact } = smartSearch(searchQuery, extraCtx, catalog);
-        const { hot: hotMatched } = partitionHotAndTrendMatches(matched);
-        const hotWithRealImage = hotMatched.filter((p) => p.image && /^https?:\/\//i.test(p.image) && !/placeholder/i.test(p.image));
-        const hotSlice = hotWithRealImage.slice(0, 5);
-
-        if (hotSlice.length > 0) {
-          const analysisOnly = tangbuyHotFromModelAnalysis && !userWantsProductRecommendations;
-          const hotLabel = analysisOnly
-            ? uiLang === 'zh'
-              ? '### 📦 Picks（结合当前商品/品牌与趋势分析）\n\n查看可跳转货源站或按标题搜索。'
-              : '### 📦 Picks (from this product/brand trend analysis)\n\nView opens the listing or a search for this title.'
-            : isExact
-              ? uiLang === 'zh'
-                ? '### 📦 Picks'
-                : '### 📦 Picks'
-              : uiLang === 'zh'
-                ? '### 📦 Picks\n\n以下为参考款式，查看可跳转或搜索。'
-                : '### 📦 Picks\n\nReference styles — View opens listing or search.';
-          setMessages((p) => [...p, { role: 'ai', type: 'products_hot', content: hotLabel, data: hotSlice }]);
+      if (showTangbuySearchPicks) {
+        const maxPicks = userWantsProductRecommendations ? 8 : 5;
+        const picks = buildTangbuySearchPicksFromKeywords(extractedKws, uiLang, maxPicks);
+        if (picks.length >= 2) {
+          const hotLabel =
+            uiLang === 'zh'
+              ? '### 📦 Tangbuy 货源搜索\n\n以下是可点击的款式/品类关键词：'
+              : '### 📦 Tangbuy sourcing\n\nTap a product/category keyword:';
+          setMessages((p) => [...p, { role: 'ai', type: 'search_picks', content: hotLabel, data: picks }]);
         }
       }
 
+      // Restore original long-list trigger logic: explicit recommendation requests
       if (userWantsProductRecommendations) {
         const trendCatalog = await loadTrendCatalogOnly();
         if (trendCatalog.length) {
-          const { matched: trendMatched } = smartSearch(searchQuery, extraCtx, trendCatalog);
+          const trendQuery = `${txt} ${(streamResult?.finalText || '').slice(0, 1200)}`;
+          const { matched: trendMatched } = smartSearch(trendQuery, snapshot || '', trendCatalog);
           const slice = trendMatched.slice(0, 18);
           if (slice.length > 0) {
             setMessages((p) => [...p, { role: 'ai', type: 'products_trend', content: '', data: slice }]);
@@ -1743,7 +1744,7 @@ export function ModuleAIChat({
   const restoredReplayMsg = React.useMemo(() => {
     if (!initialMessageCountRef.current || !messages.length) return null;
     for (let idx = Math.min(initialMessageCountRef.current, messages.length) - 1; idx >= 0; idx -= 1) {
-      if (['products', 'products_hot', 'products_trend'].includes(messages[idx]?.type)) return messages[idx];
+      if (['products', 'products_hot', 'products_trend', 'search_picks'].includes(messages[idx]?.type)) return messages[idx];
     }
     return null;
   }, [messages]);
@@ -2229,6 +2230,47 @@ export function ModuleAIChat({
           {messages.map((msg, i) => {
             if (msg._streamId && !msg.content) return null;
 
+            if (msg.type === 'search_picks') {
+              const links = Array.isArray(msg.data) ? msg.data : [];
+              return (
+                <div key={i} className="flex justify-start w-full min-w-0">
+                  <div
+                    className="rounded-2xl p-3 max-w-full w-full min-w-0"
+                    style={{ background: 'var(--theme-bubble-ai)', border: '1px solid var(--theme-border)' }}
+                  >
+                    {msg.content && (
+                      <div
+                        className="text-sm mb-3 font-medium md-body"
+                        style={{ color: 'var(--theme-bubble-ai-text)' }}
+                        dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
+                      />
+                    )}
+                    {links.length > 0 && (
+                      <ul className="space-y-2 list-none m-0 p-0">
+                        {links.map((row, j) => (
+                          <li key={`${i}-${j}`}>
+                            <a
+                              href={row.href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={uiLang === 'zh' ? '在 Tangbuy Dropshipping 中搜索' : 'Search on Tangbuy Dropshipping'}
+                              className="text-sm underline underline-offset-2 hover:opacity-80 transition-opacity"
+                              style={{
+                                color: 'var(--secondary)',
+                                fontWeight: 500,
+                              }}
+                            >
+                              <span className="break-words">{row.label || row.keyword}</span>
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+
             if (msg.type === 'products_hot' || msg.type === 'products') {
               const raw = msg.data || [];
               const { hot, trend } =
@@ -2362,7 +2404,12 @@ export function ModuleAIChat({
 
           {isLoading && (
             <div className="flex justify-start">
-              <div className="rounded-2xl px-4 py-3 text-sm animate-pulse" style={{ background: 'var(--theme-bubble-ai)', border: '1px solid var(--theme-border)', color: 'var(--theme-text-muted)' }}>Thinking…</div>
+              <div
+                className="rounded-2xl px-4 py-3 text-sm"
+                style={{ background: 'var(--theme-bubble-ai)', border: '1px solid var(--theme-border)', color: 'var(--theme-text-muted)' }}
+              >
+                {uiLang === 'zh' ? '正在回复…' : 'Thinking…'}
+              </div>
             </div>
           )}
         </div>

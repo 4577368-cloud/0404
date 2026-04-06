@@ -195,7 +195,7 @@ export default function App() {
     };
   }, []);
 
-  /** 有 Supabase 会话（含匿名）：额度与 VIP 以 user_stats 为准；无 Supabase：本地额度上限 10 */
+  /** OAuth：服务端额度；匿名 / 无 Supabase：仅本地 10 次（与 incrementQuota 一致） */
   React.useEffect(() => {
     if (!supabase) {
       setRemainingQuota(getRemainingQuota(MAX_GUEST_QUOTA));
@@ -206,16 +206,21 @@ export default function App() {
       return undefined;
     }
     const anon = isAnonymousUser(authUser);
+    if (anon) {
+      setRemainingQuota(getRemainingQuota(MAX_GUEST_QUOTA));
+      setIsVip(false);
+      return undefined;
+    }
     let cancelled = false;
     fetchUserStats(supabase).then((row) => {
       if (cancelled) return;
       if (!row) {
         setIsVip(false);
-        setRemainingQuota(anon ? MAX_GUEST_QUOTA : MAX_FREE_QUOTA);
+        setRemainingQuota(MAX_FREE_QUOTA);
         return;
       }
       setIsVip(!!row.is_vip);
-      setRemainingQuota(remainingFromStats(row, anon));
+      setRemainingQuota(remainingFromStats(row, false));
     });
     return () => { cancelled = true; };
   }, [authUser]);
@@ -467,24 +472,30 @@ export default function App() {
   }, [activeView, sidebarCollapsed]);
 
   const refreshQuota = React.useCallback(() => {
-    if (supabase && authUser) {
-      const anon = isAnonymousUser(authUser);
-      fetchUserStats(supabase).then((row) => {
-        if (!row) {
-          setIsVip(false);
-          setRemainingQuota(anon ? MAX_GUEST_QUOTA : MAX_FREE_QUOTA);
-          return;
-        }
-        setIsVip(!!row.is_vip);
-        setRemainingQuota(remainingFromStats(row, anon));
-      });
-    } else if (!supabase) {
+    if (!supabase) {
       setRemainingQuota(getRemainingQuota(MAX_GUEST_QUOTA));
       setIsVip(getIsVipUnlocked());
-    } else {
+      return;
+    }
+    if (!authUser) {
       setRemainingQuota(MAX_GUEST_QUOTA);
       setIsVip(false);
+      return;
     }
+    if (isAnonymousUser(authUser)) {
+      setRemainingQuota(getRemainingQuota(MAX_GUEST_QUOTA));
+      setIsVip(false);
+      return;
+    }
+    fetchUserStats(supabase).then((row) => {
+      if (!row) {
+        setIsVip(false);
+        setRemainingQuota(MAX_FREE_QUOTA);
+        return;
+      }
+      setIsVip(!!row.is_vip);
+      setRemainingQuota(remainingFromStats(row, false));
+    });
   }, [authUser]);
 
   React.useEffect(() => () => { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); }, []);
