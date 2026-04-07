@@ -173,6 +173,8 @@ export default function Header({
   workflowProgress, onClearWorkflowCompleted, onViewReport,
   maxFreeQuota = 30,
   showCreditsHintForAnonymous = false,
+  /** 侧栏未常驻时（欢迎态）在桌面端也显示菜单按钮，用于打开抽屉 */
+  showSidebarMenuOnDesktop = false,
 }) {
   const languages = [
     { code: 'en', label: 'English' },
@@ -274,6 +276,7 @@ export default function Header({
       ? '未登录（匿名）用户可使用 10 次对话额度。点击左下角使用 Google / Facebook 登录后，额度扩大至 30 次，已使用次数会累计计入。'
       : 'Anonymous users get 10 free credits. Sign in with Google or Facebook (bottom-left) to unlock 30; used credits carry over after login.');
   const creditsAboutLabel = th.creditsAbout || (currentLang === 'zh' ? '额度说明' : 'About credits');
+  const vipUnlimitedLabel = th.vipUnlimited || (currentLang === 'zh' ? '无限' : 'Unlimited');
 
   return (
     <header style={{
@@ -284,8 +287,11 @@ export default function Header({
       transition: 'background 0.3s',
     }}>
       <div className="flex items-center gap-2 min-w-0">
-        <button onClick={onMenuClick}
-          className="md:hidden w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 hover:opacity-80 transition-opacity"
+        <button
+          type="button"
+          onClick={onMenuClick}
+          aria-label={th.menu || 'Menu'}
+          className={`${showSidebarMenuOnDesktop ? 'flex' : 'md:hidden'} w-8 h-8 rounded-lg items-center justify-center flex-shrink-0 hover:opacity-80 transition-opacity`}
           style={{ color: 'var(--brand-primary-fixed)', background: 'transparent', border: 'none' }}
         >
           <div className="icon-menu text-[16px]" />
@@ -433,8 +439,14 @@ export default function Header({
             }}
           >
             <span className="text-[10px] font-extrabold" style={{ color: 'var(--primary)' }}>VIP</span>
-            <span className="text-[10px] font-semibold" style={{ color: 'var(--theme-text-secondary)' }}>
-              {th.vipUnlimited || (currentLang === 'zh' ? '无限' : 'Unlimited')}
+            <span
+              className="text-[15px] leading-none font-normal select-none"
+              style={{ color: 'var(--theme-text-secondary)' }}
+              title={vipUnlimitedLabel}
+              aria-label={vipUnlimitedLabel}
+              role="img"
+            >
+              ♾️
             </span>
           </div>
         ) : (

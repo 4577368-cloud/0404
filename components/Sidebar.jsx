@@ -171,6 +171,8 @@ function generateSmartName(messages, uiLang = 'zh') {
 export default function Sidebar({
   conversations, activeId, onSelect, onNew, onDelete, onRename, isOpen, onClose, onHotProducts, onSourcing, onAIReports, onMyLists, activeView, uiLang, collapsed, onToggleCollapse,
   supabaseReady, authUser, onOpenAuthModal, onLinkGoogle, onLinkFacebook, onSignOut, onSwitchAccount, myListsCount,
+  /** 真正「新用户」欢迎态：不占用桌面窄栏，仅用 Header 菜单拉出抽屉 */
+  dockedHidden = false,
 }) {
   const [editingId, setEditingId] = React.useState(null);
   const [editValue, setEditValue] = React.useState('');
@@ -301,7 +303,7 @@ export default function Sidebar({
       {isOpen && (
         <div onClick={onClose}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 80 }}
-          className="md:hidden"
+          className={dockedHidden ? '' : 'md:hidden'}
         />
       )}
 
@@ -310,7 +312,13 @@ export default function Sidebar({
         background: 'var(--theme-bg-secondary)', borderRight: '1px solid var(--theme-border)',
         transition: 'width 0.25s ease, transform 0.25s ease, background 0.3s', zIndex: 90, overflow: 'hidden',
         ...(isOpen ? { position: 'fixed', top: 0, left: 0, bottom: 0, transform: 'translateX(0)', width: 260 } : {}),
-      }} className={!isOpen ? 'hidden md:flex' : ''}>
+      }} className={
+        isOpen
+          ? 'flex'
+          : dockedHidden
+            ? 'hidden'
+            : 'hidden md:flex'
+      }>
 
         {/* Brand */}
         <div style={{ padding: collapsed ? '16px 0 8px' : '16px 14px 8px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10, justifyContent: collapsed ? 'center' : 'flex-start' }}>

@@ -335,6 +335,12 @@ export default function App() {
   }, [activeId]);
 
   const activeConv = conversations.find((c) => c.id === activeId) || conversations[0];
+  const anyConvHasUserMessage = React.useMemo(
+    () => conversations.some((c) => (c.messages || []).some((m) => m.role === 'user')),
+    [conversations],
+  );
+  /** 全局尚未发过用户消息时：对话页不显示常驻侧栏，仅中间区域；发过至少一条后侧栏常驻（含新建空对话） */
+  const sidebarDockedHidden = activeView === 'chat' && !anyConvHasUserMessage;
   const isInConversation = activeView === 'chat' && activeConv?.messages?.length > 0;
   const useSolidChatBg =
     isInConversation ||
@@ -520,6 +526,10 @@ export default function App() {
 
   React.useEffect(() => () => { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); }, []);
 
+  React.useEffect(() => {
+    if (anyConvHasUserMessage) setSidebarOpen(false);
+  }, [anyConvHasUserMessage]);
+
   return (
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -594,6 +604,7 @@ export default function App() {
         onLinkFacebook={handleSignInFacebook}
         onSignOut={handleSignOut}
         onSwitchAccount={handleSwitchAccount}
+        dockedHidden={sidebarDockedHidden}
       />
 
       {/* Right: header + chat */}
@@ -609,6 +620,7 @@ export default function App() {
             onViewReport={handleViewReport}
             maxFreeQuota={maxFreeQuotaForUser}
             showCreditsHintForAnonymous={!!authUser && isAnonymousUser(authUser)}
+            showSidebarMenuOnDesktop={sidebarDockedHidden}
           />
         </div>
 
