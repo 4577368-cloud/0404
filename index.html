@@ -7,8 +7,8 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Tangbuy Dropshipping - AI Diagnosis &amp; Optimization</title>
-    <meta name="description" content="AI-powered Shopify independent station diagnosis, winning product mining, SEO optimization, and detail page generation tool.">
+    <title>Tangbuy AI — Store leaks, product diagnosis &amp; cross-border tips</title>
+    <meta name="description" content="Product diagnosis, market gap analysis, cross-border optimization tips. 100% free. 30 seconds to insights. Tangbuy AI.">
     <meta name="keywords" content="Shopify, Dropshipping, AI, SEO, Product Finder, Tangbuy">
 
     <script src="https://resource.trickle.so/vendor_lib/unpkg/react@18/umd/react.production.min.js"></script>
@@ -62,6 +62,11 @@
             --theme-card-price-bg: #1a1a1a;
             --theme-bubble-ai: rgba(255,255,255,0.05);
             --theme-bubble-ai-text: #f3f4f6;
+            /* User chat bubble: lower saturation + higher contrast than raw --primary */
+            --theme-bubble-user-bg: color-mix(in srgb, var(--tb-brand) 58%, #0c0809);
+            --theme-bubble-user-text: #fef7f6;
+            --theme-bubble-user-link: #fff8f7;
+            --theme-bubble-user-border: rgba(255, 255, 255, 0.1);
             --theme-input-bar-bg: rgba(10,10,12,0.82);
             --theme-glow-1: rgba(238, 29, 54, 0.09);
             --theme-glow-2: rgba(238, 29, 54, 0.05);
@@ -91,6 +96,11 @@
             --theme-card-price-bg: #f4f4f5;
             --theme-bubble-ai: #ffffff;
             --theme-bubble-ai-text: #27272a;
+            /* Light: tinted surface + dark text (reads better than white on saturated red) */
+            --theme-bubble-user-bg: color-mix(in srgb, var(--tb-brand) 17%, #ffffff);
+            --theme-bubble-user-text: #2a1419;
+            --theme-bubble-user-link: color-mix(in srgb, var(--tb-brand) 78%, #1a0508);
+            --theme-bubble-user-border: color-mix(in srgb, var(--tb-brand) 26%, transparent);
             --theme-input-bar-bg: rgba(255,255,255,0.92);
             --theme-glow-1: rgba(238, 29, 54, 0.08);
             --theme-glow-2: rgba(122, 61, 255, 0.06);
@@ -438,11 +448,22 @@
         [data-theme="light"] .md-body li::marker { color: var(--primary); }
     </style>
     <link rel="icon" href="https://app.trickle.so/storage/public/images/usr_15ab72f5c8000001/61ef7379-f8de-42c4-84bd-5887405602e5.png">
+    <!-- Facebook / LinkedIn 等会抓取下列 og:* 生成链接预览；文案在此，不仅依赖分享框里的文字 -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Tangbuy AI">
+    <meta property="og:title" content="Your store's hidden leaks? Tangbuy AI finds them.">
+    <meta property="og:description" content="✅ Product diagnosis · Market gap analysis · Cross-border optimization tips. 100% free. 30 seconds to insights. #TangbuyDropshipping #EcommerceAI #SmartSelling">
+    <!-- 建议替换为 1200×630 的营销横图；当前若仍是小方图，预览区会显「图小」，但标题与说明会显示上面的文案 -->
     <meta property="og:image" content="https://app.trickle.so/storage/public/images/usr_15ab72f5c8000001/baf0346c-5dce-492e-af5d-6d227791fae0.png">
+    <meta property="og:image:alt" content="Tangbuy AI — ecommerce diagnosis and optimization">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Your store's hidden leaks? Tangbuy AI finds them.">
+    <meta name="twitter:description" content="✅ Product diagnosis · Market gap analysis · Cross-border tips. 100% free. 30 seconds to insights.">
     <meta name="twitter:image" content="https://app.trickle.so/storage/public/images/usr_15ab72f5c8000001/baf0346c-5dce-492e-af5d-6d227791fae0.png">
 </head>
 
 <body>
+    <div id="fb-root"></div>
     <div id="root"></div>
     <!-- 入口须写在本文件内，以便 vite build 扫描依赖并打包；勿仅靠插件注入 -->
     <script type="module" src="/src/main.jsx"></script>

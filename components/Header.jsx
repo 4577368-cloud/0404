@@ -2,9 +2,10 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { track, AnalyticsEvent } from '../utils/analytics.js';
 import { supabase, isSupabaseConfigured } from '../utils/supabaseClient.js';
+import { openFacebookShareDialog, ensureFacebookSdk } from '../utils/facebookSdk.js';
 
 const DEFAULT_SHARE_TEMPLATE_EN =
-  "I'm using Tangbuy AI to diagnose my store & products — really useful for cross-border sellers. Try it: {{url}}";
+  "⚡ Your store's hidden leaks? Tangbuy AI finds them.\n✅ Product diagnosis\n✅ Market gap analysis\n✅ Cross-border optimization tips\n100% free. 30 seconds to insights.\n👉 {{url}}\n#TangbuyDropshipping #EcommerceAI #SmartSelling";
 
 function buildSharePayload(shareUrl, t) {
   const tpl = t?.header?.shareMessageTemplate || DEFAULT_SHARE_TEMPLATE_EN;
@@ -47,8 +48,9 @@ const SHARE_PLATFORMS = [
         <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
       </svg>
     ),
-    getUrl: ({ shareUrl, quoteOnly }) =>
-      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(quoteOnly)}`,
+    /** 只传 u：quote 参数常被 FB 忽略或导致空白弹窗；文案由点击时复制剪贴板 */
+    getUrl: ({ shareUrl }) =>
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
   },
   {
     id: 'reddit',
@@ -66,6 +68,7 @@ const SHARE_PLATFORMS = [
 
 function ShareModal({ isOpen, onClose, t, authUser }) {
   const [copied, setCopied] = React.useState(false);
+  const [facebookCopiedHint, setFacebookCopiedHint] = React.useState(false);
   const [shareUrl, setShareUrl] = React.useState(() =>
     typeof window !== 'undefined' ? window.location.href : ''
   );
@@ -77,7 +80,17 @@ function ShareModal({ isOpen, onClose, t, authUser }) {
   const h = t?.header || {};
 
   React.useEffect(() => {
-    if (!isOpen) setCopied(false);
+    if (!isOpen) {
+      setCopied(false);
+      setFacebookCopiedHint(false);
+    }
+  }, [isOpen]);
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const id = import.meta.env.VITE_FACEBOOK_APP_ID?.trim?.();
+    if (!id) return;
+    ensureFacebookSdk(id).catch(() => {});
   }, [isOpen]);
 
   React.useEffect(() => {
@@ -118,9 +131,39 @@ function ShareModal({ isOpen, onClose, t, authUser }) {
     } catch { /* fallback */ }
   };
 
-  const handleShare = (platform) => {
+  const handleShare = async (platform) => {
     if (shareUrlLoading) return;
-    const openUrl = platform.getUrl({ shareUrl, fullMessage, quoteOnly });
+    const u = String(shareUrl || '').trim();
+    if (!u) return;
+
+    if (platform.id === 'facebook') {
+      const fbAppId = import.meta.env.VITE_FACEBOOK_APP_ID?.trim?.() || '';
+      if (fbAppId) {
+        try {
+          await openFacebookShareDialog({
+            appId: fbAppId,
+            href: u,
+            quote: fullMessage,
+            hashtag: '#TangbuyDropshipping',
+          });
+          setFacebookCopiedHint(false);
+          return;
+        } catch (e) {
+          if (import.meta.env.DEV) console.warn('[fb-share]', e);
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(fullMessage);
+        setFacebookCopiedHint(true);
+        setTimeout(() => setFacebookCopiedHint(false), 12000);
+      } catch (_) {
+        setFacebookCopiedHint(false);
+      }
+      window.open(platform.getUrl({ shareUrl: u }), '_blank', 'noopener,noreferrer,width=600,height=500');
+      return;
+    }
+
+    const openUrl = platform.getUrl({ shareUrl: u, fullMessage, quoteOnly });
     window.open(openUrl, '_blank', 'noopener,noreferrer,width=600,height=500');
   };
 
@@ -173,9 +216,21 @@ function ShareModal({ isOpen, onClose, t, authUser }) {
           </button>
         </div>
 
+        {!import.meta.env.VITE_FACEBOOK_APP_ID && (
+          <p style={{ margin: '0 0 10px', fontSize: 10, color: 'var(--theme-text-muted)', textAlign: 'center', lineHeight: 1.45 }}>
+            {h.facebookShareConfigureHint || ''}
+          </p>
+        )}
+
+        {facebookCopiedHint && (
+          <p style={{ margin: '0 0 12px', fontSize: 11, color: 'var(--primary)', textAlign: 'center', lineHeight: 1.45 }}>
+            {h.facebookShareClipboardHint || ''}
+          </p>
+        )}
+
         <div style={{ display: 'flex', justifyContent: 'center', gap: 20 }}>
           {SHARE_PLATFORMS.map((p) => (
-            <button key={p.id} type="button" onClick={() => handleShare(p)} disabled={shareUrlLoading}
+            <button key={p.id} type="button" onClick={() => void handleShare(p)} disabled={shareUrlLoading}
               style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
                 background: 'none', border: 'none', cursor: shareUrlLoading ? 'not-allowed' : 'pointer', padding: 8,

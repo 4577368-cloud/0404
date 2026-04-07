@@ -80,11 +80,11 @@ function renderMarkdown(text) {
   }
 }
 
-// User bubble markdown (must stay white text on top of red background)
+// User bubble markdown (colors follow --theme-bubble-user-* in index.html)
 const userMdRenderer = new marked.Renderer();
 userMdRenderer.link = function ({ href, title, text }) {
   const titleAttr = title ? ` title="${title}"` : '';
-  return `<a href="${href}"${titleAttr} target="_blank" rel="noopener noreferrer" style="color:#fff" class="underline underline-offset-2 hover:opacity-90">${text}</a>`;
+  return `<a href="${href}"${titleAttr} target="_blank" rel="noopener noreferrer" style="color:var(--theme-bubble-user-link)" class="underline underline-offset-2 hover:opacity-90">${text}</a>`;
 };
 function renderUserMarkdown(text) {
   if (!text) return '';
@@ -2462,7 +2462,14 @@ export function ModuleAIChat({
               const userRaw = String(msg.content ?? '').trim();
               return (
                 <div key={msgKey} className="flex justify-end">
-                  <div className="max-w-[85%] md:max-w-[75%] rounded-2xl px-4 py-2.5 text-sm bg-[var(--primary)]" style={{ color: '#fff' }}>
+                  <div
+                    className="max-w-[85%] md:max-w-[75%] rounded-2xl px-4 py-2.5 text-sm font-medium"
+                    style={{
+                      background: 'var(--theme-bubble-user-bg)',
+                      color: 'var(--theme-bubble-user-text)',
+                      border: '1px solid var(--theme-bubble-user-border)',
+                    }}
+                  >
                     <div
                       className="[&_p]:m-0 [&_p+p]:mt-2 [&_ul]:my-0 [&_ol]:my-0 [&_li]:my-0"
                       style={{ whiteSpace: 'pre-wrap' }}

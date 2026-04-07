@@ -1,0 +1,77 @@
+/**
+ * Facebook JS SDK：用于 FB.ui({ method: 'share', href, quote }) 在分享弹窗中预填引用文案（需配置 VITE_FACEBOOK_APP_ID）。
+ * @see https://developers.facebook.com/docs/sharing/reference/share-dialog
+ */
+
+let sdkLoadPromise = null;
+
+/**
+ * @param {string} appId Meta 开发者控制台「应用编号」
+ * @returns {Promise<typeof window.FB>}
+ */
+export function ensureFacebookSdk(appId) {
+  if (typeof window === 'undefined') {
+    return Promise.reject(new Error('no_window'));
+  }
+  const id = String(appId || '').trim();
+  if (!id) {
+    return Promise.reject(new Error('missing_app_id'));
+  }
+  if (window.FB) {
+    return Promise.resolve(window.FB);
+  }
+  if (sdkLoadPromise) {
+    return sdkLoadPromise;
+  }
+  sdkLoadPromise = new Promise((resolve, reject) => {
+    window.fbAsyncInit = function onFbAsyncInit() {
+      try {
+        window.FB.init({
+          appId: id,
+          cookie: true,
+          xfbml: true,
+          version: 'v21.0',
+        });
+        resolve(window.FB);
+      } catch (e) {
+        reject(e);
+      }
+    };
+    const script = document.createElement('script');
+    script.src = 'https://connect.facebook.net/en_US/sdk.js';
+    script.async = true;
+    script.defer = true;
+    script.crossOrigin = 'anonymous';
+    script.onerror = () => reject(new Error('fb_sdk_script_failed'));
+    document.body.appendChild(script);
+  });
+  return sdkLoadPromise;
+}
+
+/**
+ * 打开 Facebook 分享对话框（可预填 quote；href 为实际落地链接）
+ * @param {{ appId: string, href: string, quote: string, hashtag?: string }} opts
+ */
+export function openFacebookShareDialog(opts) {
+  const { appId, href, quote, hashtag } = opts;
+  return ensureFacebookSdk(appId).then(
+    (FB) =>
+      new Promise((resolve) => {
+        const q = String(quote || '').trim();
+        /** Share Dialog 对 quote 长度有实践上的上限 */
+        const quoteTrimmed = q.length > 620 ? `${q.slice(0, 617)}…` : q;
+        const payload = {
+          method: 'share',
+          href: String(href || '').trim(),
+        };
+        if (quoteTrimmed) payload.quote = quoteTrimmed;
+        if (hashtag && String(hashtag).trim()) {
+          const h = String(hashtag).trim();
+          payload.hashtag = h.startsWith('#') ? h : `#${h}`;
+        }
+        FB.ui(payload, (response) => {
+          resolve(response ?? {});
+        });
+      })
+  );
+}
