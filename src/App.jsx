@@ -150,6 +150,7 @@ export default function App() {
   /** 进入 AI 报告时自动收起侧栏为 true；用户主动点侧栏收起/展开后为 false */
   const sidebarAutoCollapsedRef = React.useRef(false);
   const [activeView, setActiveView] = React.useState('chat');
+  const [chatInitialMode, setChatInitialMode] = React.useState(null);
   const [activeReportId, setActiveReportId] = React.useState(null);
   const [reports, setReports] = React.useState(() => loadAIReports());
   const [reportListVisible, setReportListVisible] = React.useState(true);
@@ -736,12 +737,24 @@ export default function App() {
                   uiLang={lang}
                   reports={reports}
                   onDeleteReport={(id) => setReports(prev => prev.filter(r => r.id !== id))}
+                  onNewAnalysis={() => {
+                    setActiveReportId(null);
+                    setReportListVisible(false);
+                  }}
                 />
               )}
               <AIReportViewer 
                 reportId={activeReportId} 
                 uiLang={lang} 
-                onNewDiagnosis={() => setActiveView('chat')}
+                onNewDiagnosis={(mode) => {
+                  setChatInitialMode(mode || null);
+                  handleNewConv();
+                  setActiveView('chat');
+                  if (sidebarCollapsed && sidebarAutoCollapsedRef.current) {
+                    setSidebarCollapsed(false);
+                    sidebarAutoCollapsedRef.current = false;
+                  }
+                }}
               />
             </>
           ) : (
@@ -767,6 +780,8 @@ export default function App() {
               oauthMaxFreeQuota={MAX_FREE_QUOTA}
               hotProductDiagnosisRequest={hotProductDiagnosisRequest}
               onConsumedHotProductDiagnosisRequest={() => setHotProductDiagnosisRequest(null)}
+              initialMode={chatInitialMode}
+              onConsumedInitialMode={() => setChatInitialMode(null)}
             />
           )}
           </React.Suspense>

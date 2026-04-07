@@ -913,6 +913,8 @@ export function ModuleAIChat({
   oauthMaxFreeQuota = MAX_FREE_QUOTA,
   hotProductDiagnosisRequest = null,
   onConsumedHotProductDiagnosisRequest,
+  initialMode = null,
+  onConsumedInitialMode,
 }) {
   const [localMessages, localSetMessages] = React.useState([]);
   const messages = propMessages || localMessages;
@@ -923,7 +925,10 @@ export function ModuleAIChat({
     : false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [allProducts, setAllProducts] = React.useState([]);
-  const [mode, setMode] = React.useState('auto');
+  const [mode, setMode] = React.useState(() => {
+    if (initialMode && ['diagnosis', 'seo', 'page', 'auto'].includes(initialMode)) return initialMode;
+    return 'auto';
+  });
   const [showModeMenu, setShowModeMenu] = React.useState(false);
   const [knownSite, setKnownSite] = React.useState(null);
   const [knownContentLang, setKnownContentLang] = React.useState(null);
@@ -961,6 +966,11 @@ export function ModuleAIChat({
     setDiagnosisIntakeSubmitted(false);
     setSeoIntakeSubmitted(false);
   }, [conversationId, emptyGeoIntake]);
+
+  // Consume initialMode prop after mount so the parent can clear state
+  React.useEffect(() => {
+    if (initialMode) onConsumedInitialMode?.();
+  }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const [showVipModal, setShowVipModal] = React.useState(false);
   const [vipKeyInput, setVipKeyInput] = React.useState('');

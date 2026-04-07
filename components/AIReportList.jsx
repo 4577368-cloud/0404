@@ -7,6 +7,7 @@ export default function AIReportList({
   uiLang,
   onDeleteReport,
   reports: externalReports,
+  onNewAnalysis,
 }) {
   const [reports, setReports] = React.useState([]);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -82,12 +83,44 @@ export default function AIReportList({
           <span className="icon-file-text" style={{ color: 'var(--brand-primary-fixed)' }} />
           {uiLang === 'zh' ? 'AI 诊断报告' : 'AI Reports'}
         </h3>
-        <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--theme-text-muted)' }}>
-          {reports.length > 0 
-            ? (uiLang === 'zh' ? `${reports.length} 份报告` : `${reports.length} reports`)
-            : (uiLang === 'zh' ? '暂无报告' : 'No reports yet')
-          }
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
+          <p style={{ margin: 0, fontSize: 12, color: 'var(--theme-text-muted)' }}>
+            {reports.length > 0 
+              ? (uiLang === 'zh' ? `${reports.length} 份报告` : `${reports.length} reports`)
+              : (uiLang === 'zh' ? '暂无报告' : 'No reports yet')
+            }
+          </p>
+          {onNewAnalysis && (
+            <button
+              type="button"
+              onClick={onNewAnalysis}
+              style={{
+                padding: '4px 10px',
+                borderRadius: 8,
+                border: '1px solid color-mix(in srgb, var(--brand-primary-fixed) 25%, transparent)',
+                background: 'color-mix(in srgb, var(--brand-primary-fixed) 8%, transparent)',
+                color: 'var(--brand-primary-fixed)',
+                fontSize: 11,
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                transition: 'all 0.15s',
+                flexShrink: 0,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'color-mix(in srgb, var(--brand-primary-fixed) 15%, transparent)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'color-mix(in srgb, var(--brand-primary-fixed) 8%, transparent)';
+              }}
+            >
+              <span className="icon-plus" style={{ fontSize: 11 }} />
+              {uiLang === 'zh' ? '新建' : 'New'}
+            </button>
+          )}
+        </div>
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '8px 10px' }}>

@@ -132,6 +132,16 @@ export default function AIReportViewer({ reportId, uiLang, onNewDiagnosis }) {
   }
 
   if (!report) {
+    const ANALYSIS_CARDS = uiLang === 'zh' ? [
+      { mode: 'diagnosis', icon: 'icon-activity', title: '店铺诊断', desc: '全面审计独立站，识别转化瓶颈与增长机会', color: '#f59e0b' },
+      { mode: 'seo', icon: 'icon-search-check', title: 'SEO 优化', desc: 'SEO + PDP 深度优化，提升搜索排名与转化率', color: '#10b981' },
+      { mode: 'page', icon: 'icon-globe', title: 'GEO 分析', desc: 'AI 搜索可见性优化，占领生成式搜索入口', color: '#6366f1' },
+    ] : [
+      { mode: 'diagnosis', icon: 'icon-activity', title: 'Store Diagnosis', desc: 'Full audit of your store — conversion bottlenecks & growth blockers', color: '#f59e0b' },
+      { mode: 'seo', icon: 'icon-search-check', title: 'SEO Optimization', desc: 'SEO + PDP deep optimization for better rankings & conversion', color: '#10b981' },
+      { mode: 'page', icon: 'icon-globe', title: 'GEO Analysis', desc: 'AI search visibility — dominate generative engine results', color: '#6366f1' },
+    ];
+
     return (
       <div style={{
         flex: 1,
@@ -143,16 +153,16 @@ export default function AIReportViewer({ reportId, uiLang, onNewDiagnosis }) {
         padding: 40,
       }}>
         <div style={{
-          width: 120,
-          height: 120,
+          width: 80,
+          height: 80,
           borderRadius: '50%',
           background: 'color-mix(in srgb, var(--brand-primary-fixed) 10%, transparent)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          marginBottom: 24,
+          marginBottom: 20,
         }}>
-          <span className="icon-file-text" style={{ fontSize: 48, color: 'var(--brand-primary-fixed)', opacity: 0.6 }} />
+          <span className="icon-file-text" style={{ fontSize: 36, color: 'var(--brand-primary-fixed)', opacity: 0.6 }} />
         </div>
         <h3 style={{
           margin: 0,
@@ -160,49 +170,73 @@ export default function AIReportViewer({ reportId, uiLang, onNewDiagnosis }) {
           fontWeight: 600,
           color: 'var(--theme-text)',
         }}>
-          {uiLang === 'zh' ? '选择一份报告查看详情' : 'Select a report to view details'}
+          {uiLang === 'zh' ? '开始新的分析' : 'Start a New Analysis'}
         </h3>
         <p style={{
-          margin: '12px 0 24px',
+          margin: '10px 0 28px',
           fontSize: 14,
           color: 'var(--theme-text-muted)',
           textAlign: 'center',
-          maxWidth: 400,
+          maxWidth: 420,
         }}>
-          {uiLang === 'zh' 
-            ? '从左侧列表选择一份报告：商品 9 步诊断，或品牌 / SEO / GEO 分析输出' 
-            : 'Pick a report: 9-step product diagnosis, or brand / SEO / GEO analysis'}
+          {uiLang === 'zh'
+            ? '选择一种分析类型，填写表单后 AI 将为你生成专业报告'
+            : 'Choose an analysis type, fill in the form and AI will generate a professional report'}
         </p>
-        
-        <button
-          onClick={onNewDiagnosis}
-          style={{
-            padding: '12px 24px',
-            borderRadius: 10,
-            border: 'none',
-            background: 'var(--brand-primary-fixed)',
-            color: '#fff',
-            fontSize: 14,
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            boxShadow: '0 4px 14px rgba(255,59,48,0.3)',
-            transition: 'all 0.2s',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 6px 20px rgba(255,59,48,0.4)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 4px 14px rgba(255,59,48,0.3)';
-          }}
-        >
-          <span className="icon-plus" />
-          {uiLang === 'zh' ? '新建诊断' : 'New Diagnosis'}
-        </button>
+
+        <div style={{
+          display: 'flex',
+          gap: 16,
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          maxWidth: 720,
+        }}>
+          {ANALYSIS_CARDS.map((card) => (
+            <button
+              key={card.mode}
+              onClick={() => onNewDiagnosis(card.mode)}
+              style={{
+                width: 200,
+                padding: '24px 18px',
+                borderRadius: 14,
+                border: '1px solid var(--theme-border)',
+                background: 'var(--theme-card-bg, var(--theme-surface, #fff))',
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 10,
+                textAlign: 'center',
+                transition: 'all 0.2s',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = `0 8px 24px ${card.color}22`;
+                e.currentTarget.style.borderColor = card.color;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)';
+                e.currentTarget.style.borderColor = 'var(--theme-border)';
+              }}
+            >
+              <div style={{
+                width: 48,
+                height: 48,
+                borderRadius: 12,
+                background: `${card.color}15`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <span className={card.icon} style={{ fontSize: 22, color: card.color }} />
+              </div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--theme-text)' }}>{card.title}</div>
+              <div style={{ fontSize: 12, color: 'var(--theme-text-muted)', lineHeight: 1.5 }}>{card.desc}</div>
+            </button>
+          ))}
+        </div>
       </div>
     );
   }

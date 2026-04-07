@@ -367,7 +367,7 @@ export default function Sidebar({
             title={uiLang === 'zh' ? '商品搜索' : 'Product Search'}
             style={{
               width: '100%', display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start',
-              gap: 8, padding: '10px 12px', borderRadius: activeView === 'hotProducts' ? 10 : 0, marginTop: 8,
+              gap: 8, padding: collapsed ? '10px 0' : '10px 12px', borderRadius: activeView === 'hotProducts' ? 10 : 0, marginTop: 8,
               background: activeView === 'hotProducts' ? 'color-mix(in srgb, var(--brand-primary-fixed) 10%, transparent)' : 'transparent',
               color: activeView === 'hotProducts' ? 'var(--brand-primary-fixed)' : 'var(--theme-text)',
               border: activeView === 'hotProducts' ? '1px solid color-mix(in srgb, var(--brand-primary-fixed) 15%, transparent)' : 'none',
@@ -399,7 +399,7 @@ export default function Sidebar({
             title={uiLang === 'zh' ? 'AI报告' : 'AI Reports'}
             style={{
               width: '100%', display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'flex-start',
-              gap: 8, padding: '10px 12px', borderRadius: activeView === 'aiReports' ? 10 : 0, marginTop: 8,
+              gap: 8, padding: collapsed ? '10px 0' : '10px 12px', borderRadius: activeView === 'aiReports' ? 10 : 0, marginTop: 8,
               background: activeView === 'aiReports' ? 'color-mix(in srgb, var(--brand-primary-fixed) 10%, transparent)' : 'transparent',
               color: activeView === 'aiReports' ? 'var(--brand-primary-fixed)' : 'var(--theme-text)',
               border: activeView === 'aiReports' ? '1px solid color-mix(in srgb, var(--brand-primary-fixed) 15%, transparent)' : 'none',
