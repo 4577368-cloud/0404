@@ -76,9 +76,11 @@ function isLikelyProductKeyword(raw) {
   const t = String(raw || '').trim();
   if (!t || isJunkSearchKeyword(t)) return false;
   if (/[，。！？,.]/.test(t) && t.length > 10) return false;
-  if (t.length > 24) return false;
+  const maxLen = /[\u4e00-\u9fff]/.test(t) ? 24 : 42;
+  if (t.length > maxLen) return false;
   const zhCat = /(牛仔裤|休闲裤|运动裤|短裤|阔腿裤|直筒裤|连衣裙|半身裙|T恤|卫衣|开衫|外套|羽绒服|棉服|大衣|风衣|手机壳|耳机|背包|斜挎包|台灯|收纳|口红|面膜|眼影|假睫毛)$/;
-  const enCat = /\b(jeans|joggers|shorts|dress|hoodie|sneakers|earbuds|backpack|phone case)\b/i;
+  const enCat =
+    /\b(jeans|joggers|shorts|dress|hoodies?|sneakers|earbuds|backpack|phone case|tee|tees|tops?|bags?|pants|cargo|crossbody|graphic)\b/i;
   if (zhCat.test(t)) return true;
   if (enCat.test(t)) return true;
   return false;
@@ -152,9 +154,9 @@ export function extractProductKeywordsForTangbuy(aiText, userText = '') {
   }
 
   // 英文常见品类词
-  // Prefer full phrase from AI conclusion, e.g. "low-rise cargo jeans".
+  // Prefer full phrase from AI conclusion, e.g. "low-rise cargo jeans", "crossbody bag", "vintage tee".
   const enPhrase =
-    /\b([a-z][a-z-]{1,20}(?:\s+[a-z][a-z-]{1,20}){0,3}\s+(?:jeans|joggers|shorts|dress|hoodie|sneakers|earbuds|backpack|phone case))\b/gi;
+    /\b([a-z0-9][a-z0-9-]{0,22}(?:\s+[a-z0-9][a-z0-9-]{0,22}){0,5}\s+(?:jeans|joggers|shorts|dress|hoodies?|sneakers|earbuds|backpack|phone case|tee|tees|tops?|bags?|pants|cargo))\b/gi;
   while ((m = enPhrase.exec(blob)) !== null) {
     const phrase = m[1].trim();
     if (phrase.split(/\s+/).length >= 2) {
@@ -163,10 +165,31 @@ export function extractProductKeywordsForTangbuy(aiText, userText = '') {
     }
   }
 
-  const en = /\b(high[- ]waist|ripped|distressed|skinny|wide[- ]leg|baggy)\s+(jeans|joggers|shorts)\b/gi;
+  const en = /\b(high[- ]waist|ripped|distressed|skinny|wide[- ]leg|baggy|y2k)\s+(jeans|joggers|shorts|pants)\b/gi;
   while ((m = en.exec(blob)) !== null) {
     hasEnglishPhrase = true;
     push(m[0].trim());
+  }
+
+  const enBag = /\b(crossbody|shoulder|messenger|mini)\s+(bag|bags)\b/gi;
+  while ((m = enBag.exec(blob)) !== null) {
+    hasEnglishPhrase = true;
+    push(m[0].trim());
+  }
+
+  // "Oversized Hoodie + Vintage Tee：…" — English bullets often omit Chinese 裤/衣 markers; split + / /
+  for (const line of blob.split(/\n+/)) {
+    const cleaned = line.replace(/^[\s*\-•\d.、]+/, '').trim();
+    if (!cleaned) continue;
+    const headline = cleaned.split(/[：:]/)[0].trim();
+    if (headline.length < 5 || headline.length > 120) continue;
+    if (!/[+＋／/]|(?:\s&\s)/.test(headline)) continue;
+    const chunks = headline.split(/\s*\+\s*|\s*\/\s*|\s*／\s*|(?:\s&\s)/);
+    if (chunks.length < 2) continue;
+    for (const chunk of chunks) {
+      const c = chunk.trim().replace(/^[（(]|[）)]$/g, '').trim();
+      if (c.length >= 3) push(c);
+    }
   }
 
   const en2 = /\b(jeans|sneakers|hoodie|dress|earbuds|backpack|phone case)\b/gi;

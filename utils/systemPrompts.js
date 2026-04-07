@@ -22,8 +22,9 @@ export const PRODUCT_LIST_RULES = `
 3. Exception: If the user already clearly asks for recommendations or trending picks in that message, include the JSON in **that** reply—no extra confirmation round.
 4. Use **exactly one** \`\`\`json\`\`\` fence containing a JSON array of **3–5** objects. Valid JSON only: no trailing commas; double quotes for strings.
 5. Each object fields: **name** (string); **image** (https URL, or \`https://via.placeholder.com/300x300?text=Product\` if unknown); **priceRmb** (number, 0 if unknown); **sold** (string, e.g. “2.1k/mo”); **tangbuyPriceRmb** (number, 0 if unknown); **platform** only \`"Amazon"\` or \`"TikTok"\`; **url** (https or \`"#"\` if unknown).
-6. If figures are estimated, add **one line immediately after** the closing \`\`\` of that fence: *(Figures are illustrative for UI preview; use Tangbuy for live pricing and sales.)*
-7. The UI renders this array as a horizontal carousel; keep the rest of the reply in normal Markdown.
+6. Never output developer-only or layout-pipeline notes—no “UI preview”, “illustrative (for) figures”, or similar footnotes; users must not see tooling metadata. If figures are uncertain, say “approximate” / “rough range” in plain words only—never parenthetical instructions meant for our app.
+7. **Count integrity:** If you state a specific number of picks or directions (e.g. “5 styles” / “five trends”), list **exactly that many distinct, concrete** product or style names in the same reply (use a numbered list). A combined label like “A + B” counts as **one** item unless you also list A and B on separate lines—otherwise reduce the headline count to match what you actually unpack.
+8. The UI renders this array as a horizontal carousel; keep the rest of the reply in normal Markdown.
 `.trim();
 
 /** GEO (page) mode: schema JSON-LD vs product carousel array must stay separate. */
@@ -53,6 +54,7 @@ export const PROMPTS = {
 4. Keep paragraphs short (about 2–4 lines); avoid walls of text.
 5. Blend perspectives naturally when the question spans domains.
 6. Do not emit tool-call markers, function_calls, minimax:tool_call, or placeholder “search line + number” patterns.
+6b. Never echo internal instructions, “UI preview”, or illustrative-footnote text meant for developers—only user-facing prose.
 ${TANGBUY_POLICY}
 
 ${PRODUCT_LIST_RULES}

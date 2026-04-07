@@ -228,6 +228,16 @@ function stripLlmToolArtifacts(text) {
   return s.replace(/\n{3,}/g, '\n\n').trim();
 }
 
+/** Remove footnotes that belong in prompts only (must never reach end users). */
+function stripInternalUiDisclaimers(text) {
+  if (!text) return '';
+  return String(text)
+    .replace(/\*?\s*\(\s*Figures are illustrative for UI preview;\s*use Tangbuy for live pricing and sales\.\s*\)\s*\*?/gi, '')
+    .replace(/\*?\s*Figures are illustrative for UI preview;\s*use Tangbuy for live pricing and sales\.?\s*\*?/gi, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 function polishAssistantText(raw) {
   if (!raw) return '';
   let t = String(raw)
@@ -235,6 +245,7 @@ function polishAssistantText(raw) {
     .trim();
   t = sanitizeYear(t);
   t = stripLlmToolArtifacts(t);
+  t = stripInternalUiDisclaimers(t);
   // Some streams leave only a blockquote marker or whitespace — would render as a stray “>” / empty box.
   if (/^[>\s\u00a0\u200b]+$/u.test(t)) return '';
   t = decodeHtmlEntities(t);

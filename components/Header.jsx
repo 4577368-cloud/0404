@@ -124,8 +124,10 @@ function ShareModal({ isOpen, onClose, t, authUser }) {
 
   const handleCopy = async () => {
     if (shareUrlLoading) return;
+    const u = String(shareUrl || '').trim();
+    if (!u) return;
     try {
-      await navigator.clipboard.writeText(fullMessage);
+      await navigator.clipboard.writeText(u);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch { /* fallback */ }
@@ -153,7 +155,7 @@ function ShareModal({ isOpen, onClose, t, authUser }) {
         }
       }
       try {
-        await navigator.clipboard.writeText(fullMessage);
+        await navigator.clipboard.writeText(u);
         setFacebookCopiedHint(true);
         setTimeout(() => setFacebookCopiedHint(false), 12000);
       } catch (_) {
