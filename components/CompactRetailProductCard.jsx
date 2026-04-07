@@ -56,10 +56,11 @@ const MAX_STAGE = 4;
  * @param {'hot'|'trend'|'knowledge'} retailVariant
  *   hot  = tangbuy-product 同款：PRICE | SOLD | TANGBUY（有折扣角标）
  *   trend / knowledge = 趋势/Top1000/知识：PRICE | SOLD | RATING（无折扣角标）
- * @param {'view_ai'|'view_addlist'|'view_publish'|'view_only'} trendFooter
+ * @param {'view_ai'|'view_addlist'|'view_publish'|'view_only'|'view_chat_tray'} trendFooter
  *   view_addlist = View + Add to List（热销页全部 Tab）
  *   view_ai     = View + AI Diagnose（热销页等）
  *   view_only   = 仅 View（聊天横排 Picks：有链接直达，无则按标题/类目搜索）
+ *   view_chat_tray = 找同款 + AI诊断 + 询盘（对话横滑商品卡）
  *   view_publish = View + Publish（My Lists 页）
  */
 export function CompactRetailProductCard({
@@ -68,6 +69,7 @@ export function CompactRetailProductCard({
   retailVariant = 'hot',
   trendFooter = 'view_ai',
   onAskAi,
+  onSendInquiry,
   guestFeatureLocked,
   onRequireLogin,
   onAddToList,
@@ -95,7 +97,7 @@ export function CompactRetailProductCard({
   const ratingText = Number.isFinite(ratingVal) ? ratingVal.toFixed(1).replace(/\.0$/, '') : '—';
 
   const viewHref =
-    trendFooter === 'view_only'
+    trendFooter === 'view_only' || trendFooter === 'view_chat_tray'
       ? pickViewHrefForChatPicks(p)
       : retailVariant === 'hot'
         ? p.tangbuyUrl || p.url
@@ -103,7 +105,7 @@ export function CompactRetailProductCard({
 
   const logView = () => {
     const u = viewHref || '';
-    if (trendFooter === 'view_only') {
+    if (trendFooter === 'view_only' || trendFooter === 'view_chat_tray') {
       logTangbuyClick(supabase, p.tangbuyUrl ? 'chat_picks_view_tangbuy' : 'chat_picks_view_search', u, {
         productId: p.id,
         name: p.name,
@@ -122,7 +124,8 @@ export function CompactRetailProductCard({
 
   const priceLabel = uiLang === 'zh' ? '售价' : 'Price';
   const soldLabel = uiLang === 'zh' ? '月销' : 'Sold';
-  const tangbuyLabel = trendFooter === 'view_only' ? (uiLang === 'zh' ? '参考价' : 'Ref.') : 'Tangbuy';
+  const tangbuyLabel =
+    trendFooter === 'view_only' || trendFooter === 'view_chat_tray' ? (uiLang === 'zh' ? '参考价' : 'Ref.') : 'Tangbuy';
   const ratingLabel = uiLang === 'zh' ? '评分' : 'Rating';
 
   return (
@@ -201,8 +204,62 @@ export function CompactRetailProductCard({
             )}
           </div>
         </div>
-        <div className={`flex gap-1.5 mt-auto pt-0.5 ${trendFooter === 'view_only' ? 'w-full' : ''}`}>
-          {viewHref && viewHref !== '#' ? (
+        <div
+          className={`flex mt-auto pt-0.5 ${trendFooter === 'view_chat_tray' ? 'gap-1 w-full flex-nowrap' : `gap-1.5 ${trendFooter === 'view_only' ? 'w-full' : ''}`}`}
+        >
+          {trendFooter === 'view_chat_tray' ? (
+            <>
+              {viewHref && viewHref !== '#' ? (
+                <a
+                  href={viewHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={logView}
+                  className="flex-1 min-w-0 text-[9px] sm:text-[10px] text-center py-1.5 rounded-lg transition-all font-semibold hover:brightness-105 inline-flex items-center justify-center gap-0.5 px-0.5"
+                  style={{
+                    background: '#ef6b66',
+                    color: '#fff',
+                    border: '1px solid rgba(239,107,102,0.75)',
+                    boxShadow: '0 6px 14px rgba(239,107,102,0.20)',
+                  }}
+                  title={uiLang === 'zh' ? '在 Tangbuy 找同款' : 'Find similar on Tangbuy'}
+                >
+                  <span className="icon-search-check text-[9px] shrink-0" aria-hidden />
+                  <span className="truncate">{uiLang === 'zh' ? '找同款' : 'Find Similar'}</span>
+                </a>
+              ) : (
+                <div className="flex-1 min-w-0" />
+              )}
+              <button
+                type="button"
+                className="flex-1 min-w-0 text-[9px] sm:text-[10px] text-center py-1.5 rounded-lg transition-all font-semibold hover:brightness-105 inline-flex items-center justify-center gap-0.5 px-0.5"
+                style={{
+                  background: 'rgba(37,99,235,0.12)',
+                  color: '#1d4ed8',
+                  border: '1px solid rgba(37,99,235,0.35)',
+                }}
+                onClick={() => (guestFeatureLocked ? onRequireLogin?.() : onAskAi?.(p))}
+                title={uiLang === 'zh' ? 'AI 诊断' : 'AI diagnosis'}
+              >
+                <span className="icon-activity text-[9px] shrink-0" aria-hidden />
+                <span className="truncate">{uiLang === 'zh' ? 'AI诊断' : 'AI'}</span>
+              </button>
+              <button
+                type="button"
+                className="flex-1 min-w-0 text-[9px] sm:text-[10px] text-center py-1.5 rounded-lg transition-all font-semibold hover:brightness-105 inline-flex items-center justify-center gap-0.5 px-0.5"
+                style={{
+                  background: 'rgba(22,163,74,0.12)',
+                  color: '#15803d',
+                  border: '1px solid rgba(22,163,74,0.35)',
+                }}
+                onClick={() => (guestFeatureLocked ? onRequireLogin?.() : onSendInquiry?.(p))}
+                title={uiLang === 'zh' ? '发送询盘' : 'Send inquiry'}
+              >
+                <span className="icon-inbox text-[9px] shrink-0" aria-hidden />
+                <span className="truncate">{uiLang === 'zh' ? '询盘' : 'Inquiry'}</span>
+              </button>
+            </>
+          ) : viewHref && viewHref !== '#' ? (
             <a
               href={viewHref}
               target="_blank"
@@ -210,19 +267,19 @@ export function CompactRetailProductCard({
               onClick={logView}
               className={`text-[10px] text-center py-1.5 rounded-lg transition-all font-semibold hover:brightness-105 flex items-center justify-center gap-1 ${trendFooter === 'view_only' ? 'w-full flex-1' : 'flex-1'}`}
               style={{
-                background: 'var(--brand-primary-fixed)',
+                background: '#ef6b66',
                 color: '#fff',
-                border: '1px solid rgba(255,255,255,0.12)',
-                boxShadow: '0 6px 14px rgba(255,59,48,0.14)',
+                border: '1px solid rgba(239,107,102,0.75)',
+                boxShadow: '0 6px 14px rgba(239,107,102,0.20)',
               }}
             >
               <span className="icon-external-link text-[10px]" />
-              {uiLang === 'zh' ? '查看' : 'View'}
+              {uiLang === 'zh' ? '找同款' : 'Find Similar'}
             </a>
           ) : (
             <div className="flex-1" />
           )}
-          {trendFooter === 'view_only' ? null : trendFooter === 'view_addlist' ? (
+          {trendFooter === 'view_only' || trendFooter === 'view_chat_tray' ? null : trendFooter === 'view_addlist' ? (
             <button
               type="button"
               className="flex-1 text-[10px] text-center py-1.5 rounded-lg transition-all font-semibold hover:brightness-105 flex items-center justify-center gap-1"

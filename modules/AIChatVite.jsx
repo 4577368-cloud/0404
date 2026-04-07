@@ -915,6 +915,7 @@ export function ModuleAIChat({
   onConsumedHotProductDiagnosisRequest,
   initialMode = null,
   onConsumedInitialMode,
+  onOpenProductInquiry,
 }) {
   const [localMessages, localSetMessages] = React.useState([]);
   const messages = propMessages || localMessages;
@@ -1490,7 +1491,7 @@ export function ModuleAIChat({
       setMessages((prev) => {
         const without = prev.filter((m) => m._streamId !== streamId);
         const messages = [...without];
-        if (picksData.length >= 2) {
+        if (picksData.length >= 1) {
           messages.push({
             role: 'ai',
             type: 'search_picks',
@@ -1690,7 +1691,7 @@ export function ModuleAIChat({
       if (showTangbuySearchPicks) {
         const maxPicks = userWantsProductRecommendations ? 8 : 5;
         const picks = buildTangbuySearchPicksFromKeywords(extractedKws, uiLang, maxPicks);
-        if (picks.length >= 2) {
+        if (picks.length >= 1) {
           const hotLabel =
             uiLang === 'zh'
               ? '### 📦 Tangbuy 货源搜索\n\n以下是可点击的款式/品类关键词：'
@@ -2411,6 +2412,7 @@ export function ModuleAIChat({
                                 p={p}
                                 uiLang={uiLang}
                                 onAskAi={handleProductAskAi}
+                                onSendInquiry={onOpenProductInquiry}
                                 guestFeatureLocked={guestFeatureLocked}
                                 onRequireLogin={onGuestFeatureBlocked}
                               />
@@ -2428,6 +2430,7 @@ export function ModuleAIChat({
                             uiLang={uiLang}
                             t={t}
                             onAskAi={handleProductAskAi}
+                            onSendInquiry={onOpenProductInquiry}
                             onPublish={onPublish}
                             guestFeatureLocked={guestFeatureLocked}
                             onRequireLogin={onGuestFeatureBlocked}
@@ -2457,6 +2460,7 @@ export function ModuleAIChat({
                           uiLang={uiLang}
                           t={t}
                           onAskAi={handleProductAskAi}
+                          onSendInquiry={onOpenProductInquiry}
                           onPublish={onPublish}
                           guestFeatureLocked={guestFeatureLocked}
                           onRequireLogin={onGuestFeatureBlocked}

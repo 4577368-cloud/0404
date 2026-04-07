@@ -76,7 +76,9 @@ function isLikelyProductKeyword(raw) {
   const t = String(raw || '').trim();
   if (!t || isJunkSearchKeyword(t)) return false;
   if (/[，。！？,.]/.test(t) && t.length > 10) return false;
-  const maxLen = /[\u4e00-\u9fff]/.test(t) ? 24 : 42;
+  /** 长定语 +「的」+ 品类（如「跨境…表现不错的牛仔裤」）不是可点击款式词 */
+  if (/[\u4e00-\u9fff]{5,}的[\u4e00-\u9fff]/.test(t)) return false;
+  const maxLen = /[\u4e00-\u9fff]/.test(t) ? 16 : 42;
   if (t.length > maxLen) return false;
   const zhCat = /(牛仔裤|休闲裤|运动裤|短裤|阔腿裤|直筒裤|连衣裙|半身裙|T恤|卫衣|开衫|外套|羽绒服|棉服|大衣|风衣|手机壳|耳机|背包|斜挎包|台灯|收纳|口红|面膜|眼影|假睫毛)$/;
   const enCat =
@@ -112,8 +114,31 @@ function toEnglishTangbuyKeyword(raw) {
     .trim()
     .toLowerCase();
 
-  if (!s || s.length < 2) return '';
+  if (!s || s.length < 3) return '';
   return s.slice(0, 80);
+}
+
+/** 展示用英文标题大小写（与 Tangbuy 英文搜索一致，避免中英混排） */
+function formatTangbuySearchLabel(enKeyword) {
+  const s = String(enKeyword || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+  if (!s) return '';
+  return s
+    .split(' ')
+    .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : ''))
+    .join(' ');
+}
+
+export function isTangbuySearchPickHrefValid(href) {
+  try {
+    const u = new URL(String(href || ''));
+    const kw = u.searchParams.get('keyword');
+    return !!(kw && String(kw).trim().length >= 3);
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -206,27 +231,30 @@ export function extractProductKeywordsForTangbuy(aiText, userText = '') {
  */
 export function shouldAttachTangbuySearchPicks({ userWantsProductRecommendations, aiText, extractedKeywords }) {
   const kws = Array.isArray(extractedKeywords) ? extractedKeywords : [];
-  if (kws.length < 2) return false;
+  if (kws.length < 1) return false;
   return !!userWantsProductRecommendations;
 }
 
 /**
- * 由已过滤的关键词生成 Tangbuy 搜索项；**label 仅展示关键词**（点击跳转，不外露长 URL）。
+ * 由已过滤的关键词生成 Tangbuy 搜索项；**label 与 href 均基于英文搜索词**，避免中英混排；条数 ≤ max，不凑数。
  */
-export function buildTangbuySearchPicksFromKeywords(keywords, uiLang = 'zh', max = 8) {
-  const n = Math.min(12, Math.max(1, Number(max) || 5));
-  const list = (Array.isArray(keywords) ? keywords : []).filter((k) => isLikelyProductKeyword(k)).slice(0, n);
+export function buildTangbuySearchPicksFromKeywords(keywords, _uiLang = 'zh', max = 8) {
+  const cap = Math.min(12, Math.max(1, Number(max) || 8));
+  const list = (Array.isArray(keywords) ? keywords : []).filter((k) => isLikelyProductKeyword(k));
   const out = [];
   const seen = new Set();
   for (const keyword of list) {
     const enKeyword = toEnglishTangbuyKeyword(keyword);
     if (!enKeyword || seen.has(enKeyword)) continue;
     seen.add(enKeyword);
+    const href = buildTangbuyDropshippingSearchUrl(enKeyword);
+    if (!isTangbuySearchPickHrefValid(href)) continue;
     out.push({
-      label: keyword,
+      label: formatTangbuySearchLabel(enKeyword),
       keyword: enKeyword,
-      href: buildTangbuyDropshippingSearchUrl(enKeyword),
+      href,
     });
+    if (out.length >= cap) break;
   }
   return out;
 }

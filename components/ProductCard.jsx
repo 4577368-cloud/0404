@@ -23,6 +23,7 @@ export function ProductCard({
   uiLang,
   t,
   onAskAi,
+  onSendInquiry,
   onPublish,
   guestFeatureLocked,
   onRequireLogin,
@@ -62,7 +63,10 @@ export function ProductCard({
     return (
       <ChatTrendWideCard
         p={p} uiLang={uiLang} displayUrl={displayUrl}
-        onAskAi={onAskAi} guestFeatureLocked={guestFeatureLocked} onRequireLogin={onRequireLogin}
+        onAskAi={onAskAi}
+        onSendInquiry={onSendInquiry}
+        guestFeatureLocked={guestFeatureLocked}
+        onRequireLogin={onRequireLogin}
       />
     );
   }
@@ -104,7 +108,7 @@ export function ProductCard({
   );
 }
 
-function ChatTrendWideCard({ p, uiLang, displayUrl, onAskAi, guestFeatureLocked, onRequireLogin }) {
+function ChatTrendWideCard({ p, uiLang, displayUrl, onAskAi, onSendInquiry, guestFeatureLocked, onRequireLogin }) {
   const trendT = (k) => TREND_LABELS[uiLang === 'zh' ? 'zh' : 'en'][k] || k;
   const trendBadge = p.variant === 'bestseller' ? (uiLang === 'zh' ? '月销千榜' : 'Top 1000') : (uiLang === 'zh' ? '趋势' : 'Trend');
 
@@ -161,16 +165,33 @@ function ChatTrendWideCard({ p, uiLang, displayUrl, onAskAi, guestFeatureLocked,
               <a href={tangbuyCategorySearchHref} target="_blank" rel="noreferrer"
                 onClick={() => logTangbuyClick(supabase, 'chat_trend_tangbuy_category', tangbuyCategorySearchHref, { productId: p.id, name: p.name })}
                 className="flex-1 text-[10px] text-center py-1.5 rounded-lg transition-all font-semibold flex items-center justify-center gap-1 hover:brightness-105"
-                style={{ background: 'var(--brand-primary-fixed)', color: '#fff', border: '1px solid rgba(255,255,255,0.12)', boxShadow: '0 6px 14px rgba(255,59,48,0.14)' }}>
+                style={{ background: '#ef6b66', color: '#fff', border: '1px solid rgba(239,107,102,0.75)', boxShadow: '0 6px 14px rgba(239,107,102,0.20)' }}>
                 <span className="icon-external-link text-[10px]" />
-                {uiLang === 'zh' ? '查看' : 'View'}
+                {uiLang === 'zh' ? '找同款' : 'Find Similar'}
               </a>
               <button type="button"
                 onClick={() => (guestFeatureLocked ? onRequireLogin?.() : onAskAi?.(p))}
                 className="flex-1 text-[10px] text-center py-1.5 rounded-lg transition-all font-semibold hover:brightness-105 flex items-center justify-center gap-1"
-                style={{ background: 'color-mix(in srgb, var(--theme-surface) 88%, white 12%)', color: 'var(--theme-text-secondary)', border: '1px solid var(--theme-border)' }}>
+                style={{
+                  background: 'rgba(37,99,235,0.12)',
+                  color: '#1d4ed8',
+                  border: '1px solid rgba(37,99,235,0.35)',
+                }}>
                 <span className="icon-activity text-[10px]" />
                 {uiLang === 'zh' ? 'AI诊断' : 'AI Diagnose'}
+              </button>
+              <button
+                type="button"
+                onClick={() => (guestFeatureLocked ? onRequireLogin?.() : onSendInquiry?.(p))}
+                className="flex-1 text-[10px] text-center py-1.5 rounded-lg transition-all font-semibold hover:brightness-105 flex items-center justify-center gap-1"
+                style={{
+                  background: 'rgba(22,163,74,0.12)',
+                  color: '#15803d',
+                  border: '1px solid rgba(22,163,74,0.35)',
+                }}
+              >
+                <span className="icon-inbox text-[10px]" />
+                {uiLang === 'zh' ? '询盘' : 'Inquiry'}
               </button>
             </div>
           </div>

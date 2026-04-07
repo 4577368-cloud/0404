@@ -24,6 +24,8 @@ import {
   SHARE_REF_QUERY_KEY,
 } from '../utils/shareReferral.js';
 import { ModuleAIChat } from '../modules/AIChatVite.jsx';
+import ProductInquiryModal from '../components/ProductInquiryModal.jsx';
+import InquiryMessagesPanel from '../components/InquiryMessagesPanel.jsx';
 
 const HotProducts = React.lazy(() => import('../components/HotProducts.jsx'));
 const MyLists = React.lazy(() => import('../components/MyLists.jsx'));
@@ -162,6 +164,8 @@ export default function App() {
   const [authModalReason, setAuthModalReason] = React.useState('default');
   const prevOAuthSessionRef = React.useRef(false);
   const [hotProductDiagnosisRequest, setHotProductDiagnosisRequest] = React.useState(null);
+  const [inquiryProduct, setInquiryProduct] = React.useState(null);
+  const [inquiryListRefresh, setInquiryListRefresh] = React.useState(0);
 
   const MY_LISTS_KEY = 'tb_my_lists';
   const [myListItems, setMyListItems] = React.useState(() => {
@@ -373,7 +377,8 @@ export default function App() {
     isInConversation ||
     activeView === 'sourcing' ||
     activeView === 'hotProducts' ||
-    activeView === 'aiReports';
+    activeView === 'aiReports' ||
+    activeView === 'inquiries';
 
   const setActiveMessages = React.useCallback((updater) => {
     setConversations((prev) => prev.map((c) =>
@@ -511,6 +516,18 @@ export default function App() {
     }
   }, [activeView, activeReportId, reports, guestFeatureLocked, requireOAuthToastAndModal]);
 
+  const handleInquiryMessages = React.useCallback(() => {
+    if (guestFeatureLocked) {
+      requireOAuthToastAndModal('nav_inquiries');
+      return;
+    }
+    setActiveView('inquiries');
+    if (sidebarCollapsed && sidebarAutoCollapsedRef.current) {
+      setSidebarCollapsed(false);
+      sidebarAutoCollapsedRef.current = false;
+    }
+  }, [guestFeatureLocked, requireOAuthToastAndModal]);
+
   const handleReportCreated = React.useCallback((newReport) => {
     setReports((prev) => [newReport, ...prev.filter((r) => r.id !== newReport.id)]);
     setActiveReportId(newReport.id);
@@ -530,7 +547,7 @@ export default function App() {
   }, []);
 
   const handleHeaderMenuClick = React.useCallback(() => {
-    if (activeView === 'aiReports' && sidebarCollapsed && sidebarAutoCollapsedRef.current) {
+    if ((activeView === 'aiReports' || activeView === 'inquiries') && sidebarCollapsed && sidebarAutoCollapsedRef.current) {
       setSidebarCollapsed(false);
       sidebarAutoCollapsedRef.current = false;
     }
@@ -645,6 +662,7 @@ export default function App() {
           }
         }}
         onAIReports={handleAIReports}
+        onInquiryMessages={handleInquiryMessages}
         onMyLists={() => {
           setActiveView('myLists');
           if (sidebarCollapsed && sidebarAutoCollapsedRef.current) {
@@ -726,6 +744,8 @@ export default function App() {
             <div style={{ flex: '1 1 0', minHeight: 0, overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch' }}>
               <SourcingLandingPage />
             </div>
+          ) : activeView === 'inquiries' ? (
+            <InquiryMessagesPanel uiLang={lang} authUser={authUser} refreshKey={inquiryListRefresh} />
           ) : activeView === 'aiReports' ? (
             <>
               {reportListVisible && (
@@ -783,11 +803,46 @@ export default function App() {
               onConsumedHotProductDiagnosisRequest={() => setHotProductDiagnosisRequest(null)}
               initialMode={chatInitialMode}
               onConsumedInitialMode={() => setChatInitialMode(null)}
+              onOpenProductInquiry={setInquiryProduct}
             />
           )}
           </React.Suspense>
         </div>
       </div>
+
+      <ProductInquiryModal
+        show={!!inquiryProduct}
+        product={inquiryProduct}
+        onClose={() => setInquiryProduct(null)}
+        uiLang={lang}
+        authUser={authUser}
+        guestFeatureLocked={guestFeatureLocked}
+        onRequireLogin={() => openAuthModal('inquiry')}
+        onSubmitted={(payload) => {
+          setInquiryListRefresh((k) => k + 1);
+          const productName = String(payload?.product?.name || '').trim();
+          const demand = String(payload?.demand || '').trim();
+          const inquiryId = String(payload?.inquiryId || '').trim();
+          const note = lang === 'zh'
+            ? [
+                '已记录询盘请求。',
+                productName ? `商品：${productName}` : '',
+                demand ? `需求：${demand}` : '',
+                inquiryId ? `编号：${inquiryId}` : '',
+              ].filter(Boolean).join('\n')
+            : [
+                'Inquiry saved successfully.',
+                productName ? `Product: ${productName}` : '',
+                demand ? `Request: ${demand}` : '',
+                inquiryId ? `ID: ${inquiryId}` : '',
+              ].filter(Boolean).join('\n');
+          setActiveMessages((prev) => [
+            ...(Array.isArray(prev) ? prev : []),
+            { role: 'ai', type: 'text', content: note, _inquirySaved: true },
+          ]);
+          showToast(lang === 'zh' ? '询盘已提交' : 'Inquiry submitted');
+        }}
+      />
 
       <AuthModal
         open={authModalOpen}
