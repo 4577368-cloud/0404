@@ -307,18 +307,26 @@ export default function Sidebar({
         />
       )}
 
-      <aside ref={asideRef} style={{
-        width: collapsed ? 60 : 260, flexShrink: 0, display: 'flex', flexDirection: 'column',
-        background: 'var(--theme-bg-secondary)', borderRight: '1px solid var(--theme-border)',
-        transition: 'width 0.25s ease, transform 0.25s ease, background 0.3s', zIndex: 90, overflow: 'hidden',
-        ...(isOpen ? { position: 'fixed', top: 0, left: 0, bottom: 0, transform: 'translateX(0)', width: 260 } : {}),
-      }} className={
-        isOpen
-          ? 'flex'
-          : dockedHidden
-            ? 'hidden'
-            : 'hidden md:flex'
-      }>
+      <aside
+        ref={asideRef}
+        style={{
+          width: collapsed ? 60 : 260,
+          flexShrink: 0,
+          background: 'var(--theme-bg-secondary)',
+          borderRight: '1px solid var(--theme-border)',
+          transition: 'width 0.25s ease, transform 0.25s ease, background 0.3s',
+          zIndex: 90,
+          overflow: 'hidden',
+          ...(isOpen ? { position: 'fixed', top: 0, left: 0, bottom: 0, transform: 'translateX(0)', width: 260 } : {}),
+        }}
+        className={
+          isOpen
+            ? 'flex flex-col'
+            : dockedHidden
+              ? 'hidden'
+              : 'hidden md:flex md:flex-col'
+        }
+      >
 
         {/* Brand */}
         <div style={{ padding: collapsed ? '16px 0 8px' : '16px 14px 8px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10, justifyContent: collapsed ? 'center' : 'flex-start' }}>
@@ -524,15 +532,14 @@ export default function Sidebar({
                               textOverflow: 'ellipsis',
                               whiteSpace: 'nowrap',
                             }}>{displayName}</span>
-                            {listedConversations.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); onDelete(conv.id); setConvPickerOpen(false); }}
-                                style={{ flexShrink: 0, padding: 4, borderRadius: 4, border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--theme-text-muted)', fontSize: 12 }}
-                              >
-                                <span className="icon-trash-2" />
-                              </button>
-                            )}
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); onDelete(conv.id); setConvPickerOpen(false); }}
+                              style={{ flexShrink: 0, padding: 4, borderRadius: 4, border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--theme-text-muted)', fontSize: 12 }}
+                              aria-label={uiLang === 'zh' ? '删除对话' : 'Delete conversation'}
+                            >
+                              <span className="icon-trash-2" aria-hidden />
+                            </button>
                           </div>
                         );
                       })
@@ -586,14 +593,16 @@ export default function Sidebar({
                       }} title="Double-click to rename">{displayName}</span>
                     )}
 
-                    {listedConversations.length > 1 && !isEditing && (
+                    {!isEditing && (
                       <button
+                        type="button"
                         onClick={(e) => { e.stopPropagation(); onDelete(conv.id); }}
                         style={{ flexShrink: 0, padding: 2, borderRadius: 4, border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--theme-text-muted)', fontSize: 12, opacity: 0.5, transition: 'opacity 0.15s' }}
                         onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
                         onMouseLeave={(e) => e.currentTarget.style.opacity = '0.5'}
+                        aria-label={uiLang === 'zh' ? '删除对话' : 'Delete conversation'}
                       >
-                        <span className="icon-trash-2" />
+                        <span className="icon-trash-2" aria-hidden />
                       </button>
                     )}
                   </>

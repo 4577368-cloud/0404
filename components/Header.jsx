@@ -277,11 +277,17 @@ export default function Header({
       : 'Anonymous users get 10 free credits. Sign in with Google or Facebook (bottom-left) to unlock 30; used credits carry over after login.');
   const creditsAboutLabel = th.creditsAbout || (currentLang === 'zh' ? '额度说明' : 'About credits');
   const vipUnlimitedLabel = th.vipUnlimited || (currentLang === 'zh' ? '无限' : 'Unlimited');
+  const workflowMarqueeText =
+    th.workflowNoRefreshMarquee
+    || (currentLang === 'zh'
+      ? '报告生成中，请勿刷新页面，否则将中断分析。'
+      : 'Report is generating — do not refresh the page or the analysis will be interrupted.');
 
   return (
+    <div style={{ width: '100%', flexShrink: 0 }}>
     <header style={{
       position: 'relative',
-      height: '100%', display: 'flex', alignItems: 'center',
+      height: 56, display: 'flex', alignItems: 'center',
       justifyContent: 'space-between', padding: '0 20px',
       background: 'transparent',
       transition: 'background 0.3s',
@@ -562,5 +568,62 @@ export default function Header({
 
       <ShareModal isOpen={isShareOpen} onClose={() => setIsShareOpen(false)} t={t} />
     </header>
+
+    {isRunning && (
+      <div
+        aria-live="polite"
+        style={{
+          overflow: 'hidden',
+          width: '100%',
+          padding: '0 16px 6px',
+          background: 'transparent',
+          border: 'none',
+          boxShadow: 'none',
+        }}
+      >
+        <style>{`
+          @keyframes tb-marquee-rtl {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+          }
+          .tb-marquee-rtl-track {
+            display: inline-flex;
+            width: max-content;
+            animation: tb-marquee-rtl 36s linear infinite;
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .tb-marquee-rtl-track { animation: none; transform: none; }
+          }
+        `}</style>
+        <div className="tb-marquee-rtl-track">
+          <span
+            className="whitespace-nowrap"
+            style={{
+              fontSize: 10,
+              lineHeight: 1.35,
+              color: 'var(--theme-text-muted)',
+              fontWeight: 500,
+              paddingRight: 56,
+            }}
+          >
+            {workflowMarqueeText}
+          </span>
+          <span
+            className="whitespace-nowrap"
+            style={{
+              fontSize: 10,
+              lineHeight: 1.35,
+              color: 'var(--theme-text-muted)',
+              fontWeight: 500,
+              paddingRight: 56,
+            }}
+            aria-hidden
+          >
+            {workflowMarqueeText}
+          </span>
+        </div>
+      </div>
+    )}
+    </div>
   );
 }

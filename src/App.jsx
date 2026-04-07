@@ -335,12 +335,10 @@ export default function App() {
   }, [activeId]);
 
   const activeConv = conversations.find((c) => c.id === activeId) || conversations[0];
-  const anyConvHasUserMessage = React.useMemo(
-    () => conversations.some((c) => (c.messages || []).some((m) => m.role === 'user')),
-    [conversations],
-  );
-  /** 全局尚未发过用户消息时：对话页不显示常驻侧栏，仅中间区域；发过至少一条后侧栏常驻（含新建空对话） */
-  const sidebarDockedHidden = activeView === 'chat' && !anyConvHasUserMessage;
+  /** 与聊天区 WelcomePortal 一致：当前会话 messages 为空 = 未开始对话，侧栏不占位（完全隐藏） */
+  const activeChatIsEmpty = !(activeConv?.messages || []).length;
+  /** 对话页且当前会话尚无消息：不渲染左侧常驻侧栏；有任意一条消息后恢复「左栏 + 右栏」 */
+  const sidebarDockedHidden = activeView === 'chat' && activeChatIsEmpty;
   const isInConversation = activeView === 'chat' && activeConv?.messages?.length > 0;
   const useSolidChatBg =
     isInConversation ||
@@ -527,8 +525,19 @@ export default function App() {
   React.useEffect(() => () => { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); }, []);
 
   React.useEffect(() => {
-    if (anyConvHasUserMessage) setSidebarOpen(false);
-  }, [anyConvHasUserMessage]);
+    if (!activeChatIsEmpty) setSidebarOpen(false);
+  }, [activeChatIsEmpty]);
+
+  const prevSidebarDockedHiddenRef = React.useRef(undefined);
+  React.useEffect(() => {
+    const prev = prevSidebarDockedHiddenRef.current;
+    prevSidebarDockedHiddenRef.current = sidebarDockedHidden;
+    if (prev === undefined) return;
+    if (prev && !sidebarDockedHidden && activeView === 'chat') {
+      setSidebarCollapsed(false);
+      sidebarAutoCollapsedRef.current = false;
+    }
+  }, [sidebarDockedHidden, activeView]);
 
   return (
     <div style={{
@@ -610,7 +619,7 @@ export default function App() {
       {/* Right: header + chat */}
       <div style={{ flex: '1 1 0', minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative', zIndex: 1, background: useSolidChatBg ? 'var(--theme-chat-bg, #ffffff)' : 'transparent', transition: 'background 0.4s ease' }}>
         {/* Header */}
-        <div style={{ flexShrink: 0, height: 56, zIndex: 50 }}>
+        <div style={{ flexShrink: 0, zIndex: 50 }}>
           <Header
             currentLang={lang} setLang={setLang} t={t}
             remainingQuota={remainingQuota} isVip={isVip} theme={theme} onToggleTheme={toggleTheme}
@@ -625,7 +634,7 @@ export default function App() {
         </div>
 
         {toast.open && (
-          <div style={{ position: 'fixed', top: 56, left: '50%', transform: 'translateX(-50%)', zIndex: 60, padding: '0 16px' }}>
+          <div style={{ position: 'fixed', top: 80, left: '50%', transform: 'translateX(-50%)', zIndex: 60, padding: '0 16px' }}>
             <GlassCard className="px-4 py-2 rounded-xl text-sm text-white flex items-center gap-2">
               <div className="icon-check text-[var(--secondary)]" />
               <span>{toast.message}</span>
