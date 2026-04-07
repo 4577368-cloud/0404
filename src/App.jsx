@@ -230,9 +230,19 @@ export default function App() {
     }
     const anon = isAnonymousUser(authUser);
     if (anon) {
+      // 匿名用户也可用 claim_vip 在服务端解锁；必须与 user_stats 同步，否则密钥成功但界面仍非 VIP
       setRemainingQuota(getRemainingQuota(MAX_GUEST_QUOTA));
-      setIsVip(false);
-      return undefined;
+      let cancelled = false;
+      fetchUserStats(supabase).then((row) => {
+        if (cancelled) return;
+        setIsVip(!!row?.is_vip);
+        if (row?.is_vip) {
+          setRemainingQuota(remainingFromStats(row, true));
+        }
+      });
+      return () => {
+        cancelled = true;
+      };
     }
     let cancelled = false;
     fetchUserStats(supabase).then((row) => {
@@ -531,7 +541,12 @@ export default function App() {
     }
     if (isAnonymousUser(authUser)) {
       setRemainingQuota(getRemainingQuota(MAX_GUEST_QUOTA));
-      setIsVip(false);
+      fetchUserStats(supabase).then((row) => {
+        setIsVip(!!row?.is_vip);
+        if (row?.is_vip) {
+          setRemainingQuota(remainingFromStats(row, true));
+        }
+      });
       return;
     }
     fetchUserStats(supabase).then((row) => {
