@@ -4,6 +4,20 @@ import http from 'http';
 import https from 'https';
 import fs from 'fs';
 import path from 'path';
+import { FACEBOOK_SHARE_OG_IMAGES } from './utils/shareOgImages.js';
+
+/** 每次生成/请求 index.html 时随机选一张 OG 图（生产构建时固定为该次构建的随机结果） */
+function randomShareOgImage() {
+  return {
+    name: 'random-share-og-image',
+    transformIndexHtml(html: string) {
+      if (!html.includes('__TB_OG_SHARE_IMAGE__')) return html;
+      const list = FACEBOOK_SHARE_OG_IMAGES;
+      const url = list[Math.floor(Math.random() * list.length)];
+      return html.replaceAll('__TB_OG_SHARE_IMAGE__', url);
+    },
+  };
+}
 
 function viteDevHtml() {
   return {
@@ -284,6 +298,7 @@ export default defineConfig(({ mode }) => {
       relaxDevServerTimeouts(),
       fixReactDomTExport(),
       viteDevHtml(),
+      randomShareOgImage(),
       apiChatMiddleware(),
       apiOssUploadMiddleware(),
       react({ include: ['**/*.{js,jsx,ts,tsx}'] }),

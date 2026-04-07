@@ -23,15 +23,13 @@ import {
   getPendingRefFromSession,
   SHARE_REF_QUERY_KEY,
 } from '../utils/shareReferral.js';
+import { ModuleAIChat } from '../modules/AIChatVite.jsx';
 
 const HotProducts = React.lazy(() => import('../components/HotProducts.jsx'));
 const MyLists = React.lazy(() => import('../components/MyLists.jsx'));
 const SourcingLandingPage = React.lazy(() => import('../components/SourcingLandingPage.jsx'));
 const AIReportList = React.lazy(() => import('../components/AIReportList.jsx'));
 const AIReportViewer = React.lazy(() => import('../components/AIReportViewer.jsx'));
-const ModuleAIChat = React.lazy(() =>
-  import('../modules/AIChatVite.jsx').then((m) => ({ default: m.ModuleAIChat }))
-);
 
 /** 本地 `vite` 开发服，或 `.env` 中 `VITE_ALLOW_GUEST_PRODUCT_SEARCH=true`：未 OAuth 也可从侧栏进入「商品搜索」浏览；页内 AI 诊断等仍走 guest 拦截。 */
 function allowGuestProductSearchNav() {

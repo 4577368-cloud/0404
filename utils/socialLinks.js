@@ -1,4 +1,5 @@
-export const FIND_US_WHATSAPP_URL = 'https://api.whatsapp.com/message/KSHZRLSWZN5HB1?autoload=1&app_absent=0';
+/** Official Tangbuy WhatsApp (message link). Use only as `href`; never paste raw URL in UI copy or AI prose. */
+export const FIND_US_WHATSAPP_URL = 'https://wa.me/message/KSHZRLSWZN5HB1';
 
-// Keep label generic because this short-link does not expose raw number.
+// Keep label generic — link does not expose raw phone in text.
 export const FIND_US_WHATSAPP_LABEL = 'WhatsApp';

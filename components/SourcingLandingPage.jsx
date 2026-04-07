@@ -1,5 +1,6 @@
 import React from 'react';
 import { TrendingDown, Building2, DollarSign, ArrowRight } from 'lucide-react';
+import { FIND_US_WHATSAPP_URL } from '../utils/socialLinks.js';
 
 /** 与 App 主题一致；桌面端 Why / How 同列宽模板，保证 6 个卡片等宽 */
 const sectionTint = { backgroundColor: 'color-mix(in srgb, var(--primary) 10%, var(--theme-card-bg, #fff))' };
@@ -100,7 +101,7 @@ export function SourcingLandingPage() {
             Directly From Top-Tier, Vetted Factories.
           </p>
           <a
-            href="https://wa.me/8615906600531"
+            href={FIND_US_WHATSAPP_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-block text-sm font-medium text-white rounded-lg px-6 py-2.5 transition-all hover:brightness-105 shadow-sm"

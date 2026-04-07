@@ -20,7 +20,8 @@ export const TRANSLATIONS = {
             usageRemaining: "Remaining",
             usageLimitReached: "You've reached the free limit (30 uses). For non-Tangbuy listings, only 30 uses are supported. Tangbuy Dropshipping customers can use it for free with no limits.",
             bindOnShopify: "Bind Tangbuy on Shopify App Store",
-            whatsappSupport: "Need human support? WhatsApp:",
+            /** Prefix before WhatsApp text link (same line); link label is always "WhatsApp". */
+            whatsappSupportBefore: "Need human support? ",
             modes: {
                 auto: "Auto",
                 diagnosis: "Store Diagnosis",
@@ -164,7 +165,9 @@ export const TRANSLATIONS = {
         vip: {
             quotaExhausted: "Free quota exhausted",
             guestBody: "You've used all 10 anonymous free credits. Sign in with Google or Facebook (bottom-left) to unlock 30 total; used credits still count toward your limit.",
-            oauthBody: "You've used all {{n}} free credits. Enter the key to unlock VIP permanently. Tangbuy merchants can contact WhatsApp for a key.",
+            oauthBodyCore: "You've used all {{n}} free credits. Enter the key to unlock VIP permanently.",
+            oauthBodyMerchantBefore: "Tangbuy merchants can contact ",
+            oauthBodyMerchantAfter: " for a key.",
             signInForMore: "Sign in for more credits",
             enterKeyPlaceholder: "Enter key",
             later: "Later",
@@ -194,7 +197,7 @@ export const TRANSLATIONS = {
             usageRemaining: "剩余次数",
             usageLimitReached: "你已用完免费次数（30 次）。非 Tangbuy 上架仅支持使用 30 次。Tangbuy Dropshipping 客户支持永久免费使用。",
             bindOnShopify: "去 Shopify App Store 绑定 Tangbuy",
-            whatsappSupport: "如需人工支持，请添加客服 WhatsApp：",
+            whatsappSupportBefore: "如需人工支持，请添加客服 ",
             modes: {
                 auto: "自动",
                 diagnosis: "独立站诊断",
@@ -338,7 +341,9 @@ export const TRANSLATIONS = {
         vip: {
             quotaExhausted: "额度已用完",
             guestBody: "你已用完匿名免费额度（10 次）。使用左下角 Google / Facebook 登录后，免费额度可提升至 30 次，已用次数会累计计入。",
-            oauthBody: "你的免费次数已用完（{{n}} 次）。输入密钥可永久解锁 VIP 无限使用。若你是 Tangbuy 商家用户，请联系 WhatsApp 获取密钥。",
+            oauthBodyCore: "你的免费次数已用完（{{n}} 次）。输入密钥可永久解锁 VIP 无限使用。",
+            oauthBodyMerchantBefore: "若你是 Tangbuy 商家用户，请通过 ",
+            oauthBodyMerchantAfter: " 获取密钥。",
             signInForMore: "登录获取更多次数",
             enterKeyPlaceholder: "请输入密钥",
             later: "稍后",
@@ -368,7 +373,7 @@ export const TRANSLATIONS = {
             usageRemaining: "Restantes",
             usageLimitReached: "Has alcanzado el límite gratuito (30 usos). Para listados que no son de Tangbuy, solo se admiten 30 usos. Los clientes de Tangbuy Dropshipping pueden usarlo gratis sin límites.",
             bindOnShopify: "Vincular Tangbuy en Shopify App Store",
-            whatsappSupport: "¿Necesitas soporte humano? WhatsApp:",
+            whatsappSupportBefore: "¿Necesitas soporte humano? ",
             modes: {
                 auto: "Auto",
                 diagnosis: "Diagnóstico",
@@ -512,7 +517,9 @@ export const TRANSLATIONS = {
         vip: {
             quotaExhausted: "Cuota gratuita agotada",
             guestBody: "Has usado los 10 créditos gratuitos como invitado. Inicia sesión con Google o Facebook (abajo a la izquierda) para llegar a 30 en total; los usos ya contados se mantienen.",
-            oauthBody: "Has usado los {{n}} créditos gratuitos. Introduce la clave para desbloquear VIP de forma permanente. Los comerciantes Tangbuy pueden pedir la clave por WhatsApp.",
+            oauthBodyCore: "Has usado los {{n}} créditos gratuitos. Introduce la clave para desbloquear VIP de forma permanente.",
+            oauthBodyMerchantBefore: "Los comerciantes Tangbuy pueden pedir la clave por ",
+            oauthBodyMerchantAfter: ".",
             signInForMore: "Iniciar sesión para más créditos",
             enterKeyPlaceholder: "Introduce la clave",
             later: "Más tarde",
@@ -542,7 +549,7 @@ export const TRANSLATIONS = {
             usageRemaining: "Restant",
             usageLimitReached: "Vous avez atteint la limite gratuite (30 utilisations). Pour les mises en ligne non-Tangbuy, seules 30 utilisations sont prises en charge. Les clients Tangbuy Dropshipping peuvent l'utiliser gratuitement sans limite.",
             bindOnShopify: "Lier Tangbuy sur Shopify App Store",
-            whatsappSupport: "Besoin d'un support humain ? WhatsApp :",
+            whatsappSupportBefore: "Besoin d'un support humain ? ",
             modes: {
                 auto: "Auto",
                 diagnosis: "Diagnostic",
@@ -686,7 +693,9 @@ export const TRANSLATIONS = {
         vip: {
             quotaExhausted: "Quota gratuit épuisé",
             guestBody: "Vous avez utilisé les 10 crédits gratuits en mode invité. Connectez-vous avec Google ou Facebook (en bas à gauche) pour monter à 30 au total ; les utilisations déjà comptées sont conservées.",
-            oauthBody: "Vous avez utilisé vos {{n}} crédits gratuits. Entrez la clé pour débloquer le VIP en permanence. Les marchands Tangbuy peuvent demander la clé via WhatsApp.",
+            oauthBodyCore: "Vous avez utilisé vos {{n}} crédits gratuits. Entrez la clé pour débloquer le VIP en permanence.",
+            oauthBodyMerchantBefore: "Les marchands Tangbuy peuvent demander la clé via ",
+            oauthBodyMerchantAfter: ".",
             signInForMore: "Se connecter pour plus de crédits",
             enterKeyPlaceholder: "Entrez la clé",
             later: "Plus tard",
