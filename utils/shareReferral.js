@@ -25,12 +25,15 @@ export function parseRefCodeFromSearch(search) {
 }
 
 /**
- * 将当前页 URL 中的 ref 同步到 sessionStorage（OAuth 回调前可保留）
+ * 将当前页 URL 中的 ref 同步到 localStorage（OAuth 回调前可保留）
  */
 export function persistRefFromUrlToSession() {
   if (typeof window === 'undefined') return;
   const code = parseRefCodeFromSearch();
   if (code) {
+    try {
+      localStorage.setItem(SESSION_REF_KEY, code);
+    } catch (_) {}
     try {
       sessionStorage.setItem(SESSION_REF_KEY, code);
     } catch (_) {}
@@ -40,7 +43,7 @@ export function persistRefFromUrlToSession() {
 export function getPendingRefFromSession() {
   if (typeof window === 'undefined') return null;
   try {
-    const s = sessionStorage.getItem(SESSION_REF_KEY);
+    const s = localStorage.getItem(SESSION_REF_KEY) || sessionStorage.getItem(SESSION_REF_KEY);
     return s && s.length >= 4 ? s.toLowerCase() : null;
   } catch {
     return null;
@@ -49,6 +52,9 @@ export function getPendingRefFromSession() {
 
 export function clearPendingRefSession() {
   if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(SESSION_REF_KEY);
+  } catch (_) {}
   try {
     sessionStorage.removeItem(SESSION_REF_KEY);
   } catch (_) {}
@@ -95,7 +101,7 @@ export async function recordShareVisitIfNeeded(supabase) {
   if (!code) return { ok: false, reason: 'no_ref' };
 
   try {
-    if (sessionStorage.getItem(sessionRecordedKey(code)) === '1') {
+    if (localStorage.getItem(sessionRecordedKey(code)) === '1' || sessionStorage.getItem(sessionRecordedKey(code)) === '1') {
       stripRefFromAddressBar();
       return { ok: true, reason: 'already_recorded_session' };
     }
@@ -114,8 +120,11 @@ export async function recordShareVisitIfNeeded(supabase) {
   }
   if (payload.ok === true || payload.skipped === 'self') {
     try {
+      localStorage.setItem(sessionRecordedKey(code), '1');
+      localStorage.setItem(SESSION_REF_KEY, code);
+    } catch (_) {}
+    try {
       sessionStorage.setItem(sessionRecordedKey(code), '1');
-      sessionStorage.setItem(SESSION_REF_KEY, code);
     } catch (_) {}
     stripRefFromAddressBar();
   }
@@ -140,11 +149,12 @@ export async function recordShareOAuthAttributionIfNeeded(supabase, authUser) {
   if (!code) return { ok: false, reason: 'no_ref' };
 
   try {
-    if (sessionStorage.getItem(OAUTH_ATR_KEY(code)) === '1') {
+    if (localStorage.getItem(OAUTH_ATR_KEY(code)) === '1' || sessionStorage.getItem(OAUTH_ATR_KEY(code)) === '1') {
       return { ok: true, reason: 'already_recorded' };
     }
   } catch (_) {}
 
+  if (import.meta.env?.DEV) console.log('[share-ref-oauth] calling RPC with code:', code, 'user:', authUser.email);
   const { data, error } = await supabase.rpc('record_share_ref_oauth_attribution', {
     p_short_code: code,
   });
@@ -153,12 +163,13 @@ export async function recordShareOAuthAttributionIfNeeded(supabase, authUser) {
     return { ok: false, reason: error.message };
   }
   const payload = data && typeof data === 'object' ? data : {};
+  if (import.meta.env?.DEV) console.log('[share-ref-oauth] RPC result:', payload);
   if (payload.skipped === 'anonymous_or_no_email' || payload.skipped === 'self') {
     return { ok: true, reason: payload.skipped };
   }
   if (payload.ok === true) {
     try {
-      sessionStorage.setItem(OAUTH_ATR_KEY(code), '1');
+      localStorage.setItem(OAUTH_ATR_KEY(code), '1');
     } catch (_) {}
   }
   return { ok: !!payload.ok, reason: payload.error || '' };

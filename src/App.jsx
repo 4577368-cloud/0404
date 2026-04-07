@@ -11,6 +11,7 @@ import {
   ensureAnonymousSession,
   isAnonymousUser,
   persistLastOAuthProviderIfSocial,
+  saveAnonymousSessionBeforeOAuth,
 } from '../utils/supabaseAuth.js';
 import AuthModal from '../components/AuthModal.jsx';
 import { track, AnalyticsEvent } from '../utils/analytics.js';
@@ -276,6 +277,7 @@ export default function App() {
 
   const handleSignInGoogle = React.useCallback(async () => {
     if (!supabase) return;
+    await saveAnonymousSessionBeforeOAuth(supabase);
     track(AnalyticsEvent.OAUTH_PROVIDER_CLICK, { provider: 'google' });
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -286,6 +288,7 @@ export default function App() {
 
   const handleSignInFacebook = React.useCallback(async () => {
     if (!supabase) return;
+    await saveAnonymousSessionBeforeOAuth(supabase);
     track(AnalyticsEvent.OAUTH_PROVIDER_CLICK, { provider: 'facebook' });
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'facebook',

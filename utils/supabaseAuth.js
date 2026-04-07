@@ -43,18 +43,98 @@ export function readLastOAuthProvider() {
   }
 }
 
+const ANON_SESSION_BACKUP_KEY = 'tb_anon_session_backup';
+
 /**
- * 已有 session 则返回；否则尝试匿名登录（失败时返回 null，由应用回退到本地额度）。
+ * 保存当前匿名 session 的 refresh_token，以便 OAuth 登出后恢复同一匿名身份。
+ * @param {import('@supabase/supabase-js').SupabaseClient} client
+ */
+export async function saveAnonymousSessionBeforeOAuth(client) {
+  if (!client) return;
+  try {
+    const { data: { session } } = await client.auth.getSession();
+    if (!session) return;
+    const user = session.user;
+    if (!user || !isAnonymousUser(user)) return;
+    localStorage.setItem(ANON_SESSION_BACKUP_KEY, JSON.stringify({
+      access_token: session.access_token,
+      refresh_token: session.refresh_token,
+    }));
+  } catch (_) { /* ignore */ }
+}
+
+/**
+ * 尝试恢复之前保存的匿名 session（避免创建新匿名用户）。
+ * 成功返回 session，失败返回 null（调用方应降级到 signInAnonymously）。
+ * @param {import('@supabase/supabase-js').SupabaseClient} client
+ */
+async function restoreAnonymousSession(client) {
+  if (!client) return null;
+  try {
+    const raw = localStorage.getItem(ANON_SESSION_BACKUP_KEY);
+    if (!raw) return null;
+    const { access_token, refresh_token } = JSON.parse(raw);
+    if (!refresh_token) return null;
+    const { data, error } = await client.auth.setSession({ access_token, refresh_token });
+    if (error) {
+      if (import.meta.env?.DEV) console.warn('[auth] restore anon session failed:', error.message);
+      localStorage.removeItem(ANON_SESSION_BACKUP_KEY);
+      return null;
+    }
+    return data.session ?? null;
+  } catch (_) {
+    localStorage.removeItem(ANON_SESSION_BACKUP_KEY);
+    return null;
+  }
+}
+
+/**
+ * 已有 session 则返回；否则尝试恢复之前的匿名 session；最后才创建新匿名用户。
  * @param {import('@supabase/supabase-js').SupabaseClient} client
  */
 export async function ensureAnonymousSession(client) {
   if (!client) return null;
   const { data: { session } } = await client.auth.getSession();
   if (session) return session;
+  // 尝试恢复之前保存的匿名 session
+  const restored = await restoreAnonymousSession(client);
+  if (restored) {
+    if (import.meta.env?.DEV) console.log('[auth] restored previous anonymous session');
+    return restored;
+  }
+  // 创建新匿名用户（最后手段）
   const { data, error } = await client.auth.signInAnonymously();
   if (error) {
     console.warn('[auth] Anonymous sign-in failed (enable Anonymous provider in Supabase):', error.message);
     return null;
   }
-  return data.session ?? null;
+  const newSession = data.session ?? null;
+  // 保存新匿名 session 以备将来恢复
+  if (newSession) {
+    try {
+      localStorage.setItem(ANON_SESSION_BACKUP_KEY, JSON.stringify({
+        access_token: newSession.access_token,
+        refresh_token: newSession.refresh_token,
+      }));
+    } catch (_) { /* ignore */ }
+  }
+  return newSession;
+}
+
+const DEVICE_ID_KEY = 'tb_device_id';
+
+/**
+ * 获取或生成一个稳定的设备 ID，存储在 localStorage 中。
+ * 同一浏览器始终返回相同 ID，不受匿名 session 变化影响。
+ */
+export function getOrCreateDeviceId() {
+  try {
+    const existing = localStorage.getItem(DEVICE_ID_KEY);
+    if (existing && existing.length >= 8) return existing;
+    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+    localStorage.setItem(DEVICE_ID_KEY, id);
+    return id;
+  } catch (_) {
+    return 'unknown';
+  }
 }
