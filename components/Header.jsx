@@ -166,6 +166,14 @@ function ShareModal({ isOpen, onClose, t, authUser }) {
     if (platform.id === 'facebook') {
       const linkForFb = canonicalUrlForFacebookShare(u);
       const fullForFb = getRandomFacebookCopy(linkForFb);
+      // 无论走 FB.ui 还是 fallback，都先把完整文案（含链接）写入剪贴板，方便用户 Ctrl+V 粘贴
+      try {
+        await navigator.clipboard.writeText(fullForFb);
+        setFacebookCopiedHint(true);
+        setTimeout(() => setFacebookCopiedHint(false), 12000);
+      } catch (_) {
+        setFacebookCopiedHint(false);
+      }
       const fbAppId = import.meta.env.VITE_FACEBOOK_APP_ID?.trim?.() || '';
       if (fbAppId) {
         try {
@@ -175,20 +183,12 @@ function ShareModal({ isOpen, onClose, t, authUser }) {
             quote: fullForFb,
             hashtag: '#TangbuyDropshipping',
           });
-          setFacebookCopiedHint(false);
           return;
         } catch (e) {
           if (import.meta.env.DEV) console.warn('[fb-share]', e);
         }
       }
-      // 经典分享页无法通过 URL 带长文案：剪贴板复制完整推荐语（含链接），与上方 u 参数同源（无 #）
-      try {
-        await navigator.clipboard.writeText(fullForFb);
-        setFacebookCopiedHint(true);
-        setTimeout(() => setFacebookCopiedHint(false), 12000);
-      } catch (_) {
-        setFacebookCopiedHint(false);
-      }
+      // fallback：经典分享页
       window.open(
         platform.getUrl({ shareUrl: linkForFb }),
         '_blank',
