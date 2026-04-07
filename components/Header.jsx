@@ -5,13 +5,38 @@ import { supabase, isSupabaseConfigured } from '../utils/supabaseClient.js';
 import { openFacebookShareDialog, ensureFacebookSdk } from '../utils/facebookSdk.js';
 
 const DEFAULT_SHARE_TEMPLATE_EN =
-  "⚡ Your store's hidden leaks? Tangbuy AI finds them.\n✅ Product diagnosis\n✅ Market gap analysis\n✅ Cross-border optimization tips\n100% free. 30 seconds to insights.\n👉 {{url}}\n#TangbuyDropshipping #EcommerceAI #SmartSelling";
+  "Tried Tangbuy AI to see what it actually does.\n\nIt's basically an AI built around sourcing—supplier discovery, price comparison, and cost analysis.\n\nNot for just content.\n\nWhat stood out is how it helps you rethink sourcing decisions instead of just showing you data.\n\nFor anyone dealing with multiple suppliers or trying to optimize margins, it's worth testing.\n\n{{url}}";
+
+/** 5 randomized Facebook share copy versions — one is picked at random each click */
+const FACEBOOK_SHARE_COPIES = [
+  "Been testing different AI tools lately. Tangbuy AI is a bit different, it's not about content or store analytics.\nMore focused on sourcing: finding suppliers, comparing prices, and spotting cost gaps.\nTried it on a few products and got some alternative sourcing options I hadn't considered.\n\n{{url}}",
+  "Came across Tangbuy AI and gave it a try.\nIt's not one of those \"AI writes for you\" tools. Feels more like a sourcing assistant —\nhelps explore suppliers and compare cost structures.\nPicked up a few things I've been overlooking.\n\n{{url}}",
+  "Most ecommerce AI tools are about ads and content.\nTangbuy AI is more about sourcing and supply chain decisions.\nDon't really see many tools like this.\n\n{{url}}",
+  "Tried Tangbuy AI recently.\nIt's basically a sourcing-focused AI, helps you find suppliers — not just doing content stuff.\nFound a few cheaper / more stable options I hadn't noticed before.\nKind of niche but useful.\n\n{{url}}",
+  "Tested Tangbuy AI.\nNot focusing on ads or content — but for sourcing + cost analysis.\nHelps you see where your margins might be off.\nDidn't expect much, but it's actually decent.\n\n{{url}}",
+];
+
+function getRandomFacebookCopy(shareUrl) {
+  const tpl = FACEBOOK_SHARE_COPIES[Math.floor(Math.random() * FACEBOOK_SHARE_COPIES.length)];
+  return tpl.replace(/\{\{url\}\}/g, shareUrl).trim();
+}
 
 function buildSharePayload(shareUrl, t) {
   const tpl = t?.header?.shareMessageTemplate || DEFAULT_SHARE_TEMPLATE_EN;
   const fullMessage = tpl.replace(/\{\{url\}\}/g, shareUrl).trim();
   const quoteOnly = tpl.replace(/\{\{url\}\}/g, '').replace(/\s+/g, ' ').trim();
   return { fullMessage, quoteOnly };
+}
+
+/** Facebook 抓取预览时对带 # 的 SPA 地址常异常；分享参数 u / href 用去掉 hash 的 URL（保留 ?ref= 等 query） */
+function canonicalUrlForFacebookShare(raw) {
+  try {
+    const url = new URL(String(raw || '').trim());
+    url.hash = '';
+    return url.toString();
+  } catch {
+    return String(raw || '').trim();
+  }
 }
 
 const SHARE_PLATFORMS = [
@@ -139,13 +164,15 @@ function ShareModal({ isOpen, onClose, t, authUser }) {
     if (!u) return;
 
     if (platform.id === 'facebook') {
+      const linkForFb = canonicalUrlForFacebookShare(u);
+      const fullForFb = getRandomFacebookCopy(linkForFb);
       const fbAppId = import.meta.env.VITE_FACEBOOK_APP_ID?.trim?.() || '';
       if (fbAppId) {
         try {
           await openFacebookShareDialog({
             appId: fbAppId,
-            href: u,
-            quote: fullMessage,
+            href: linkForFb,
+            quote: fullForFb,
             hashtag: '#TangbuyDropshipping',
           });
           setFacebookCopiedHint(false);
@@ -154,14 +181,19 @@ function ShareModal({ isOpen, onClose, t, authUser }) {
           if (import.meta.env.DEV) console.warn('[fb-share]', e);
         }
       }
+      // 经典分享页无法通过 URL 带长文案：剪贴板复制完整推荐语（含链接），与上方 u 参数同源（无 #）
       try {
-        await navigator.clipboard.writeText(u);
+        await navigator.clipboard.writeText(fullForFb);
         setFacebookCopiedHint(true);
         setTimeout(() => setFacebookCopiedHint(false), 12000);
       } catch (_) {
         setFacebookCopiedHint(false);
       }
-      window.open(platform.getUrl({ shareUrl: u }), '_blank', 'noopener,noreferrer,width=600,height=500');
+      window.open(
+        platform.getUrl({ shareUrl: linkForFb }),
+        '_blank',
+        'noopener,noreferrer,width=640,height=560',
+      );
       return;
     }
 
@@ -218,9 +250,11 @@ function ShareModal({ isOpen, onClose, t, authUser }) {
           </button>
         </div>
 
-        {!import.meta.env.VITE_FACEBOOK_APP_ID && (
-          <p style={{ margin: '0 0 10px', fontSize: 10, color: 'var(--theme-text-muted)', textAlign: 'center', lineHeight: 1.45 }}>
-            {h.facebookShareConfigureHint || ''}
+        {!import.meta.env.VITE_FACEBOOK_APP_ID && (h.facebookShareManualPastePrefix || h.facebookShareManualPasteShortcut || h.facebookShareManualPasteSuffix) && (
+          <p style={{ margin: '0 0 10px', fontSize: 11, color: 'var(--theme-text-secondary)', textAlign: 'center', lineHeight: 1.55 }}>
+            {h.facebookShareManualPastePrefix || ''}
+            <strong style={{ color: 'var(--primary)', fontWeight: 800 }}>{h.facebookShareManualPasteShortcut || 'Ctrl+V / ⌘+V'}</strong>
+            {h.facebookShareManualPasteSuffix || ''}
           </p>
         )}
 

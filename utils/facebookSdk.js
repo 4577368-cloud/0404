@@ -58,8 +58,8 @@ export function openFacebookShareDialog(opts) {
     (FB) =>
       new Promise((resolve) => {
         const q = String(quote || '').trim();
-        /** Share Dialog 对 quote 长度有实践上的上限 */
-        const quoteTrimmed = q.length > 620 ? `${q.slice(0, 617)}…` : q;
+        /** Share Dialog 的 quote 过长会被客户端忽略；保留充足长度以免长文案被截断 */
+        const quoteTrimmed = q.length > 6000 ? `${q.slice(0, 5997)}…` : q;
         const payload = {
           method: 'share',
           href: String(href || '').trim(),

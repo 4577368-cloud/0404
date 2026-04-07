@@ -17,6 +17,7 @@ import { track, AnalyticsEvent } from '../utils/analytics.js';
 import {
   persistRefFromUrlToSession,
   recordShareVisitIfNeeded,
+  recordShareOAuthAttributionIfNeeded,
   parseRefCodeFromSearch,
   getPendingRefFromSession,
   SHARE_REF_QUERY_KEY,
@@ -259,7 +260,9 @@ export default function App() {
   }, [authUser, devAuthBypass, applyLocalDevQuotaState]);
 
   const oauthRedirectTo = React.useCallback(() => {
-    const origin = window.location.origin;
+    // Prefer a canonical production origin to avoid bouncing back to preview/alias domains after OAuth.
+    const envOrigin = String(import.meta.env.VITE_PUBLIC_APP_ORIGIN || '').trim().replace(/\/+$/, '');
+    const origin = envOrigin || window.location.origin;
     const path = window.location.pathname || '/';
     const ref = getPendingRefFromSession() || parseRefCodeFromSearch();
     if (ref) {
@@ -431,7 +434,15 @@ export default function App() {
 
   React.useEffect(() => {
     if (!authSessionReady || !authUser || !supabase) return;
-    recordShareVisitIfNeeded(supabase);
+    let cancelled = false;
+    (async () => {
+      await recordShareOAuthAttributionIfNeeded(supabase, authUser);
+      if (cancelled) return;
+      await recordShareVisitIfNeeded(supabase);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [authSessionReady, authUser, supabase]);
 
   const showToast = React.useCallback((message) => {

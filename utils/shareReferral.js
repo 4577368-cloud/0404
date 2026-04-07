@@ -2,6 +2,8 @@
  * 专属分享短链：URL 查询参数 ref=短码，落地后写入 share_link_visits（需 Supabase 会话）。
  */
 
+import { isAnonymousUser } from './supabaseAuth.js';
+
 export const SHARE_REF_QUERY_KEY = 'ref';
 const SESSION_REF_KEY = 'tb_share_ref_pending';
 
@@ -118,4 +120,46 @@ export async function recordShareVisitIfNeeded(supabase) {
     stripRefFromAddressBar();
   }
   return { ok: !!payload.ok || payload.skipped === 'self' };
+}
+
+const OAUTH_ATR_KEY = (code) => `tb_ref_oauth_attr_${code}`;
+
+/**
+ * 非匿名且已绑定邮箱的用户（Google/Facebook 等）在仍持有 ref 时记一条 OAuth 归因（需 005_share_referral_emails.sql RPC）。
+ * @param {import('@supabase/supabase-js').SupabaseClient} supabase
+ * @param {import('@supabase/supabase-js').User | null} authUser
+ */
+export async function recordShareOAuthAttributionIfNeeded(supabase, authUser) {
+  if (!supabase || !authUser) return { ok: false, reason: 'skip' };
+  if (isAnonymousUser(authUser)) return { ok: false, reason: 'anonymous' };
+  const email = String(authUser.email || '').trim();
+  if (!email) return { ok: false, reason: 'no_email' };
+
+  let code = parseRefCodeFromSearch();
+  if (!code) code = getPendingRefFromSession();
+  if (!code) return { ok: false, reason: 'no_ref' };
+
+  try {
+    if (sessionStorage.getItem(OAUTH_ATR_KEY(code)) === '1') {
+      return { ok: true, reason: 'already_recorded' };
+    }
+  } catch (_) {}
+
+  const { data, error } = await supabase.rpc('record_share_ref_oauth_attribution', {
+    p_short_code: code,
+  });
+  if (error) {
+    if (import.meta.env?.DEV) console.warn('[share-ref-oauth]', error.message);
+    return { ok: false, reason: error.message };
+  }
+  const payload = data && typeof data === 'object' ? data : {};
+  if (payload.skipped === 'anonymous_or_no_email' || payload.skipped === 'self') {
+    return { ok: true, reason: payload.skipped };
+  }
+  if (payload.ok === true) {
+    try {
+      sessionStorage.setItem(OAUTH_ATR_KEY(code), '1');
+    } catch (_) {}
+  }
+  return { ok: !!payload.ok, reason: payload.error || '' };
 }
