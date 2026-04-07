@@ -122,23 +122,36 @@ function ShareModal({ isOpen, onClose, t, authUser }) {
     if (!isOpen || typeof window === 'undefined') return;
     let cancelled = false;
     (async () => {
-      if (!isSupabaseConfigured() || !supabase || !authUser?.id) {
+      const configured = isSupabaseConfigured();
+      if (!configured || !supabase || !authUser?.id) {
+        console.warn('[share-link] skip RPC: configured=%s, supabase=%s, authUser.id=%s', configured, !!supabase, authUser?.id);
         setShareUrl(window.location.href);
         return;
       }
       setShareUrlLoading(true);
-      const { data, error } = await supabase.rpc('get_or_create_share_link');
-      if (cancelled) return;
-      setShareUrlLoading(false);
-      const code = data && typeof data === 'object' && data.ok && data.short_code ? String(data.short_code) : null;
-      if (error || !code) {
-        if (import.meta.env?.DEV && error) console.warn('[share-link]', error.message);
-        setShareUrl(window.location.href);
-        return;
+      try {
+        const { data, error } = await supabase.rpc('get_or_create_share_link');
+        if (cancelled) return;
+        setShareUrlLoading(false);
+        console.log('[share-link] RPC result: data=%o, error=%o', data, error);
+        const code = data && typeof data === 'object' && data.ok && data.short_code ? String(data.short_code) : null;
+        if (error || !code) {
+          console.warn('[share-link] fallback: error=%s, code=%s', error?.message, code);
+          setShareUrl(window.location.href);
+          return;
+        }
+        const envOrigin = String(import.meta.env.VITE_PUBLIC_APP_ORIGIN || '').trim().replace(/\/+$/, '');
+        const base = envOrigin || window.location.origin;
+        const u = new URL(base + (window.location.pathname || '/'));
+        u.searchParams.set('ref', code);
+        setShareUrl(u.toString());
+      } catch (err) {
+        if (!cancelled) {
+          console.error('[share-link] unexpected error:', err);
+          setShareUrlLoading(false);
+          setShareUrl(window.location.href);
+        }
       }
-      const u = new URL(window.location.href);
-      u.searchParams.set('ref', code);
-      setShareUrl(u.toString());
     })();
     return () => {
       cancelled = true;

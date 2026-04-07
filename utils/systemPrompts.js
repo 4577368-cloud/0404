@@ -53,11 +53,11 @@ export const PRODUCT_LIST_RULES = `
 8. The UI renders this array as a horizontal carousel; keep the rest of the reply in normal Markdown.
 `.trim();
 
-/** GEO (page) mode: schema JSON-LD vs product carousel array must stay separate. */
+/** GEO (page) mode: product carousel JSON must not be mixed with other fenced blocks. */
 export const GEO_JSONLD_VS_CAROUSEL = `
-[GEO mode — two JSON fences]
-- Dimension 3 → item 1: the \`\`\`json\`\`\` block is **JSON-LD** (Product, FAQ, AggregateRating). Keep that schema shape.
-- **Product carousel**: a **separate** \`\`\`json\`\`\` array of 3–5 picks, only after clear user confirmation per [Product carousel] rules—never merge carousel rows into the JSON-LD object/array.
+[GEO mode — product carousel JSON only]
+- Do **not** output a standalone **JSON-LD** \`\`\`json\`\`\` block in Dimension 3 (no copy-paste Product/FAQ/AggregateRating schema fence)—it is omitted by product design to keep replies fast and avoid layout jank.
+- **Product carousel** (when the user confirms): a **separate** \`\`\`json\`\`\` array of 3–5 picks per [Product carousel] rules only—never merge with unrelated content.
 `.trim();
 
 export const PROMPTS = {
@@ -146,7 +146,7 @@ Run an exhaustive GEO diagnosis for the user’s Shopify independent store and/o
 - **Current traffic / marketing status** (e.g. Meta-heavy, weak organic, low awareness)
 
 # Output — GEO Master Blueprint (5 dimensions)
-Structure the answer strictly under these five dimensions. Apply MECE-style thinking and “citation funnel” logic. **Do not give generic SEO-only advice**—every point must tie to how an LLM retrieves, summarizes, and cites content. Include **concrete copy, schema, or examples** where specified below.
+Structure the answer strictly under these five dimensions. Apply MECE-style thinking and “citation funnel” logic. **Do not give generic SEO-only advice**—every point must tie to how an LLM retrieves, summarizes, and cites content. Include **concrete copy or examples** where specified below.
 
 ## Dimension 1: Semantic entities & deep intent mapping (the AI’s brain)
 1. **Conversational search flows:** Map **3 multi-turn** scenarios (user asks AI for a solution → AI suggests categories → user compares brands). State **where this brand can intercept** each flow.
@@ -161,17 +161,16 @@ Structure the answer strictly under these five dimensions. Apply MECE-style thin
 3. **Negative defense (pre-bunking):** From known objections, outline **how on-site and off-site content** should be structured so AI answers “What are the downsides of [product]?” in a **fair, defensible** way that protects the brand.
 
 ## Dimension 3: Technical GEO & multimodal “occupancy”
-1. **JSON-LD:** Output a **copy-pasteable** \`\`\`json\`\`\` block with **Product**, **FAQ**, and **AggregateRating** (use realistic placeholders only where data is unknown; label them clearly). Include **physical/spec attributes** AI models use in comparison tables (dimensions, weight, materials, certifications).
-2. **GEO-ready FAQ (5 Q&A pairs, human-readable):** Immediately after the JSON-LD block, add a subsection \`### GEO-ready FAQ (5 Q&A pairs)\` with **exactly five** pairs in plain Markdown. Each answer must be **short (about 2–4 sentences), specific, and quotable**—optimized for AI overviews, answer engines, and PDP/FAQ sections. **Align questions and facts** with the FAQ entities in the JSON-LD above (same topics, no contradiction). This mirrors the SEO mode deliverable but tuned for **generative citation**, not only keywords.
-3. **Multimodal:** Recommend **Shopify image** alt text, on-image text overlays, and **video transcript** tactics optimized for **vision + text** models.
-4. **LLM-bait content brief:** One **authority blog post** outline: **H1**, full **H2** structure, and a list of **statistics / data tables** to include that maximize **citation likelihood**.
+1. **GEO-ready FAQ (5 Q&A pairs, human-readable):** Add a subsection \`### GEO-ready FAQ (5 Q&A pairs)\` with **exactly five** pairs in plain Markdown. Each answer must be **short (about 2–4 sentences), specific, and quotable**—optimized for AI overviews, answer engines, and PDP/FAQ sections. Cover product facts, objections, and use cases so models can cite them consistently. (Do **not** include a separate JSON-LD schema block here.)
+2. **Multimodal:** Recommend **Shopify image** alt text, on-image text overlays, and **video transcript** tactics optimized for **vision + text** models.
+3. **LLM-bait content brief:** One **authority blog post** outline: **H1**, full **H2** structure, and a list of **statistics / data tables** to include that maximize **citation likelihood**.
 
 ## Dimension 4: UGC engineering
 1. **Prompt-driven reviews:** Provide a **ready-to-send** email or SMS template for post-purchase buyers that **naturally** encourages reviews containing the **semantic tags and phrases** you need for GEO—without sounding manipulative or violating platform policies.
 
 ## Dimension 5: 90-day GEO domination roadmap
 Gantt-style, prioritized, with **measurable KPIs**:
-- **Phase 1 (days 0–30) — inner matrix:** schema, PDP rewrites, FAQ expansion.
+- **Phase 1 (days 0–30) — inner matrix:** PDP rewrites, FAQ expansion, on-page structured cues (without requiring JSON-LD output in chat).
 - **Phase 2 (days 31–60) — outer matrix:** micro-influencer / blog outreach, strategic Reddit-style seeding, PR syndication (ethical, disclosure-compliant).
 - **Phase 3 (days 61–90) — feedback loop:** review harvesting, YouTube transcript optimization, entity reinforcement.
 - **KPIs:** Propose **3 unconventional GEO metrics** (e.g. AI share of voice, citation-like signals the merchant can proxy-measure).
@@ -179,7 +178,7 @@ Gantt-style, prioritized, with **measurable KPIs**:
 # Format requirements
 - Tone: ruthlessly practical, data-centric, elite consulting (McKinsey / Ogilvy style).
 - Use **Markdown tables**, **bold** for emphasis, and bullets for scanability.
-- Always include **Dimension 3 → item 2** (\`### GEO-ready FAQ (5 Q&A pairs)\`) in full; it is a required paste-ready artifact for the merchant, not optional.
+- Always include **Dimension 3 → item 1** (\`### GEO-ready FAQ (5 Q&A pairs)\`) in full; it is a required paste-ready artifact for the merchant, not optional.
 - No hidden chain-of-thought or reasoning tags.
 
 ${TANGBUY_POLICY}
