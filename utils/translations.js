@@ -142,6 +142,7 @@ export const TRANSLATIONS = {
             sharePrivacyNote: "This page may include personal details — review before sharing.",
             shareMessageTemplate: "I'm using Tangbuy AI to diagnose my store & products — really useful for cross-border sellers. Try it: {{url}}",
             workflowNoRefreshMarquee: "Report is generating — do not refresh the page or the analysis will be interrupted.",
+            shareLinkLoading: "Loading your link…",
         },
         auth: {
             signInToUse: "This feature requires a signed-in account. Please sign in with Google or Facebook below.",
@@ -311,6 +312,7 @@ export const TRANSLATIONS = {
             sharePrivacyNote: "当前页面可能包含个人信息，分享前请确认内容。",
             shareMessageTemplate: "我正在用 Tangbuy AI 诊断独立站与选品，非常好用，推荐试试：{{url}}",
             workflowNoRefreshMarquee: "报告生成中，请勿刷新页面，否则将中断分析。",
+            shareLinkLoading: "正在生成专属链接…",
         },
         auth: {
             signInToUse: "此功能需登录账号后方可使用，请在下方使用 Google 或 Facebook 登录。",
@@ -480,6 +482,7 @@ export const TRANSLATIONS = {
             sharePrivacyNote: "Esta página puede incluir datos personales; revísala antes de compartir.",
             shareMessageTemplate: "Estoy usando Tangbuy AI para diagnosticar mi tienda y productos — muy útil para vender en el extranjero. Pruébalo: {{url}}",
             workflowNoRefreshMarquee: "Generando informe — no actualice la página o el análisis se interrumpirá.",
+            shareLinkLoading: "Generando enlace…",
         },
         auth: {
             signInToUse: "Esta función requiere iniciar sesión. Usa Google o Facebook a continuación.",
@@ -649,6 +652,7 @@ export const TRANSLATIONS = {
             sharePrivacyNote: "Cette page peut contenir des données personnelles — vérifiez avant de partager.",
             shareMessageTemplate: "J'utilise Tangbuy AI pour diagnostiquer ma boutique et mes produits — très utile pour la vente à l'international. Essayez : {{url}}",
             workflowNoRefreshMarquee: "Génération du rapport en cours — ne rafraîchissez pas la page ou l'analyse sera interrompue.",
+            shareLinkLoading: "Génération du lien…",
         },
         auth: {
             signInToUse: "Cette fonction nécessite une connexion. Utilisez Google ou Facebook ci-dessous.",

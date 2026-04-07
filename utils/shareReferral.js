@@ -1,0 +1,121 @@
+/**
+ * 专属分享短链：URL 查询参数 ref=短码，落地后写入 share_link_visits（需 Supabase 会话）。
+ */
+
+export const SHARE_REF_QUERY_KEY = 'ref';
+const SESSION_REF_KEY = 'tb_share_ref_pending';
+
+/**
+ * @param {string} [search]
+ * @returns {string|null}
+ */
+export function parseRefCodeFromSearch(search) {
+  if (typeof window === 'undefined' && search == null) return null;
+  const q = search ?? (typeof window !== 'undefined' ? window.location.search : '') ?? '';
+  try {
+    const params = new URLSearchParams(q.startsWith('?') ? q : `?${q}`);
+    const raw = params.get(SHARE_REF_QUERY_KEY) || params.get('s') || params.get('invite');
+    const code = raw != null ? String(raw).trim() : '';
+    return code.length >= 4 ? code.toLowerCase() : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 将当前页 URL 中的 ref 同步到 sessionStorage（OAuth 回调前可保留）
+ */
+export function persistRefFromUrlToSession() {
+  if (typeof window === 'undefined') return;
+  const code = parseRefCodeFromSearch();
+  if (code) {
+    try {
+      sessionStorage.setItem(SESSION_REF_KEY, code);
+    } catch (_) {}
+  }
+}
+
+export function getPendingRefFromSession() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const s = sessionStorage.getItem(SESSION_REF_KEY);
+    return s && s.length >= 4 ? s.toLowerCase() : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearPendingRefSession() {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.removeItem(SESSION_REF_KEY);
+  } catch (_) {}
+}
+
+/**
+ * 构建带 ref 的落地 URL（分享用）
+ * @param {string} shortCode
+ * @returns {string}
+ */
+export function buildPersonalizedShareUrl(shortCode) {
+  if (typeof window === 'undefined') return '';
+  const u = new URL(window.location.href);
+  u.searchParams.set(SHARE_REF_QUERY_KEY, String(shortCode).toLowerCase());
+  return u.toString();
+}
+
+/**
+ * 从地址栏去掉 ref（可选，避免重复上报）
+ */
+export function stripRefFromAddressBar() {
+  if (typeof window === 'undefined') return;
+  try {
+    const u = new URL(window.location.href);
+    if (!u.searchParams.has(SHARE_REF_QUERY_KEY)) return;
+    u.searchParams.delete(SHARE_REF_QUERY_KEY);
+    const next = `${u.pathname}${u.search}${u.hash}`;
+    window.history.replaceState({}, '', next);
+  } catch (_) {}
+}
+
+function sessionRecordedKey(code) {
+  return `tb_ref_visit_done_${code}`;
+}
+
+/**
+ * @param {import('@supabase/supabase-js').SupabaseClient} supabase
+ * @returns {Promise<{ ok: boolean, reason?: string }>}
+ */
+export async function recordShareVisitIfNeeded(supabase) {
+  if (!supabase) return { ok: false, reason: 'no_client' };
+  let code = parseRefCodeFromSearch();
+  if (!code) code = getPendingRefFromSession();
+  if (!code) return { ok: false, reason: 'no_ref' };
+
+  try {
+    if (sessionStorage.getItem(sessionRecordedKey(code)) === '1') {
+      stripRefFromAddressBar();
+      return { ok: true, reason: 'already_recorded_session' };
+    }
+  } catch (_) {}
+
+  const { data, error } = await supabase.rpc('record_share_visit', {
+    p_short_code: code,
+  });
+  if (error) {
+    if (import.meta.env?.DEV) console.warn('[share-ref]', error.message);
+    return { ok: false, reason: error.message };
+  }
+  const payload = data && typeof data === 'object' ? data : {};
+  if (payload.error === 'not_authenticated') {
+    return { ok: false, reason: 'not_authenticated' };
+  }
+  if (payload.ok === true || payload.skipped === 'self') {
+    try {
+      sessionStorage.setItem(sessionRecordedKey(code), '1');
+      sessionStorage.setItem(SESSION_REF_KEY, code);
+    } catch (_) {}
+    stripRefFromAddressBar();
+  }
+  return { ok: !!payload.ok || payload.skipped === 'self' };
+}

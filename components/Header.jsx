@@ -1,6 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { track, AnalyticsEvent } from '../utils/analytics.js';
+import { supabase, isSupabaseConfigured } from '../utils/supabaseClient.js';
 
 const DEFAULT_SHARE_TEMPLATE_EN =
   "I'm using Tangbuy AI to diagnose my store & products — really useful for cross-border sellers. Try it: {{url}}";
@@ -63,9 +64,12 @@ const SHARE_PLATFORMS = [
   },
 ];
 
-function ShareModal({ isOpen, onClose, t }) {
+function ShareModal({ isOpen, onClose, t, authUser }) {
   const [copied, setCopied] = React.useState(false);
-  const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+  const [shareUrl, setShareUrl] = React.useState(() =>
+    typeof window !== 'undefined' ? window.location.href : ''
+  );
+  const [shareUrlLoading, setShareUrlLoading] = React.useState(false);
   const { fullMessage, quoteOnly } = React.useMemo(
     () => buildSharePayload(shareUrl, t),
     [shareUrl, t],
@@ -76,9 +80,37 @@ function ShareModal({ isOpen, onClose, t }) {
     if (!isOpen) setCopied(false);
   }, [isOpen]);
 
+  React.useEffect(() => {
+    if (!isOpen || typeof window === 'undefined') return;
+    let cancelled = false;
+    (async () => {
+      if (!isSupabaseConfigured() || !supabase || !authUser?.id) {
+        setShareUrl(window.location.href);
+        return;
+      }
+      setShareUrlLoading(true);
+      const { data, error } = await supabase.rpc('get_or_create_share_link');
+      if (cancelled) return;
+      setShareUrlLoading(false);
+      const code = data && typeof data === 'object' && data.ok && data.short_code ? String(data.short_code) : null;
+      if (error || !code) {
+        if (import.meta.env?.DEV && error) console.warn('[share-link]', error.message);
+        setShareUrl(window.location.href);
+        return;
+      }
+      const u = new URL(window.location.href);
+      u.searchParams.set('ref', code);
+      setShareUrl(u.toString());
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, authUser?.id]);
+
   if (!isOpen) return null;
 
   const handleCopy = async () => {
+    if (shareUrlLoading) return;
     try {
       await navigator.clipboard.writeText(fullMessage);
       setCopied(true);
@@ -87,6 +119,7 @@ function ShareModal({ isOpen, onClose, t }) {
   };
 
   const handleShare = (platform) => {
+    if (shareUrlLoading) return;
     const openUrl = platform.getUrl({ shareUrl, fullMessage, quoteOnly });
     window.open(openUrl, '_blank', 'noopener,noreferrer,width=600,height=500');
   };
@@ -126,12 +159,14 @@ function ShareModal({ isOpen, onClose, t }) {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, borderRadius: 12, padding: '10px 14px', background: 'color-mix(in srgb, var(--theme-surface) 85%, transparent)', border: '1px solid var(--theme-border)' }}>
-          <span style={{ flex: 1, fontSize: 12, color: 'var(--theme-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={shareUrl}>{shareUrl}</span>
-          <button type="button" onClick={handleCopy}
+          <span style={{ flex: 1, fontSize: 12, color: 'var(--theme-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={shareUrl}>
+            {shareUrlLoading ? (h.shareLinkLoading || '…') : shareUrl}
+          </span>
+          <button type="button" onClick={handleCopy} disabled={shareUrlLoading}
             style={{
               display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 8,
               border: 'none', background: copied ? '#16a34a' : 'var(--theme-text)', color: copied ? '#fff' : 'var(--theme-bg)',
-              fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s', whiteSpace: 'nowrap',
+              fontSize: 12, fontWeight: 600, cursor: shareUrlLoading ? 'not-allowed' : 'pointer', opacity: shareUrlLoading ? 0.55 : 1, transition: 'background 0.2s', whiteSpace: 'nowrap',
             }}>
             <span className={copied ? 'icon-check text-[12px]' : 'icon-link text-[12px]'} />
             {copied ? (h.shareCopied || 'Copied!') : (h.shareCopyLink || 'Copy')}
@@ -140,11 +175,11 @@ function ShareModal({ isOpen, onClose, t }) {
 
         <div style={{ display: 'flex', justifyContent: 'center', gap: 20 }}>
           {SHARE_PLATFORMS.map((p) => (
-            <button key={p.id} onClick={() => handleShare(p)}
+            <button key={p.id} type="button" onClick={() => handleShare(p)} disabled={shareUrlLoading}
               style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-                background: 'none', border: 'none', cursor: 'pointer', padding: 8,
-                color: p.color, transition: 'transform 0.15s',
+                background: 'none', border: 'none', cursor: shareUrlLoading ? 'not-allowed' : 'pointer', padding: 8,
+                color: p.color, transition: 'transform 0.15s', opacity: shareUrlLoading ? 0.45 : 1,
               }}
               onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
               onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
@@ -175,6 +210,8 @@ export default function Header({
   showCreditsHintForAnonymous = false,
   /** 侧栏未常驻时（欢迎态）在桌面端也显示菜单按钮，用于打开抽屉 */
   showSidebarMenuOnDesktop = false,
+  /** 用于生成带 ?ref=短码 的专属分享链接（Supabase 已配置且已建立会话时） */
+  authUser = null,
 }) {
   const languages = [
     { code: 'en', label: 'English' },
@@ -566,7 +603,7 @@ export default function Header({
         </a>
       </div>
 
-      <ShareModal isOpen={isShareOpen} onClose={() => setIsShareOpen(false)} t={t} />
+      <ShareModal isOpen={isShareOpen} onClose={() => setIsShareOpen(false)} t={t} authUser={authUser} />
     </header>
 
     {isRunning && (

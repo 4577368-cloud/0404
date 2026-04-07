@@ -14,6 +14,13 @@ import {
 } from '../utils/supabaseAuth.js';
 import AuthModal from '../components/AuthModal.jsx';
 import { track, AnalyticsEvent } from '../utils/analytics.js';
+import {
+  persistRefFromUrlToSession,
+  recordShareVisitIfNeeded,
+  parseRefCodeFromSearch,
+  getPendingRefFromSession,
+  SHARE_REF_QUERY_KEY,
+} from '../utils/shareReferral.js';
 
 const HotProducts = React.lazy(() => import('../components/HotProducts.jsx'));
 const MyLists = React.lazy(() => import('../components/MyLists.jsx'));
@@ -241,10 +248,17 @@ export default function App() {
     return () => { cancelled = true; };
   }, [authUser, devAuthBypass, applyLocalDevQuotaState]);
 
-  const oauthRedirectTo = React.useCallback(
-    () => `${window.location.origin}${window.location.pathname || '/'}`,
-    []
-  );
+  const oauthRedirectTo = React.useCallback(() => {
+    const origin = window.location.origin;
+    const path = window.location.pathname || '/';
+    const ref = getPendingRefFromSession() || parseRefCodeFromSearch();
+    if (ref) {
+      const u = new URL(origin + path);
+      u.searchParams.set(SHARE_REF_QUERY_KEY, ref);
+      return u.toString();
+    }
+    return `${origin}${path}`;
+  }, []);
 
   const handleSignInGoogle = React.useCallback(async () => {
     if (!supabase) return;
@@ -400,6 +414,15 @@ export default function App() {
   React.useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  React.useEffect(() => {
+    persistRefFromUrlToSession();
+  }, []);
+
+  React.useEffect(() => {
+    if (!authSessionReady || !authUser || !supabase) return;
+    recordShareVisitIfNeeded(supabase);
+  }, [authSessionReady, authUser, supabase]);
 
   const showToast = React.useCallback((message) => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
@@ -630,6 +653,7 @@ export default function App() {
             maxFreeQuota={maxFreeQuotaForUser}
             showCreditsHintForAnonymous={!!authUser && isAnonymousUser(authUser)}
             showSidebarMenuOnDesktop={sidebarDockedHidden}
+            authUser={authUser}
           />
         </div>
 
