@@ -47,6 +47,7 @@ import {
   tryFetchJson,
   loadProductCatalog,
   loadTrendCatalogOnly,
+  TREND_WIDE_CARD_REPLY_CAP,
   shouldRecommendProducts,
   isProductConfirmation,
   parseCatalogProductJsonFromMarkdown,
@@ -237,6 +238,40 @@ function stripInternalUiDisclaimers(text) {
   return String(text)
     .replace(/\*?\s*\(\s*Figures are illustrative for UI preview;\s*use Tangbuy for live pricing and sales\.\s*\)\s*\*?/gi, '')
     .replace(/\*?\s*Figures are illustrative for UI preview;\s*use Tangbuy for live pricing and sales\.?\s*\*?/gi, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+/**
+ * search_picks 正文仅保留「合法 Tangbuy 搜索链接」；
+ * 其它模型自带链接会被降级为纯文本，避免 ### / 30%-50% 这类噪音词可点击。
+ */
+function isSafeTangbuySearchHref(href) {
+  try {
+    const u = new URL(String(href || '').trim());
+    if (!/^https?:$/i.test(u.protocol)) return false;
+    if (!/tangbuy\.com$/i.test(u.hostname)) return false;
+    if (!/\/search$/i.test(u.pathname)) return false;
+    const q = String(u.searchParams.get('keyword') || '').trim();
+    if (q.length < 3) return false;
+    const decoded = decodeURIComponent(q);
+    if (!/[a-z\u4e00-\u9fff]/i.test(decoded)) return false;
+    if (/^[\d\s.,%+\-_/\\#*()~–—]+$/.test(decoded)) return false;
+    if (/^\d+\s*[-~–—]\s*\d+$/.test(decoded)) return false;
+    if (/^\d+(?:\.\d+)?\s*%\s*[-~–—]\s*\d+(?:\.\d+)?\s*%$/.test(decoded)) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function stripLinksForSearchPicks(text) {
+  if (!text) return '';
+  return String(text)
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/gi, (_, label, href) =>
+      isSafeTangbuySearchHref(href) ? `[${label}](${href})` : label,
+    )
+    .replace(/\bhttps?:\/\/[^\s)]+/gi, (href) => (isSafeTangbuySearchHref(href) ? href : ''))
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
@@ -1239,7 +1274,9 @@ export function ModuleAIChat({
   }
 
   // returns { matched: Product[], isExact: boolean } — `catalogOverride` when state not ready yet (first message race).
-  const smartSearch = React.useCallback((query, extraContext, catalogOverride) => {
+  // opts.trendResultCap：仅影响「趋势/榜单行」命中分支的条数上限（默认 10）；显式推荐流程传入 TREND_WIDE_CARD_REPLY_CAP。
+  const smartSearch = React.useCallback((query, extraContext, catalogOverride, opts = {}) => {
+    const trendResultCap = Number(opts.trendResultCap) > 0 ? Number(opts.trendResultCap) : 10;
     // Note: shownIdsRef is now cleared only when user sends a new message, not on every search
     // This prevents showing duplicate products within the same conversation session
     const isTrendProduct = (p) => p?.variant === 'trend' || p?.variant === 'bestseller' || p?.platform === 'Trend' || p?.platform === 'MonthlyTop';
@@ -1290,11 +1327,11 @@ export function ModuleAIChat({
           return { ...p, _score: score };
         });
         let matchedTrend = scoredTrend.filter((p) => p._score >= 5).sort((a, b) => b._score - a._score);
-        let result = matchedTrend.slice(0, 10);
+        let result = matchedTrend.slice(0, trendResultCap);
         if (result.length === 0) {
           const fuzzy = trendPool.filter((p) => allSearchTerms.some((w) => p.searchLower?.includes(w)));
           const pickFrom = fuzzy.length ? shuffle(fuzzy, Date.now() + 3) : shuffle(trendPool, Date.now() + 4);
-          result = pickFrom.slice(0, Math.min(10, pickFrom.length));
+          result = pickFrom.slice(0, Math.min(trendResultCap, pickFrom.length));
         }
         result.forEach((p) => shownIdsRef.current.add(p.id));
         return { matched: result, isExact: matchedTrend.length > 0 };
@@ -1329,7 +1366,7 @@ export function ModuleAIChat({
 
     const trendHits = matched.filter(isTrendProduct).sort((a, b) => b._score - a._score);
     if (trendHits.length > 0) {
-      const result = trendHits.slice(0, 10);
+      const result = trendHits.slice(0, trendResultCap);
       result.forEach((p) => shownIdsRef.current.add(p.id));
       const isExact = hasFilter || (allSearchTerms.length > 0 && trendHits[0]._score >= 8);
       return { matched: result, isExact };
@@ -1681,14 +1718,23 @@ export function ModuleAIChat({
       const userWantsProductRecommendations = shouldRecommendProducts(txt, messages, streamResult?.finalText);
       let trendListAppended = false;
 
-      // Restore original long-list trigger logic: explicit recommendation requests
+      /**
+       * 竖向宽卡（products_trend）
+       * - 数据源：**仅** `loadTrendCatalogOnly()` = `Product.json`（趋势）与 `Best-selling.json`（月销千榜）合并后的列表，**不是** tangbuy-product 热销 JSON。
+       * - 触发：`shouldRecommendProducts` 为真（用户明确「推荐商品/选品/趋势款…」或短句确认跟在上一条 AI 问是否要看商品之后）。
+       * - 流程：`smartSearch` 在 **用户话 + 助手回复前 1200 字**（`trendQuery`）上从上述合并库打分；模型在正文里写的具体词（如「美容仪」「睫毛夹」「化妆包」）会进入该字符串，与 `detectCategories` / 分词后的词一起参与匹配与 `filterTrendMatchesForPreciseDisplay`（商品标题/类目 `searchLower` 需命中品类关键词或这些词之一）。
+       * - 展示：最多 `TREND_WIDE_CARD_REPLY_CAP` 条，**不是**两个 JSON 的全量行。
+       */
       if (userWantsProductRecommendations) {
         const trendCatalog = await loadTrendCatalogOnly();
         if (trendCatalog.length) {
           const trendQuery = `${txt} ${(streamResult?.finalText || '').slice(0, 1200)}`;
-          const { matched: trendMatched } = smartSearch(trendQuery, snapshot || '', trendCatalog);
+          const { matched: trendMatched } = smartSearch(trendQuery, snapshot || '', trendCatalog, {
+            trendResultCap: TREND_WIDE_CARD_REPLY_CAP,
+          });
           const preciseTrend = filterTrendMatchesForPreciseDisplay(trendQuery, trendMatched);
-          const slice = preciseTrend.slice(0, 18);
+          const ranked = preciseTrend.length > 0 ? preciseTrend : trendMatched;
+          const slice = ranked.slice(0, TREND_WIDE_CARD_REPLY_CAP);
           if (slice.length > 0) {
             setMessages((p) => [...p, { role: 'ai', type: 'products_trend', content: '', data: slice }]);
             trendListAppended = true;
@@ -2461,7 +2507,7 @@ export function ModuleAIChat({
                       <div
                         className="text-sm mb-3 font-medium md-body"
                         style={{ color: 'var(--theme-bubble-ai-text)' }}
-                        dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }}
+                        dangerouslySetInnerHTML={{ __html: renderMarkdown(stripLinksForSearchPicks(msg.content)) }}
                       />
                     )}
                     {links.length > 0 && (

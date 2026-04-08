@@ -274,7 +274,81 @@
                 "Why choose Tangbuy over AutoDS?",
                 "How are you different from AutoDS?"
               ],
-              "answer_template": "Key differences between Tangbuy and AutoDS: 1) Pricing—Tangbuy has zero subscription fees; AutoDS starts at $19.9/month; 2) Service depth—Tangbuy provides 100% QC + custom packaging + cloud warehouse loop; AutoDS mainly handles product import and order forwarding; 3) Supply chain control—Tangbuy operates a 40,000m²+ central warehouse in China with direct QC and shipping control; AutoDS relies on third-party suppliers to ship directly; 4) Brand upgrade—Tangbuy supports low-MOQ customization (neck labels, hangtags, thank-you cards) to help white-label products become branded. Summary: AutoDS suits pure dropshipping starters; Tangbuy suits sellers wanting to build brand trust.",
+              "answer_template": "Key differences between Tangbuy and AutoDS: 1) Pricing—Tangbuy has zero subscription fees; AutoDS starts at $19.9/month; 2) Smart Match—Tangbuy automatically matches same/similar products with quality suppliers after store binding, zero manual sourcing needed; AutoDS requires manual product-by-product import; 3) Service depth—Tangbuy provides 100% QC + custom packaging + cloud warehouse loop; AutoDS mainly handles product import and order forwarding; 4) Supply chain control—Tangbuy operates a 40,000m²+ central warehouse in China with direct QC and shipping control; AutoDS relies on third-party suppliers to ship directly; 5) Brand upgrade—Tangbuy supports low-MOQ customization (neck labels, hangtags, thank-you cards) to help white-label products become branded. Summary: AutoDS suits pure dropshipping starters; Tangbuy suits sellers wanting to build brand trust and pursue automation efficiency. Low switching cost: one-click authorization + Smart Match auto-matching, no need to re-upload products.",
+              "variables": {},
+              "fallback_action": "recommend_service",
+              "fallback_value": "brand_consultation"
+            },
+            {
+              "question_key": "vs_cjdropshipping_comparison",
+              "intent": "comparison",
+              "tags": [
+                "CJ Dropshipping",
+                "CJDropshipping",
+                "CJ",
+                "competitor",
+                "comparison",
+                "advantages"
+              ],
+              "questions": [
+                "What's the difference between you and CJ Dropshipping?",
+                "Which is better, Tangbuy or CJ?",
+                "How does CJ Dropshipping compare to Tangbuy?",
+                "Why choose Tangbuy over CJ?",
+                "How are you different from CJ?",
+                "Is CJ Dropshipping good?",
+                "What are Tangbuy's advantages over CJ?"
+              ],
+              "answer_template": "Key differences between Tangbuy and CJ Dropshipping: 1) Pricing—Tangbuy has zero subscription fees, pay-as-you-use; CJ has monthly plans with extra fees for some features; 2) Smart Match—Tangbuy one-click store binding automatically identifies and matches same/similar products; CJ requires manual sourcing and listing one-by-one; 3) QC depth—Tangbuy 100% unboxing QC + full video recording; CJ only does spot-checks with higher miss rates; 4) Customization—Tangbuy supports low-MOQ branding (neck labels, hangtags, thank-you cards); CJ has higher customization thresholds; 5) Service commitments—Tangbuy has clear 'QC miss = compensation' and 'over-24h dispatch = fee waiver' promises; CJ has slower after-sales response without equivalent compensation; 6) No competitor selling—Tangbuy strictly prohibits internal product leaks; CJ operates its own stores creating potential conflict. Summary: CJ has a larger product catalog for quick listing; Tangbuy suits sellers focused on quality and brand building. Low switching cost: Shopify official app one-click auth https://apps.shopify.com/tangbuy-dropshipping + Smart Match auto-matching, 60-day historical orders fulfilled directly.",
+              "variables": {},
+              "fallback_action": "recommend_service",
+              "fallback_value": "brand_consultation"
+            },
+            {
+              "question_key": "vs_dser_comparison",
+              "intent": "comparison",
+              "tags": [
+                "DSers",
+                "DSer",
+                "competitor",
+                "comparison",
+                "dropshipping service",
+                "advantages"
+              ],
+              "questions": [
+                "What's the difference between you and DSers?",
+                "Which is better, Tangbuy or DSers?",
+                "How does DSers compare to Tangbuy?",
+                "Why choose Tangbuy over DSers?",
+                "How are you different from DSers?",
+                "Is DSers good?",
+                "What are Tangbuy's advantages over DSers?"
+              ],
+              "answer_template": "Key differences between Tangbuy and DSers: 1) Pricing—Tangbuy has zero subscription fees; DSers starts at $19.9/month; 2) Smart Match—Tangbuy one-click binding automatically identifies store products and matches with quality suppliers; DSers requires manual supplier-by-supplier linking; 3) Supply chain control—Tangbuy owns 40,000m²+ central warehouse with 100% QC closed-loop; DSers is an aggregation platform connecting multiple third-party suppliers with inconsistent quality; 4) Service depth—Tangbuy offers bundle shipping, inventory prep, tiered discounts; DSers mainly does order sync and supplier matching; 5) Branding—Tangbuy supports custom packaging, labeling with low MOQ; DSers lacks this capability; 6) Data security—Tangbuy promises data privacy isolation, never reselling; DSers as a platform may use seller data for recommendations. Summary: DSers suits lightweight multi-platform dropshipping; Tangbuy suits sellers wanting to deeply build a single brand and pursue automation efficiency. Extremely low switching cost: Shopify official app one-click auth https://apps.shopify.com/tangbuy-dropshipping , Smart Match auto-matching with no need to re-list products.",
+              "variables": {},
+              "fallback_action": "recommend_service",
+              "fallback_value": "brand_consultation"
+            },
+            {
+              "question_key": "competitor_summary_comparison",
+              "intent": "comparison",
+              "tags": [
+                "competitor comparison",
+                "competitors",
+                "dropshipping platforms",
+                "selection advice",
+                "comprehensive comparison"
+              ],
+              "questions": [
+                "How do I choose a dropshipping platform?",
+                "How does Tangbuy compare to other dropshipping platforms?",
+                "Which should I choose: AutoDS, CJ, DSers, or Tangbuy?",
+                "What's the difference between you and other dropshipping platforms?",
+                "Comparison of dropshipping platforms?",
+                "Which platform for beginners?",
+                "Which platform for building a brand?"
+              ],
+              "answer_template": "Mainstream dropshipping platform comparison: 📊 AutoDS—$19.9+/month, focuses on product import and order automation, requires manual product-by-product import, suits pure dropshipping starters; 📦 CJ Dropshipping—large product catalog but has monthly fees, QC is spot-check only, requires manual sourcing, suits quick listing; 🔗 DSers—$19.9+/month, multi-platform order aggregation, inconsistent supplier quality, requires manual supplier linking, suits multi-platform sellers; 🚀 Tangbuy—zero subscription fees, Smart Match one-click binding auto-matches suppliers + own 40,000m² central warehouse + 100% QC + custom packaging, suits sellers pursuing automation efficiency and brand building. Selection advice: Choose AutoDS/DSers for quick market testing; choose Tangbuy for long-term brand building; choose CJ for product variety, choose Tangbuy for efficiency and stability. Extremely low switching cost: Shopify official app one-click auth https://apps.shopify.com/tangbuy-dropshipping + Smart Match auto-matching + 60-day historical orders fulfilled directly.",
               "variables": {},
               "fallback_action": "recommend_service",
               "fallback_value": "brand_consultation"
@@ -318,7 +392,8 @@
                 "slow shipping",
                 "trust building",
                 "logistics safety",
-                "price value"
+                "price value",
+                "beginner mindset"
               ],
               "questions": [
                 "Will customers cancel with 10-day shipping?",
@@ -328,13 +403,13 @@
                 "How do I get customers to accept slower logistics?",
                 "How do I ensure customer experience with long shipping times?",
                 "Is Tangbuy logistics safe and reliable?",
-                "How's your shipping price/value ratio?"
+                "How's your shipping price/value ratio?",
+                "How should beginners handle long shipping times?"
               ],
-              "answer_template": "Long shipping times are normal in cross-border dropshipping—the key is turning 'expectations' into 'trust': 📦 Set expectations upfront—clearly state 'Estimated 12-18 business days' on product pages, show again at checkout, use 'Standard Shipping' instead of misleading 'Free Shipping'; 🔒 Safety & reliability—Tangbuy integrates 50+ curated logistics lines with full tracking and proactive milestone notifications; 'QC miss = full compensation', 'over-24h dispatch = fee waiver'—building trust through service commitments; 💰 Price value—bundle shipping saves 30%-60% on freight, 90-day free warehousing reduces capital pressure; ⚡ Speed options—small-batch inventory prep enables 2-hour dispatch, compressing processing time from industry-standard 3-7 days to 2-3 days. 💡 Real data: with proper expectation management + transparent tracking + quality assurance, refund rates stay at approx. 2%, below industry average.",
+              "answer_template": "10+ day delivery can make new sellers nervous, but customers CAN accept it—it all depends on how you present it. Customers care about three things: transparency (know delivery time upfront), trackability (clear logistics visibility), and product value (worth the wait). ✅ Practical tips: 1) Clearly state 'Estimated 10-15 business days' on product and checkout pages—those willing to wait will order, those who aren't won't complain later; 2) Compensate with value—offer slightly better prices, free accessories, or exclusive services so customers feel 'it's worth the wait'; 3) Proactive service—notify expected delivery after dispatch, actively sync logistics updates, good communication drastically reduces cancellation; 4) This is just a phase—as order volume grows, you can prep inventory, negotiate faster channels. 🔒 Tangbuy acceleration: with inventory prep, as fast as 2-hour dispatch, standard 2-3 days QC + packing, EU/US 6-12 business days, 100% QC + professional packaging for better unboxing. As a beginner, focus on validating your process first—delivery times improve as you grow, many successful DTC brands started this way too.",
               "variables": {
                 "delivery_time": "6-12 business days",
                 "refund_rate": "approx. 2%",
-                "shipping_save": "30%-60%",
                 "rush_ship": "2 hours"
               },
               "fallback_action": "recommend_service",
@@ -361,10 +436,62 @@
                 "How much does it cost to start an independent store?",
                 "What are the requirements to start?"
               ],
-              "answer_template": "Three steps for beginners: 1️⃣ Product positioning—use Tangbuy trend selection or submit sourcing requests, avoid red-ocean competition, prioritize products with differentiation potential; 2️⃣ Store setup—Shopify recommended, focus on: differentiated product copy (highlight QC/customization value), honest shipping time disclosure, clear return/refund policy; 3️⃣ Supply chain integration—register Tangbuy (zero subscription fee), connect store, pick 3-5 test products, walk through the full order-to-receipt flow. 💡 Beginner tip: don't bulk list products upfront—start with small orders to test market response, validate logistics and quality before scaling.",
+              "answer_template": "Three steps for beginners: 1️⃣ Product positioning—use Tangbuy trend selection or submit sourcing requests, avoid red-ocean competition, prioritize products with differentiation potential; 2️⃣ Store setup—Shopify recommended, focus on: differentiated product copy (highlight QC/customization value), honest shipping time disclosure, clear return/refund policy; 3️⃣ Supply chain integration—register Tangbuy (zero subscription fee), one-click authorize and bind your store https://dropshipping.tangbuy.com/en-US/association , Smart Match automatically matches same/similar products with quality suppliers—just confirm your selection, zero manual work. 💡 Beginner tip: don't bulk list products upfront—start with small orders to test market response, validate logistics and quality before scaling.",
               "variables": {},
               "fallback_action": "redirect",
-              "fallback_value": "https://dropshipping.tangbuy.com/en-US/productPool"
+              "fallback_value": "https://dropshipping.tangbuy.com/en-US/association"
+            },
+            {
+              "question_key": "smart_match_feature",
+              "intent": "information",
+              "tags": [
+                "Smart Match",
+                "smart matching",
+                "auto match",
+                "store binding",
+                "supplier matching",
+                "automation"
+              ],
+              "questions": [
+                "What is Smart Match?",
+                "How does Smart Match work?",
+                "How do I select products after binding my store?",
+                "How to auto-match suppliers?",
+                "Can I auto-find suppliers after binding my store?",
+                "What is the Smart Match feature?",
+                "How to quickly find suppliers for my store products?"
+              ],
+              "answer_template": "Smart Match is Tangbuy's core automation feature: 🔥 After one-click store authorization https://dropshipping.tangbuy.com/en-US/association , the system automatically scans your store products and intelligently matches same/similar products with quality suppliers—completely zero manual intervention; ✅ Sellers only need to confirm if the matches are satisfactory and approve with one click; ⚡ As a Shopify official app https://apps.shopify.com/tangbuy-dropshipping it can also automatically pull your store's last 60 days of orders for direct fulfillment. Dramatically reduces sourcing and integration costs, letting sellers focus on operations and marketing.",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://dropshipping.tangbuy.com/en-US/shopsetup"
+            },
+            {
+              "question_key": "migrate_from_competitors",
+              "intent": "consultation",
+              "tags": [
+                "switch",
+                "migrate",
+                "change platform",
+                "other dropshipping",
+                "AutoDS",
+                "CJ",
+                "DSers",
+                "switching cost"
+              ],
+              "questions": [
+                "I'm using another dropshipping platform, how do I switch to Tangbuy?",
+                "Is it easy to migrate from AutoDS to Tangbuy?",
+                "Is the switching cost high?",
+                "I'm already using CJ, is it troublesome to switch to you?",
+                "How do I switch from DSers?",
+                "Will switching platforms affect my store?",
+                "Do I need to re-upload products when migrating?"
+              ],
+              "answer_template": "Switching from other dropshipping platforms to Tangbuy has extremely low cost: 🚀 One-click authorization—bind your store via the Shopify official app https://apps.shopify.com/tangbuy-dropshipping or authorization portal https://dropshipping.tangbuy.com/en-US/association , no need to re-upload products; ⚡ Smart Match auto-matching—the system automatically identifies your existing store products and matches them with same/similar quality suppliers at lower prices, no manual sourcing needed; 📦 Historical order fulfillment—as an official app, it can automatically pull 60 days of store orders for direct fulfillment, seamless transition; 💰 Zero subscription fee—no fixed cost pressure for switching, pay-as-you-use, validate while using. We recommend testing the full process with 3-5 products first, then fully migrating once satisfied.",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://dropshipping.tangbuy.com/en-US/association"
             }
           ]
         }

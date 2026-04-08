@@ -4,7 +4,14 @@
  */
 export const APP_VERSION_SEMVER = '1.02';
 
+function getBuildCommitShort() {
+  // Injected by Vite define in vite.config.mts.
+  if (typeof __APP_COMMIT_SHORT__ === 'string') return __APP_COMMIT_SHORT__.trim();
+  return '';
+}
+
 export function getAppVersionLabel() {
   const n = String(APP_VERSION_SEMVER || '1.01').trim().replace(/^v/i, '');
-  return `V${n}`;
+  const commit = getBuildCommitShort();
+  return commit ? `V${n}.${commit}` : `V${n}`;
 }

@@ -291,9 +291,19 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   Object.assign(process.env, env);
   const base = normalizeViteBase(env.VITE_BASE_PATH);
+  const commitSha = (
+    process.env.VERCEL_GIT_COMMIT_SHA
+    || process.env.GIT_COMMIT
+    || process.env.COMMIT_SHA
+    || ''
+  ).trim();
+  const appCommitShort = commitSha ? commitSha.slice(0, 7) : '';
 
   return {
     base,
+    define: {
+      __APP_COMMIT_SHORT__: JSON.stringify(appCommitShort),
+    },
     plugins: [
       relaxDevServerTimeouts(),
       fixReactDomTExport(),

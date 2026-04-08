@@ -370,7 +370,81 @@
                 "为什么要选Tangbuy而不是AutoDS？",
                 "你们和AutoDS有什么不同？"
               ],
-              "answer_template": "Tangbuy与AutoDS核心差异：1) 定价模式 - Tangbuy 0订阅费，AutoDS月费$19.9起；2) 服务深度 - Tangbuy提供100%质检+定制包装+云仓闭环，AutoDS主要做产品导入和订单转发；3) 供应链控制 - Tangbuy在中国本土有40000m²+中央仓，直接控制质检和发货，AutoDS依赖第三方供应商自发；4) 品牌升级 - Tangbuy支持低MOQ定制领标/吊牌/感谢卡，帮助白牌转品牌。总结：AutoDS适合纯代发起步，Tangbuy适合想建立品牌信任的卖家。",
+              "answer_template": "Tangbuy与AutoDS核心差异：1) 定价模式 - Tangbuy 0订阅费，AutoDS月费$19.9起；2) Smart Match智能匹配 - Tangbuy绑定店铺后自动匹配同款/相似款优质货源，无需人工寻源，AutoDS需手动逐个导入产品；3) 服务深度 - Tangbuy提供100%质检+定制包装+云仓闭环，AutoDS主要做产品导入和订单转发；4) 供应链控制 - Tangbuy在中国本土有40000m²+中央仓，直接控制质检和发货，AutoDS依赖第三方供应商自发；5) 品牌升级 - Tangbuy支持低MOQ定制领标/吊牌/感谢卡，帮助白牌转品牌。总结：AutoDS适合纯代发起步，Tangbuy适合想建立品牌信任、追求自动化效率的卖家。切换成本低：一键授权+Smart Match自动匹配，无需重新上架商品。",
+              "variables": {},
+              "fallback_action": "recommend_service",
+              "fallback_value": "brand_consultation"
+            },
+            {
+              "question_key": "vs_cjdropshipping_comparison",
+              "intent": "comparison",
+              "tags": [
+                "CJ Dropshipping",
+                "CJDropshipping",
+                "CJ",
+                "竞争对手",
+                "对比",
+                "优势"
+              ],
+              "questions": [
+                "你们和CJ Dropshipping有什么区别？",
+                "Tangbuy和CJ哪个好？",
+                "CJ Dropshipping和Tangbuy对比？",
+                "为什么要选Tangbuy而不是CJ？",
+                "你们和CJ有什么不同？",
+                "CJ Dropshipping好用吗？",
+                "Tangbuy对比CJ优势在哪？"
+              ],
+              "answer_template": "Tangbuy与CJ Dropshipping核心差异：1) 定价模式 - Tangbuy 0订阅费按需付费，CJ有月费套餐且部分功能需额外付费；2) Smart Match智能匹配 - Tangbuy一键绑定店铺后自动识别并匹配同款/相似款货源，CJ需手动逐个寻源上架；3) 质检深度 - Tangbuy 100%拆包质检+全程录像，CJ仅抽检，漏检率相对较高；4) 定制化 - Tangbuy支持低MOQ品牌定制（领标/吊牌/感谢卡），CJ定制门槛较高；5) 服务承诺 - Tangbuy有'漏检赔付''超时免单'明确承诺，CJ售后响应较慢且无同等赔付机制；6) 不跟卖承诺 - Tangbuy严禁内部泄露选品，CJ同时做自营店铺存在潜在竞争风险。总结：CJ产品库较全适合快速铺货，Tangbuy适合注重品质与品牌建设的卖家。切换成本低：通过Shopify官方应用一键授权 https://apps.shopify.com/tangbuy-dropshipping + Smart Match自动匹配，60天历史订单直接履约。",
+              "variables": {},
+              "fallback_action": "recommend_service",
+              "fallback_value": "brand_consultation"
+            },
+            {
+              "question_key": "vs_dser_comparison",
+              "intent": "comparison",
+              "tags": [
+                "DSers",
+                "DSer",
+                "竞争对手",
+                "对比",
+                "代发服务",
+                "优势"
+              ],
+              "questions": [
+                "你们和DSers有什么区别？",
+                "Tangbuy和DSers哪个好？",
+                "DSers和Tangbuy对比？",
+                "为什么要选Tangbuy而不是DSers？",
+                "你们和DSers有什么不同？",
+                "DSers好用吗？",
+                "Tangbuy对比DSers优势在哪？"
+              ],
+              "answer_template": "Tangbuy与DSers核心差异：1) 定价模式 - Tangbuy 0订阅费，DSers月费$19.9起；2) Smart Match智能匹配 - Tangbuy一键绑定后自动识别店铺商品并匹配优质货源，DSers需手动逐个关联供应商；3) 供应链控制 - Tangbuy自有40000m²+中央仓+100%质检闭环，DSers是平台聚合模式，对接多个第三方供应商质量参差不齐；4) 服务深度 - Tangbuy提供组合发货、备货管理、阶梯折扣等深度供应链服务，DSers主要做订单同步和供应商匹配；5) 品牌化 - Tangbuy支持定制包装、贴标等低MOQ品牌服务，DSers无此能力；6) 数据安全 - Tangbuy承诺数据隐私隔离绝不转卖，DSers作为平台可能使用卖家数据进行推荐。总结：DSers适合多平台铺货的轻量代发，Tangbuy适合想深耕单一品牌、追求自动化效率的卖家。切换成本极低：通过Shopify官方应用一键授权 https://apps.shopify.com/tangbuy-dropshipping ，Smart Match自动匹配无需重新上架。",
+              "variables": {},
+              "fallback_action": "recommend_service",
+              "fallback_value": "brand_consultation"
+            },
+            {
+              "question_key": "competitor_summary_comparison",
+              "intent": "comparison",
+              "tags": [
+                "竞品对比",
+                "竞争对手",
+                "代发平台",
+                "选择建议",
+                "综合对比"
+              ],
+              "questions": [
+                "代发平台怎么选？",
+                "Tangbuy和其他代发平台比怎么样？",
+                "AutoDS、CJ、DSers、Tangbuy选哪个？",
+                "你们和别的dropshipping平台有什么区别？",
+                "市面上代发平台对比？",
+                "新手选哪个代发平台？",
+                "想做品牌选哪个代发平台？"
+              ],
+              "answer_template": "主流代发平台对比：📊 AutoDS - $19.9/月起，主打产品导入和订单自动化，需手动逐个导入产品，适合纯代发起步；📦 CJ Dropshipping - 产品库全但有月费，质检仅抽检，需手动寻源，适合快速铺货；🔗 DSers - $19.9/月起，多平台订单聚合，供应商质量参差，需手动关联供应商，适合多平台铺货；🚀 Tangbuy - 0订阅费，Smart Match一键绑定自动匹配货源+自有40000m²中央仓+100%质检+定制包装，适合追求自动化效率和品牌建设的卖家。选择建议：想快速测试市场选AutoDS/DSers，想长期做品牌沉淀选Tangbuy；要产品多选CJ，要效率稳选Tangbuy。切换成本极低：Shopify官方应用一键授权 https://apps.shopify.com/tangbuy-dropshipping + Smart Match自动匹配+60天历史订单直接履约。",
               "variables": {},
               "fallback_action": "recommend_service",
               "fallback_value": "brand_consultation"
@@ -415,7 +489,8 @@
                 "发货慢",
                 "信任建设",
                 "物流安全",
-                "价格性价比"
+                "价格性价比",
+                "新手心理"
               ],
               "questions": [
                 "10天发货客户会取消吗？",
@@ -425,13 +500,13 @@
                 "怎么让客户接受较慢的物流？",
                 "物流时间长客户体验怎么保障？",
                 "Tangbuy物流安全可靠吗？",
-                "你们物流性价比怎么样？"
+                "你们物流性价比怎么样？",
+                "新手怎么面对长运输时效？"
               ],
-              "answer_template": "长时效是跨境dropshipping常态，关键是把'预期'变成'信任'：📦 预期前置 - 产品页明确标注'预计12-18个工作日送达'，购物车再次显示，用'Standard Shipping'而非'Free Shipping'误导；🔒 安全可靠 - Tangbuy整合50+优选物流专线，全程可追踪，节点主动推送；漏检即赔付、发货超时免单，用服务承诺建立信任；💰 价格性价比 - 组合发货可省30%-60%运费，90天免费仓储降低资金压力；⚡ 提速方案 - 小量备货到仓最快2小时出库，处理时间从行业3-7天压缩至2-3天。💡 实测：做好预期管理+透明追踪+品质保障，退款率控制在约2%行业较低水平。",
+              "answer_template": "10多天送达确实让新手心里没底，但答案是：消费者是可以接受的，关键在你怎么呈现。消费者真正在意三点：透明（提前说明时效）、可追踪（物流清晰可见）、产品价值（值得等待）。✅ 实用建议：1) 页面明确标注'预计10-15个工作日送达'，愿意等的会下单，不愿等的不会事后投诉；2) 用价值弥补时效—价格实惠一点，或送小配件、专属服务，让客户觉得'等得值'；3) 主动服务—发货后告知预计到达时间，物流更新主动同步，好沟通大幅降低取消率；4) 这只是阶段性问题—随着订单量提升，可以备货到仓、谈判更快渠道。🔒 Tangbuy加速方案：有库存最快2小时出库，常规2-3天完成质检打包，欧美6-12个工作日，100%质检+专业包装提升开箱体验。新手期先跑通流程积累经验，时效会随业务成长逐步改善，很多成功DTC品牌早期也经历过这个阶段。",
               "variables": {
                 "delivery_time": "6-12个工作日",
                 "refund_rate": "约2%",
-                "shipping_save": "30%-60%",
                 "rush_ship": "2小时"
               },
               "fallback_action": "recommend_service",
@@ -458,10 +533,62 @@
                 "做独立站需要多少钱起步？",
                 "刚开始做需要什么条件？"
               ],
-              "answer_template": "新手起步三步走：1️⃣ 选品定位 - 用Tangbuy趋势选品或提交寻源需求，避开红海竞争，优先选有差异化空间的产品；2️⃣ 店铺搭建 - 建议Shopify起步，重点做好：产品页差异化文案（突出质检/定制价值）、物流时效诚实标注、退换货政策明确；3️⃣ 供应链对接 - 注册Tangbuy（0订阅费），关联店铺，选3-5款测试品，走一遍从订单到收货的全流程。💡 起步建议：不要一上来大量铺货，先用小订单测试市场反应，验证物流和品质后再扩量。",
+              "answer_template": "新手起步三步走：1️⃣ 选品定位 - 用Tangbuy趋势选品或提交寻源需求，避开红海竞争，优先选有差异化空间的产品；2️⃣ 店铺搭建 - 建议Shopify起步，重点做好：产品页差异化文案（突出质检/定制价值）、物流时效诚实标注、退换货政策明确；3️⃣ 供应链对接 - 注册Tangbuy（0订阅费），一键授权绑定店铺 https://dropshipping.tangbuy.com/en-US/association ，Smart Match会自动匹配同款/相似款优质货源，只需确认选品即可，无需人工介入。💡 起步建议：不要一上来大量铺货，先用小订单测试市场反应，验证物流和品质后再扩量。",
               "variables": {},
               "fallback_action": "redirect",
-              "fallback_value": "https://dropshipping.tangbuy.com/en-US/productPool"
+              "fallback_value": "https://dropshipping.tangbuy.com/en-US/association"
+            },
+            {
+              "question_key": "smart_match_feature",
+              "intent": "information",
+              "tags": [
+                "Smart Match",
+                "智能匹配",
+                "自动匹配",
+                "店铺绑定",
+                "货源匹配",
+                "自动化"
+              ],
+              "questions": [
+                "什么是Smart Match？",
+                "Smart Match怎么用？",
+                "店铺绑定后怎么选品？",
+                "怎么自动匹配货源？",
+                "绑定店铺后能自动找货源吗？",
+                "Smart Match功能是什么？",
+                "怎么快速找到店铺商品的货源？"
+              ],
+              "answer_template": "Smart Match是Tangbuy的核心自动化功能：🔥 一键授权绑定店铺 https://dropshipping.tangbuy.com/en-US/association 后，系统会自动扫描店铺商品，智能匹配同款或相似款优质货源，完全无需人工介入；✅ 商家只需确认匹配结果是否满意，一键采纳即可；⚡ 作为Shopify官方应用 https://apps.shopify.com/tangbuy-dropshipping 还能自动拉取店铺近60天历史订单，直接进行履约发货。大幅降低选品和对接成本，让卖家专注运营和营销。",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://dropshipping.tangbuy.com/en-US/shopsetup"
+            },
+            {
+              "question_key": "migrate_from_competitors",
+              "intent": "consultation",
+              "tags": [
+                "切换",
+                "迁移",
+                "换平台",
+                "其他代发",
+                "AutoDS",
+                "CJ",
+                "DSers",
+                "切换成本"
+              ],
+              "questions": [
+                "正在用其他代发平台，怎么换到Tangbuy？",
+                "从AutoDS迁移到Tangbuy方便吗？",
+                "切换成本大吗？",
+                "已经在用CJ了，换到你们麻烦吗？",
+                "从DSers换过来怎么操作？",
+                "换平台会影响店铺吗？",
+                "迁移需要重新上传商品吗？"
+              ],
+              "answer_template": "从其他代发平台切换到Tangbuy成本极低：🚀 一键授权 - 通过Shopify官方应用 https://apps.shopify.com/tangbuy-dropshipping 或授权入口 https://dropshipping.tangbuy.com/en-US/association 绑定店铺，无需重新上传商品；⚡ Smart Match自动匹配 - 系统会自动识别店铺现有商品，匹配同款/相似款优质低价货源，无需人工重新寻源；📦 历史订单履约 - 作为官方应用可自动拉取店铺60天内订单，直接进行履约发货，无缝衔接；💰 0订阅费 - 切换无固定成本压力，按需付费，边用边验证。建议先用3-5款商品测试全流程，满意后再全面迁移。",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://dropshipping.tangbuy.com/en-US/association"
             }
           ]
         }

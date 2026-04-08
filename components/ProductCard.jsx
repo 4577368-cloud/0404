@@ -83,14 +83,14 @@ export function ProductCard({
   const validSavePct = savePctText && !savePctText.includes('100%') && !savePctText.includes('-0%');
 
   return (
-    <div className="group w-36 sm:w-40 flex-shrink-0 rounded-lg overflow-hidden transition-all duration-300 hover:shadow-lg border border-gray-100 shadow-sm bg-white">
+    <div className="group w-36 sm:w-40 flex-shrink-0 rounded-lg overflow-hidden transition-[transform,box-shadow] duration-300 hover:shadow-lg border border-gray-100 shadow-sm bg-white">
       <div className="relative h-28 overflow-hidden">
         <img src={displayUrl} alt={p.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" referrerPolicy="no-referrer"
           onError={(e) => { e.target.onerror = null; e.target.src = 'https://via.placeholder.com/300?text=No+Image'; }} />
         {validSavePct && <span className="absolute top-1.5 right-1.5 px-1 py-0.5 rounded bg-red-500 text-white text-[7px] font-bold">{savePctText}</span>}
       </div>
       <div className="p-2.5">
-        <h4 className="text-[10px] font-medium truncate mb-1.5 leading-tight" style={{ fontFamily: '"Song", "STSong", "SimSun", serif', color: 'var(--theme-text)' }} title={p.name}>{p.name}</h4>
+        <h4 className="text-[10px] font-medium truncate mb-1.5 leading-tight" style={{ color: 'var(--theme-text)' }} title={p.name}>{p.name}</h4>
         {hasPrice && <div className="text-sm font-bold text-gray-900 mb-1.5">{fmtUsd(listPriceUsdForCard(p))}</div>}
         <div className="flex gap-1">
           <a href={p.tangbuyUrl || p.url} target="_blank" rel="noreferrer"
@@ -164,14 +164,14 @@ function ChatTrendWideCard({ p, uiLang, displayUrl, onAskAi, onSendInquiry, gues
             <div className="flex gap-1.5 mt-1 shrink-0">
               <a href={tangbuyCategorySearchHref} target="_blank" rel="noreferrer"
                 onClick={() => logTangbuyClick(supabase, 'chat_trend_tangbuy_category', tangbuyCategorySearchHref, { productId: p.id, name: p.name })}
-                className="flex-1 text-[10px] text-center py-1.5 rounded-lg transition-all font-semibold flex items-center justify-center gap-1 hover:brightness-105"
+                className="flex-1 text-[10px] text-center py-1.5 rounded-lg transition-opacity duration-150 font-semibold flex items-center justify-center gap-1 hover:opacity-90"
                 style={{ background: '#ef6b66', color: '#fff', border: '1px solid rgba(239,107,102,0.75)', boxShadow: '0 6px 14px rgba(239,107,102,0.20)' }}>
                 <span className="icon-external-link text-[10px]" />
                 {uiLang === 'zh' ? '找同款' : 'Find Similar'}
               </a>
               <button type="button"
                 onClick={() => (guestFeatureLocked ? onRequireLogin?.() : onAskAi?.(p))}
-                className="flex-1 text-[10px] text-center py-1.5 rounded-lg transition-all font-semibold hover:brightness-105 flex items-center justify-center gap-1"
+                className="flex-1 text-[10px] text-center py-1.5 rounded-lg transition-opacity duration-150 font-semibold hover:opacity-90 flex items-center justify-center gap-1"
                 style={{
                   background: 'rgba(37,99,235,0.12)',
                   color: '#1d4ed8',
@@ -183,7 +183,7 @@ function ChatTrendWideCard({ p, uiLang, displayUrl, onAskAi, onSendInquiry, gues
               <button
                 type="button"
                 onClick={() => (guestFeatureLocked ? onRequireLogin?.() : onSendInquiry?.(p))}
-                className="flex-1 text-[10px] text-center py-1.5 rounded-lg transition-all font-semibold hover:brightness-105 flex items-center justify-center gap-1"
+                className="flex-1 text-[10px] text-center py-1.5 rounded-lg transition-opacity duration-150 font-semibold hover:opacity-90 flex items-center justify-center gap-1"
                 style={{
                   background: 'rgba(22,163,74,0.12)',
                   color: '#15803d',

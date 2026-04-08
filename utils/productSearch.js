@@ -617,6 +617,9 @@ export async function loadProductCatalog() {
   ];
 }
 
+/** Product.json + Best-selling（月销千榜）合并后的竖向宽卡在对话里的展示上限（非全库、非「两个 JSON 全部行」）。 */
+export const TREND_WIDE_CARD_REPLY_CAP = 24;
+
 /** Product.json + Best-selling.json 合并趋势/Top1000 库 */
 export async function loadTrendCatalogOnly() {
   const [trendRaw, bestRaw] = await Promise.all([
@@ -974,12 +977,18 @@ export function shouldAttachTangbuyHotFromModelTrendAnalysis(userText, aiText) {
   return false;
 }
 
+/**
+ * 是否在本次用户话术后附加 **竖向趋势宽卡**（products_trend）。
+ * 命中后从 `Product.json` + `Best-selling.json` 合并库检索，见 `loadTrendCatalogOnly`。
+ */
 export function shouldRecommendProducts(text, prevMessages, _aiResponse = '') {
   const t = String(text || '').trim();
 
   // 仅当用户明确要「看商品 / 选品 / 趋势款」等时才在回复后附带商品卡片；普通诊断、SEO、闲聊不应触发
   // 1) Explicit product / trend request
   if (/(推荐商品|推荐产品|给我推荐|帮我选品|帮我找货|帮我找商品|推荐一些|有什么.*商品|有什么.*产品|给我看.*商品|帮我挑|想看点.*货|想找.*爆款|show me products|recommend products|find products|suggest products|give me products|show trending|list products|product ideas|winning products)/i.test(t)) return true;
+  /** 口语寻货：想找(一些)美妆商品、给我找点货、想看看有什么产品… */
+  if (/(想找|想要|给我找|帮我找|想看看)[^。！？\n]{0,32}(?:商品|产品|货|选品|款式|东西)|(?:有|给)什么(?:好)?的?(?:商品|产品|货)推荐/i.test(t)) return true;
   if (/(趋势商品|趋势选品|找趋势|热销商品|爆款推荐|热卖推荐|trending products|best sellers|hot products)/i.test(t)) return true;
 
   // 2) User confirms after AI asked a follow-up about products

@@ -130,7 +130,7 @@ export function CompactRetailProductCard({
 
   return (
     <div
-      className="rounded-xl overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-lg h-full flex flex-col w-full max-w-[288px] mx-auto"
+      className="rounded-xl overflow-hidden transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg h-full flex flex-col w-full max-w-[288px] mx-auto"
       style={{
         background: 'var(--theme-card-bg)',
         border: '1px solid color-mix(in srgb, var(--theme-border) 82%, transparent)',
@@ -215,7 +215,7 @@ export function CompactRetailProductCard({
                   target="_blank"
                   rel="noreferrer"
                   onClick={logView}
-                  className="flex-1 min-w-0 text-[9px] sm:text-[10px] text-center py-1.5 rounded-lg transition-all font-semibold hover:brightness-105 inline-flex items-center justify-center gap-0.5 px-0.5"
+                  className="flex-1 min-w-0 text-[9px] sm:text-[10px] text-center py-1.5 rounded-lg transition-opacity duration-150 font-semibold hover:opacity-90 inline-flex items-center justify-center gap-0.5 px-0.5"
                   style={{
                     background: '#ef6b66',
                     color: '#fff',
@@ -232,7 +232,7 @@ export function CompactRetailProductCard({
               )}
               <button
                 type="button"
-                className="flex-1 min-w-0 text-[9px] sm:text-[10px] text-center py-1.5 rounded-lg transition-all font-semibold hover:brightness-105 inline-flex items-center justify-center gap-0.5 px-0.5"
+                className="flex-1 min-w-0 text-[9px] sm:text-[10px] text-center py-1.5 rounded-lg transition-opacity duration-150 font-semibold hover:opacity-90 inline-flex items-center justify-center gap-0.5 px-0.5"
                 style={{
                   background: 'rgba(37,99,235,0.12)',
                   color: '#1d4ed8',
@@ -246,7 +246,7 @@ export function CompactRetailProductCard({
               </button>
               <button
                 type="button"
-                className="flex-1 min-w-0 text-[9px] sm:text-[10px] text-center py-1.5 rounded-lg transition-all font-semibold hover:brightness-105 inline-flex items-center justify-center gap-0.5 px-0.5"
+                className="flex-1 min-w-0 text-[9px] sm:text-[10px] text-center py-1.5 rounded-lg transition-opacity duration-150 font-semibold hover:opacity-90 inline-flex items-center justify-center gap-0.5 px-0.5"
                 style={{
                   background: 'rgba(22,163,74,0.12)',
                   color: '#15803d',
@@ -265,7 +265,7 @@ export function CompactRetailProductCard({
               target="_blank"
               rel="noreferrer"
               onClick={logView}
-              className={`text-[10px] text-center py-1.5 rounded-lg transition-all font-semibold hover:brightness-105 flex items-center justify-center gap-1 ${trendFooter === 'view_only' ? 'w-full flex-1' : 'flex-1'}`}
+              className={`text-[10px] text-center py-1.5 rounded-lg transition-opacity duration-150 font-semibold hover:opacity-90 flex items-center justify-center gap-1 ${trendFooter === 'view_only' ? 'w-full flex-1' : 'flex-1'}`}
               style={{
                 background: '#ef6b66',
                 color: '#fff',
@@ -282,7 +282,7 @@ export function CompactRetailProductCard({
           {trendFooter === 'view_only' || trendFooter === 'view_chat_tray' ? null : trendFooter === 'view_addlist' ? (
             <button
               type="button"
-              className="flex-1 text-[10px] text-center py-1.5 rounded-lg transition-all font-semibold hover:brightness-105 flex items-center justify-center gap-1"
+              className="flex-1 text-[10px] text-center py-1.5 rounded-lg transition-opacity duration-150 font-semibold hover:opacity-90 flex items-center justify-center gap-1"
               style={{ background: 'var(--theme-surface)', color: 'var(--theme-text)', border: '1px solid var(--theme-border)' }}
               onClick={() => onAddToList?.(p)}
             >
@@ -293,7 +293,7 @@ export function CompactRetailProductCard({
             <div className="flex gap-1 flex-1">
               <button
                 type="button"
-                className="flex-1 text-[10px] text-center py-1.5 rounded-lg transition-all font-semibold hover:brightness-105 flex items-center justify-center gap-1"
+                className="flex-1 text-[10px] text-center py-1.5 rounded-lg transition-opacity duration-150 font-semibold hover:opacity-90 flex items-center justify-center gap-1"
                 style={{ background: 'var(--theme-surface)', color: 'var(--theme-text)', border: '1px solid var(--theme-border)' }}
                 onClick={() => onPublishPlaceholder?.()}
               >
@@ -303,7 +303,7 @@ export function CompactRetailProductCard({
               {onRemoveFromList && (
                 <button
                   type="button"
-                  className="text-[10px] px-2 py-1.5 rounded-lg transition-all font-semibold hover:brightness-105 flex items-center justify-center"
+                  className="text-[10px] px-2 py-1.5 rounded-lg transition-opacity duration-150 font-semibold hover:opacity-90 flex items-center justify-center"
                   style={{ background: 'transparent', color: 'var(--theme-text-muted)', border: '1px solid var(--theme-border)' }}
                   onClick={() => onRemoveFromList?.()}
                   title={uiLang === 'zh' ? '移除' : 'Remove'}
@@ -315,7 +315,7 @@ export function CompactRetailProductCard({
           ) : (
             <button
               type="button"
-              className="flex-1 text-[10px] text-center py-1.5 rounded-lg transition-all font-semibold hover:brightness-105 flex items-center justify-center gap-1"
+              className="flex-1 text-[10px] text-center py-1.5 rounded-lg transition-opacity duration-150 font-semibold hover:opacity-90 flex items-center justify-center gap-1"
               style={{ background: 'var(--theme-surface)', color: 'var(--theme-text)', border: '1px solid var(--theme-border)' }}
               onClick={() => (guestFeatureLocked ? onRequireLogin?.() : onAskAi?.(p))}
             >

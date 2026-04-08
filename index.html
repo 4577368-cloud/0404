@@ -20,7 +20,8 @@
     <link href="https://resource.trickle.so/vendor_lib/unpkg/lucide-static@0.516.0/font/lucide.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" />
+    <!-- optional：避免 swap 后整页/新插入块出现「先系统字再 DM Sans」的闪烁；字体会缓存，回访即一致 -->
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=optional" rel="stylesheet" />
     <!-- Layout + Theme styles: plain CSS, no JS dependency -->
     <style>
         html, body, #root { margin: 0; padding: 0; height: 100%; overflow: hidden; }
@@ -179,7 +180,9 @@
                 color: var(--theme-text);
                 font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
                 -webkit-font-smoothing: antialiased;
-                transition: background-color 0.3s, color 0.3s;
+                -moz-osx-font-smoothing: grayscale;
+                /* 勿对 color 做 transition：切主题或插入大块 UI 时易造成「字体/颜色在闪」的观感 */
+                transition: background-color 0.3s ease;
             }
             [data-theme="light"] body {
                 background-image: radial-gradient(circle at 50% 0%, #ffffff 0%, var(--theme-bg) 100%);
@@ -465,6 +468,11 @@
 
 <body>
     <div id="fb-root"></div>
+    <!-- 预注册聊天推荐商品卡常用 Tailwind 任意类，减轻 CDN 首次扫描注入时的整段重绘/字体抖动 -->
+    <div aria-hidden="true" class="pointer-events-none fixed -left-[9999px] top-0 h-px w-px overflow-hidden opacity-0">
+      <span class="rounded-xl overflow-hidden transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg h-full flex flex-col w-full max-w-[288px] mx-auto relative aspect-[4/3] flex-shrink-0 object-cover absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/55 border border-white/12 backdrop-blur-sm text-[10px] font-bold text-lime-300 p-3 gap-2 flex-1 min-h-0 text-[12px] leading-snug line-clamp-2 min-h-[2.5em] items-stretch justify-between gap-1 px-0.5 text-center text-[8px] font-semibold uppercase tracking-wide leading-tight mt-0.5 w-px shrink-0 self-stretch my-0.5 mt-auto pt-0.5 gap-1.5 flex-nowrap text-[9px] sm:text-[10px] text-center py-1.5 rounded-lg font-semibold hover:brightness-105 inline-flex items-center justify-center gap-0.5 px-0.5 shrink-0 truncate text-[10px] flex gap-1" />
+      <span class="grid grid-cols-5 gap-x-0.5 gap-y-0.5 content-start text-[11px] text-[13px] sm:text-[14px] tracking-tight text-[9px] min-h-[100px] w-[172px] sm:w-[188px]" />
+    </div>
     <div id="root"></div>
     <!-- 入口须写在本文件内，以便 vite build 扫描依赖并打包；勿仅靠插件注入 -->
     <script type="module" src="/src/main.jsx"></script>

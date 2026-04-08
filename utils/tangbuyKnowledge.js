@@ -17,6 +17,66 @@ import {
 
 const TANGBUY_SEARCH_URL_TEMPLATE = 'https://dropshipping.tangbuy.com/en-US/search?keyword=<keyword>&type=text';
 
+/** 非货源检索：建站/平台/支付/广告工具等，禁止作为 Tangbuy 关键词（如单独出现的 Shopify） */
+const TANGBUY_NON_SKU_TOKEN_RE =
+  /\b(shopify|woocommerce|bigcommerce|magento|squarespace|wix(\s*stores?)?|prestashop|opencart|etsy(\s*seller)?|stripe|paypal|klarna|afterpay|affirm|square\s*payments|mailchimp|klaviyo|hubspot|zendesk|salesforce|google\s*analytics|ga4|gtm|tag\s*manager|facebook\s*ads|meta\s*ads|google\s*ads|tiktok\s*ads|snapchat\s*ads|pinterest\s*ads|linkedin\s*ads|amazon\s*seller|seller\s*central|brand\s*registry|printful|printify|oberlo|dsers|cj\s*dropshipping|canva|notion|slack|zoom|figma|webflow|framer|vercel|netlify|cloudflare)\b/i;
+
+/**
+ * 整段关键词是否为「平台/工具词」或仅由这类词构成（避免 Shopify、独立站建站等进货源搜索）。
+ */
+export function isNonProductTangbuySearchToken(raw) {
+  const t = String(raw || '').trim();
+  if (!t) return true;
+  const low = t.toLowerCase().replace(/\s+/g, ' ').trim();
+  if (TANGBUY_NON_SKU_TOKEN_RE.test(low)) return true;
+  const words = low.split(/\s+/).filter(Boolean);
+  const platformSingle = new Set([
+    'shopify',
+    'woocommerce',
+    'squarespace',
+    'wix',
+    'magento',
+    'prestashop',
+    'stripe',
+    'paypal',
+    'klaviyo',
+    'mailchimp',
+    'hubspot',
+    'zendesk',
+    'oberlo',
+    'etsy',
+    'canva',
+    'notion',
+    'slack',
+    'figma',
+    'webflow',
+  ]);
+  if (words.length === 1 && platformSingle.has(words[0])) return true;
+  return false;
+}
+
+/** 用户话 + 助手前段：明显在讲开店/后台/支付/建站，且尚未出现可落地品类/款名 */
+function tangbuyStoreOpsWithoutConcreteSku(userText, aiText) {
+  const u = String(userText || '').trim();
+  const aHead = String(aiText || '').slice(0, 1800);
+  const blob = `${u}\n${aHead}`;
+  const storeOpsHeavy =
+    /(开通店铺|开店流程|开店步骤|注册店铺|店铺审核|怎么开.*店|如何开.*店|独立站\s*建站|建站教程|shopify|woocommerce|seller\s*central|收款绑定|支付方式|paypal\s*账户|stripe\s*账户|域名解析|绑定域名|主题\s*(模板|装修)|结账页|checkout\s*设置|结账\s*设置|运费\s*设置|物流\s*模板)/i.test(
+      blob,
+    );
+  if (!storeOpsHeavy) return false;
+  return !queryHasConcreteProductIntent(u) && !queryHasConcreteProductIntent(aHead);
+}
+
+function filterAttachableTangbuyKeywords(kws) {
+  return (Array.isArray(kws) ? kws : []).filter(
+    (k) =>
+      isMeaningfulTangbuyKeyword(k) &&
+      !isNonProductTangbuySearchToken(k) &&
+      (isLikelyProductKeyword(k) || isLikelyEnglishCommercePhrase(k)),
+  );
+}
+
 /** Tangbuy Dropshipping 文本搜索（与知识库约定一致） */
 export function buildTangbuyDropshippingSearchUrl(keyword) {
   const q = String(keyword ?? '').trim();
@@ -80,6 +140,23 @@ function isJunkSearchKeyword(s) {
   if (/^(请|如果|是否|可以|需要|能否)/.test(t) && t.length < 12) return true;
   if (/市场|规模|增长|竞争|时效|物流|成本|分析|建议|方向|差异化|用户|结论/.test(t) && t.length >= 8) return true;
   return false;
+}
+
+/**
+ * 仅允许可理解为真实商品/品类的关键词：
+ * - 必须包含中英文文字（纯符号/纯数字区间/比例无效）
+ * - 过滤 markdown 碎片与运营数字片段（###、2-3、30%-50%）
+ */
+function isMeaningfulTangbuyKeyword(raw) {
+  const t = String(raw || '').trim();
+  if (!t || t.length < 3 || t.length > 80) return false;
+  if (/\n|https?:\/\//i.test(t)) return false;
+  if (/^[\d\s.,%+\-_/\\#*()~–—]+$/.test(t)) return false;
+  if (/^(?:#{1,}|[-_/\\~–—]+)$/.test(t)) return false;
+  if (/^\d+\s*[-~–—]\s*\d+$/.test(t)) return false;
+  if (/^\d+(?:\.\d+)?\s*%\s*[-~–—]\s*\d+(?:\.\d+)?\s*%$/.test(t)) return false;
+  if (!/[a-z\u4e00-\u9fff]/i.test(t)) return false;
+  return true;
 }
 
 /** 分析/策略类用语：含此类片段时不做「货品特征字」宽松放行，避免「分析工具箱」等误过 */
@@ -204,6 +281,7 @@ export function extractProductKeywordsForTangbuy(aiText, userText = '') {
   let hasEnglishPhrase = false;
   const push = (s) => {
     const x = String(s || '').trim().replace(/[：:，,。.!！?？、]+$/g, '');
+    if (isNonProductTangbuySearchToken(x)) return;
     if (!isLikelyProductKeyword(x)) return;
     const low = x.toLowerCase();
     if (out.some((e) => e.toLowerCase() === low)) return;
@@ -337,6 +415,7 @@ function inferTangbuyKeywordFromUserNeed(userText) {
   }
   const en = toEnglishTangbuyKeyword(u);
   if (!en || en.length < 5) return '';
+  if (isNonProductTangbuySearchToken(en)) return '';
   const parts = en.split(/\s+/).filter(Boolean);
   if (parts.length > 0 && parts.every((p) => INFER_EN_AUDIENCE_ONLY.has(p))) return '';
   return en;
@@ -348,6 +427,10 @@ function inferTangbuyKeywordFromUserNeed(userText) {
 export function extractTangbuyKeywordsWithInference(aiText, userText = '') {
   const fromModel = extractProductKeywordsForTangbuy(aiText, userText);
   if (fromModel.length) return fromModel;
+  if (tangbuyStoreOpsWithoutConcreteSku(userText, aiText)) {
+    const inferred = inferTangbuyKeywordFromUserNeed(userText);
+    return inferred ? [inferred] : [];
+  }
   const blob0 = `${userText}\n${aiText}`.slice(0, 2000);
   const industryDefaults = getIndustryDefaultEnglishKeywords(blob0);
   if (industryDefaults?.length) return industryDefaults;
@@ -357,8 +440,8 @@ export function extractTangbuyKeywordsWithInference(aiText, userText = '') {
 
 /**
  * 是否应在回复后展示 Tangbuy 搜索：
- * - 已有可检索关键词（抽取或行业默认）；
- * - 且满足其一：用户显式要推荐 **或** 命中「趋势/品类市场展望」类对话策略（见 `shouldAttachTangbuyHotFromModelTrendAnalysis`，与具体行业词无关）。
+ * - 过滤后仍有可上架的货源关键词（排除 Shopify 等平台词）；
+ * - 且满足其一：用户显式要推荐 **或** 命中「趋势/品类市场展望」且**非**纯开店/后台讨论（无具体品类时不再附带）。
  */
 export function shouldAttachTangbuySearchPicks({
   userWantsProductRecommendations,
@@ -366,9 +449,10 @@ export function shouldAttachTangbuySearchPicks({
   aiText = '',
   extractedKeywords,
 }) {
-  const kws = Array.isArray(extractedKeywords) ? extractedKeywords : [];
-  if (kws.length < 1) return false;
+  const attachable = filterAttachableTangbuyKeywords(extractedKeywords);
+  if (attachable.length < 1) return false;
   if (userWantsProductRecommendations) return true;
+  if (tangbuyStoreOpsWithoutConcreteSku(userText, aiText)) return false;
   return shouldAttachTangbuyHotFromModelTrendAnalysis(userText, aiText);
 }
 
@@ -386,6 +470,7 @@ export function stripHallucinatedTangbuyMarkdownBlock(text) {
 /** 英文行业默认词、模型输出的英文品类短语：不必过中文 isLikelyProductKeyword。 */
 function isLikelyEnglishCommercePhrase(k) {
   const t = String(k || '').trim();
+  if (isNonProductTangbuySearchToken(t)) return false;
   if (t.length < 5 || t.length > 80) return false;
   if (!/^[a-z0-9][a-z0-9\s\-'.]+$/i.test(t)) return false;
   const words = t.toLowerCase().split(/\s+/).filter(Boolean);
@@ -399,14 +484,17 @@ function isLikelyEnglishCommercePhrase(k) {
  */
 export function buildTangbuySearchPicksFromKeywords(keywords, _uiLang = 'zh', max = 8) {
   const cap = Math.min(12, Math.max(1, Number(max) || 8));
-  const list = (Array.isArray(keywords) ? keywords : []).filter(
-    (k) => isLikelyProductKeyword(k) || isLikelyEnglishCommercePhrase(k),
-  );
+  const list = filterAttachableTangbuyKeywords(keywords);
   const out = [];
   const seen = new Set();
   for (const keyword of list) {
     const enKeyword = toEnglishTangbuyKeyword(keyword);
-    if (!enKeyword || seen.has(enKeyword)) continue;
+    if (
+      !enKeyword ||
+      !isMeaningfulTangbuyKeyword(enKeyword) ||
+      isNonProductTangbuySearchToken(enKeyword) ||
+      seen.has(enKeyword)
+    ) continue;
     seen.add(enKeyword);
     const href = buildTangbuyDropshippingSearchUrl(enKeyword);
     if (!isTangbuySearchPickHrefValid(href)) continue;
@@ -434,7 +522,7 @@ export function buildTangbuySearchPicksFromContext(opts = {}) {
 
   const fromSeeds = (Array.isArray(seedNames) ? seedNames : [])
     .map((s) => String(s || '').trim())
-    .filter((s) => s.length >= 3 && !isJunkSearchKeyword(s));
+    .filter((s) => s.length >= 3 && !isJunkSearchKeyword(s) && !isNonProductTangbuySearchToken(s));
 
   const extracted = extractTangbuyKeywordsWithInference(aiText, userText);
   const merged = [];
