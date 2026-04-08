@@ -963,9 +963,9 @@ export default function Sidebar({
             <div
               style={{
                 padding: '6px 12px 10px',
-                fontSize: 11,
+                fontSize: 10,
                 color: 'var(--theme-text-muted)',
-                textAlign: 'center',
+                textAlign: 'left',
                 letterSpacing: '0.02em',
               }}
             >
@@ -985,9 +985,9 @@ export default function Sidebar({
             <div
               style={{
                 padding: '2px 12px 8px',
-                fontSize: 11,
+                fontSize: 10,
                 color: 'var(--theme-text-muted)',
-                textAlign: 'center',
+                textAlign: 'left',
                 letterSpacing: '0.02em',
               }}
             >
