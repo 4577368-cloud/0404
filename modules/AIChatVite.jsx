@@ -18,7 +18,7 @@ import {
   WORKFLOW_TOTAL_STEPS,
 } from '../utils/workflowProgress.js';
 import OverlayModal from '../components/OverlayModal.jsx';
-import GEOIntakePanel, { buildGeoIntakeUserMessage } from '../components/GEOIntakePanel.jsx';
+import GEOIntakePanel, { buildGeoIntakeUserMessage, countFilled } from '../components/GEOIntakePanel.jsx';
 import SimpleModeIntakePanel, {
   buildDiagnosisIntakeUserMessage,
   buildSeoIntakeUserMessage,
@@ -812,7 +812,7 @@ const ProgressiveProductList = React.memo(function ProgressiveProductList({ item
   );
 });
 
-const WelcomePortal = React.memo(function WelcomePortal({ uiLang, t, isLoading, mode, onModeChange, modeIcons, modeLabels, modeColors, modeMenuRef, inputRef, onSend, onOpenSourcing, portalIntakeSlot }) {
+const WelcomePortal = React.memo(function WelcomePortal({ uiLang, t, isLoading, mode, onModeChange, modeIcons, modeLabels, modeColors, modeMenuRef, inputRef, onSend, onOpenSourcing, portalIntakeSlot, intakeSlotRef }) {
   const cards = React.useMemo(() => getShortcutCards(uiLang), [uiLang]);
 
   const handleCardClick = React.useCallback((card) => {
@@ -839,7 +839,7 @@ const WelcomePortal = React.memo(function WelcomePortal({ uiLang, t, isLoading, 
         </div>
 
         {portalIntakeSlot ? (
-          <div className="w-full max-w-4xl mb-5 text-left">{portalIntakeSlot}</div>
+          <div ref={intakeSlotRef} className="w-full max-w-4xl mb-5 text-left">{portalIntakeSlot}</div>
         ) : null}
 
         <div className="w-full max-w-2xl mb-6 transition-all duration-300">
@@ -1789,6 +1789,62 @@ export function ModuleAIChat({
   const showDiagnosisIntakePanel = mode === 'diagnosis' && !diagnosisIntakeSubmitted && !!diagnosisIntakeLabels;
   const showSeoIntakePanel = mode === 'seo' && !seoIntakeSubmitted && !!seoIntakeLabels;
 
+  /** 包裹当前显示的 intake 表单，用于「空白表单时点外部收起」 */
+  const intakePanelWrapRef = React.useRef(null);
+  const emptyIntakePanelOpen = React.useMemo(() => {
+    if (showGeoIntakePanel && countFilled(geoIntake) === 0) return true;
+    if (showDiagnosisIntakePanel && !String(diagnosisIntakeUrl || '').trim()) return true;
+    if (showSeoIntakePanel && !String(seoIntakeUrl || '').trim()) return true;
+    return false;
+  }, [showGeoIntakePanel, showDiagnosisIntakePanel, showSeoIntakePanel, geoIntake, diagnosisIntakeUrl, seoIntakeUrl]);
+
+  const intakeDismissSnapRef = React.useRef({});
+  React.useEffect(() => {
+    intakeDismissSnapRef.current = {
+      showGeoIntakePanel,
+      showDiagnosisIntakePanel,
+      showSeoIntakePanel,
+      geoIntake,
+      diagnosisIntakeUrl,
+      seoIntakeUrl,
+    };
+  });
+
+  React.useEffect(() => {
+    if (!emptyIntakePanelOpen) return undefined;
+    const tryCollapseEmptyIntake = () => {
+      const snap = intakeDismissSnapRef.current;
+      if (snap.showGeoIntakePanel && countFilled(snap.geoIntake) === 0) {
+        setGeoIntakeSubmitted(true);
+        return;
+      }
+      if (snap.showDiagnosisIntakePanel && !String(snap.diagnosisIntakeUrl || '').trim()) {
+        setDiagnosisIntakeSubmitted(true);
+        return;
+      }
+      if (snap.showSeoIntakePanel && !String(snap.seoIntakeUrl || '').trim()) {
+        setSeoIntakeSubmitted(true);
+      }
+    };
+    const onPointerDown = (e) => {
+      const host = intakePanelWrapRef.current;
+      if (host && host.contains(e.target)) return;
+      const inputBar = typeof document !== 'undefined' ? document.getElementById('chat-input-bar') : null;
+      if (inputBar && inputBar.contains(e.target)) return;
+      tryCollapseEmptyIntake();
+    };
+    const onKeyDown = (e) => {
+      if (e.key !== 'Escape') return;
+      tryCollapseEmptyIntake();
+    };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown, true);
+      window.removeEventListener('keydown', onKeyDown, true);
+    };
+  }, [emptyIntakePanelOpen]);
+
   const handleGeoField = React.useCallback((key, value) => {
     setGeoIntake((prev) => ({ ...prev, [key]: value }));
   }, []);
@@ -2344,6 +2400,7 @@ export function ModuleAIChat({
             onSend={send}
             onOpenSourcing={onOpenSourcing}
             portalIntakeSlot={portalIntakeSlot}
+            intakeSlotRef={intakePanelWrapRef}
           />
         ) : (
         <div className="max-w-5xl mx-auto px-4 md:px-6 pt-2 pb-4 space-y-5">
@@ -2657,6 +2714,7 @@ export function ModuleAIChat({
       ) : null}
       {!isPortalView && showGeoIntakePanel ? (
         <div
+          ref={intakePanelWrapRef}
           className="flex-shrink-0 max-w-5xl w-full mx-auto px-4 md:px-6 py-2 overflow-y-auto min-h-0"
           style={{
             borderTop: '1px solid var(--theme-border)',
@@ -2677,6 +2735,7 @@ export function ModuleAIChat({
       ) : null}
       {!isPortalView && showDiagnosisIntakePanel ? (
         <div
+          ref={intakePanelWrapRef}
           className="flex-shrink-0 max-w-5xl w-full mx-auto px-4 md:px-6 py-2"
           style={{
             borderTop: '1px solid var(--theme-border)',
@@ -2697,6 +2756,7 @@ export function ModuleAIChat({
       ) : null}
       {!isPortalView && showSeoIntakePanel ? (
         <div
+          ref={intakePanelWrapRef}
           className="flex-shrink-0 max-w-5xl w-full mx-auto px-4 md:px-6 py-2"
           style={{
             borderTop: '1px solid var(--theme-border)',
