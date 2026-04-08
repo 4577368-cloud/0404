@@ -155,9 +155,23 @@ function makeConv() {
   return { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), messages: [], defaultName: 'New Chat' };
 }
 
-function loadConversations() {
+function normalizeStorageSuffix(raw) {
+  const v = String(raw || '').trim();
+  return v ? v.replace(/[^a-zA-Z0-9_-]/g, '_') : '';
+}
+
+function conversationStorageKeyForUser(user) {
+  const suffix = normalizeStorageSuffix(user?.id);
+  if (!suffix) return null;
+  return {
+    convKey: `${CONV_STORAGE_KEY}__${suffix}`,
+    activeKey: `${ACTIVE_CONV_KEY}__${suffix}`,
+  };
+}
+
+function loadConversations(convStorageKey = CONV_STORAGE_KEY) {
   try {
-    const raw = localStorage.getItem(CONV_STORAGE_KEY);
+    const raw = localStorage.getItem(convStorageKey);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -169,6 +183,14 @@ function loadConversations() {
 function loadActiveId(convs) {
   try {
     const id = localStorage.getItem(ACTIVE_CONV_KEY);
+    if (id && convs.some((c) => c.id === id)) return id;
+  } catch (_) {}
+  return convs[0]?.id || '';
+}
+
+function loadActiveIdByKey(convs, activeStorageKey = ACTIVE_CONV_KEY) {
+  try {
+    const id = localStorage.getItem(activeStorageKey);
     if (id && convs.some((c) => c.id === id)) return id;
   } catch (_) {}
   return convs[0]?.id || '';
@@ -452,13 +474,23 @@ export default function App() {
 
   const [conversations, setConversations] = React.useState(() => loadConversations());
   const [activeId, setActiveId] = React.useState(() => loadActiveId(conversations));
+  const convoStorage = React.useMemo(() => conversationStorageKeyForUser(authUser), [authUser]);
 
   React.useEffect(() => {
-    try { localStorage.setItem(CONV_STORAGE_KEY, JSON.stringify(conversations)); } catch (_) {}
-  }, [conversations]);
+    if (!convoStorage?.convKey || !convoStorage?.activeKey) return;
+    const loaded = loadConversations(convoStorage.convKey);
+    setConversations(loaded);
+    setActiveId(loadActiveIdByKey(loaded, convoStorage.activeKey));
+  }, [convoStorage]);
+
   React.useEffect(() => {
-    try { localStorage.setItem(ACTIVE_CONV_KEY, activeId); } catch (_) {}
-  }, [activeId]);
+    if (!convoStorage?.convKey) return;
+    try { localStorage.setItem(convoStorage.convKey, JSON.stringify(conversations)); } catch (_) {}
+  }, [conversations, convoStorage]);
+  React.useEffect(() => {
+    if (!convoStorage?.activeKey) return;
+    try { localStorage.setItem(convoStorage.activeKey, activeId); } catch (_) {}
+  }, [activeId, convoStorage]);
 
   const activeConv = conversations.find((c) => c.id === activeId) || conversations[0];
   /** 与聊天区 WelcomePortal 一致：当前会话 messages 为空 = 未开始对话，侧栏不占位（完全隐藏） */
