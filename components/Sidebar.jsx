@@ -13,12 +13,15 @@ const FIND_US_LINKS = [
 
 const INTENT_RULES = [
   { re: /https?:\/\/[^\s]+/i, fn: (m) => { try { return '🔍 ' + new URL(m.match(/https?:\/\/[^\s]+/)[0]).hostname.replace('www.', ''); } catch { return '🔍 网站分析'; } } },
+  // 须在「物流/shipping」之前：dropshipping 含 shipping 子串，勿误判为物流
+  { re: /dropship|一件代发|代发货|新手.*(?:开始|入门|做)|怎么开始|如何开始|getting\s+started|new\s+to\s+(?:dropship|e-?commerce)/i, label: '🚀 Dropshipping 入门' },
   { re: /seo|搜索引擎|关键词|meta|标题优化|title\s*tag/i, label: '🔎 SEO 优化' },
   { re: /诊断|分析.*店铺|店铺.*分析|diagnos|audit/i, label: '🏪 店铺诊断' },
   { re: /详情页|产品页|landing\s*page|detail\s*page|描述.*生成/i, label: '📄 详情页生成' },
   { re: /广告|投放|facebook.*ad|google.*ad|tiktok.*ad|campaign/i, label: '📢 广告策略' },
   { re: /选品|推荐.*商品|热门.*产品|trending|best\s*sell|爆款/i, label: '🛒 选品推荐' },
-  { re: /物流|发货|运费|shipping|fulfillment|退货|退换/i, label: '📦 物流方案' },
+  // 纯「物流/运费」等；含 dropship 的走上行「Dropshipping 入门」，勿标成泛物流
+  { re: /物流|发货|运费|\bshipping\b|\bfulfillment\b|退货|退换/i, label: '📦 物流方案', skipIf: (txt) => /dropship/i.test(txt) },
   { re: /定价|价格.*策略|竞品|pricing|competitor/i, label: '💰 定价分析' },
   { re: /支付|payment|stripe|paypal|合规|compliance/i, label: '💳 支付合规' },
   { re: /邮件|email|edm|newsletter|生命周期/i, label: '✉️ EDM 策略' },
@@ -36,6 +39,7 @@ const AI_TITLE_RULES = [
   { re: /德国.*热卖|德国.*趋势|德国.*市场/i, label: '德国热卖趋势' },
   { re: /美国.*热卖|美国.*趋势|美国.*市场/i, label: '美国热卖趋势' },
   { re: /英国.*热卖|英国.*趋势|英国.*市场/i, label: '英国热卖趋势' },
+  { re: /dropshipping.*指南|新手.*dropship|dropship.*(?:入门|指南)|入门.*dropship|如何开始.*dropship|getting\s+started.*dropship/i, label: 'Dropshipping 入门' },
   { re: /选品.*推荐|产品.*推荐|商品.*推荐/i, label: '选品推荐' },
   { re: /SEO.*优化|关键词.*优化|搜索.*优化/i, label: 'SEO优化' },
   { re: /店铺.*诊断|店铺.*分析|网站.*分析/i, label: '店铺诊断' },
@@ -109,23 +113,79 @@ function isGenericAiGreeting(text) {
   );
 }
 
-function titleFromAiContent(aiContent) {
-  const cleanAiContent = String(aiContent || '').replace(/```[\s\S]*?```/g, '').replace(/<[^>]*>/g, '').slice(0, 800);
-  for (const rule of AI_TITLE_RULES) {
-    if (rule.re.test(cleanAiContent)) return rule.label;
-  }
-  const firstSentence = cleanAiContent.split(/[。！？.!?\n]/)[0].trim();
-  if (firstSentence && firstSentence.length >= 8 && firstSentence.length <= 28) {
-    const cleaned = firstSentence.replace(/^(以下是|这是|根据|关于|针对|基于|根据您|针对您|当然|好的|您好|你好)[，,：:\s]*/, '').trim();
-    if (cleaned.length >= 6 && cleaned.length <= 28 && !isGenericAiGreeting(cleaned)) {
-      return cleaned.length <= 20 ? cleaned : `${cleaned.slice(0, 18)}…`;
+/** 天气 / 闲聊元问题 / 问 AI 能力 — 不作为「用户句」命名依据；单独问句仍可由下方 AI 首句起名 */
+function isOffTopicOrMetaUserQuery(text) {
+  const t = String(text || '').trim();
+  if (!t || t.length > 200) return false;
+  return (
+    /天气|气温|下雨|下雪|刮风|雾霾|台风|摄氏度|℃|°[cf]|forecast|weather|humidity|rain|snow/i.test(t)
+    || /^(你能|你会|你可以)\s*做什么/.test(t)
+    || /^你(能|会)做什么/.test(t)
+    || /介绍一下你(自己)?|你是谁|你是哪个|什么模型/i.test(t)
+    || /what\s+can\s+you\s+do|who\s+are\s+you|what\s+are\s+you/i.test(t)
+  );
+}
+
+/** 不适合作为标题的 AI 片段（即使看起来像第一句） */
+function isInvalidTitleCandidate(s) {
+  const t = String(s || '').trim();
+  if (t.length < 8) return true;
+  if (t.length > 120) return true;
+  if (isGenericAiGreeting(t)) return true;
+  if (/天气|气温|预报|forecast|weather|rain|snow|humidity/i.test(t) && t.length < 50) return true;
+  if (/^(你能|你会|我可以|有什么可以帮|以下(是)?我)/.test(t) && t.length < 55) return true;
+  if (/^what\s+can\s+i\s+help|^how\s+can\s+i\s+assist/i.test(t)) return true;
+  return false;
+}
+
+/**
+ * 从 AI 正文优先摘「第一句 / 首行」作长标题（有意义才返回）
+ */
+function extractMeaningfulTitleFromAi(aiContent, uiLang) {
+  const raw = String(aiContent || '')
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/<[^>]*>/g, '');
+  const lines = raw
+    .split(/\r?\n/)
+    .map((l) => l.replace(/^#{1,6}\s+/, '').replace(/^[-*•]\s+/, '').replace(/^\d+[.)]\s+/, '').trim())
+    .filter((l) => l.length > 0);
+
+  const tryLine = (line) => {
+    let s = line.replace(/^(以下是|这是|根据|关于|针对|基于|根据您|针对您|当然|好的|您好|你好|嗨)[，,：:\s]*/i, '').trim();
+    const maxLen = uiLang === 'zh' ? 44 : 52;
+    if (s.length > maxLen) s = `${s.slice(0, maxLen - 1)}…`;
+    if (isInvalidTitleCandidate(s)) return null;
+    return s;
+  };
+
+  for (const line of lines.slice(0, 4)) {
+    const parts = line.split(/(?<=[。！？!?])\s+/);
+    for (const chunk of parts) {
+      const got = tryLine(chunk.trim());
+      if (got) return got;
     }
   }
   return null;
 }
 
+function titleFromAiContent(aiContent, uiLang = 'zh') {
+  const meaningful = extractMeaningfulTitleFromAi(aiContent, uiLang);
+  if (meaningful) return meaningful;
+
+  const cleanAiContent = String(aiContent || '')
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/^#{1,6}\s+/gm, '')
+    .slice(0, 800);
+  for (const rule of AI_TITLE_RULES) {
+    if (rule.re.test(cleanAiContent)) return rule.label;
+  }
+  return null;
+}
+
 /**
- * 从新到旧扫描整段对话：优先 URL/意图，再非寒暄的 AI 摘要，再实质用户句；无则中性默认名。
+ * 从新到旧：优先 AI 首句/首行有意义长标题 → 固定 AI_TITLE_RULES → 用户意图 → 用户原文。
+ * 仅寒暄/天气/问能力等且无可用 AI 标题时，用默认「新对话」。
  * @param {string} uiLang 'zh' | 其他 → 默认标题语言
  */
 function generateSmartName(messages, uiLang = 'zh') {
@@ -135,16 +195,12 @@ function generateSmartName(messages, uiLang = 'zh') {
   const users = messages.filter((m) => m.role === 'user');
   const ais = messages.filter((m) => m.role === 'ai');
 
-  for (let i = users.length - 1; i >= 0; i--) {
-    const txt = getUserText(users[i]);
-    if (isTrivialUserMessage(txt)) continue;
-    for (const rule of INTENT_RULES) {
-      if (rule.re.test(txt)) {
-        return typeof rule.fn === 'function' ? rule.fn(txt) : rule.label;
-      }
-    }
-  }
+  const hasSubstantiveUser = users.some((m) => {
+    const t = getUserText(m);
+    return !isTrivialUserMessage(t) && !isOffTopicOrMetaUserQuery(t);
+  });
 
+  // 1) 优先：AI 首句/行长标题（有意义）→ 其次固定规则 / 商品卡
   for (let i = ais.length - 1; i >= 0; i--) {
     const m = ais[i];
     const aiContent = m.content || m.text || '';
@@ -152,13 +208,31 @@ function generateSmartName(messages, uiLang = 'zh') {
     if (m.type === 'products_hot' || m.type === 'products_trend' || m.type === 'search_picks') {
       return uiLang === 'zh' ? '🛒 Tangbuy 搜索推荐' : '🛒 Tangbuy search picks';
     }
-    const fromAi = titleFromAiContent(aiContent);
+    const fromAi = titleFromAiContent(aiContent, uiLang);
     if (fromAi) return fromAi;
+  }
+
+  // 无实质用户问题且 AI 也未产出可用标题 → 不单独起名（避免「你好」也变成关键词）
+  if (!hasSubstantiveUser) {
+    return defaultLabel;
   }
 
   for (let i = users.length - 1; i >= 0; i--) {
     const txt = getUserText(users[i]);
     if (isTrivialUserMessage(txt)) continue;
+    if (isOffTopicOrMetaUserQuery(txt)) continue;
+    for (const rule of INTENT_RULES) {
+      if (typeof rule.skipIf === 'function' && rule.skipIf(txt)) continue;
+      if (rule.re.test(txt)) {
+        return typeof rule.fn === 'function' ? rule.fn(txt) : rule.label;
+      }
+    }
+  }
+
+  for (let i = users.length - 1; i >= 0; i--) {
+    const txt = getUserText(users[i]);
+    if (isTrivialUserMessage(txt)) continue;
+    if (isOffTopicOrMetaUserQuery(txt)) continue;
     const cleaned = txt.replace(/https?:\/\/[^\s]+/g, '').replace(/[^\w\u4e00-\u9fff\s]/g, ' ').trim();
     if (cleaned.length >= 2 && cleaned.length <= 36) {
       return cleaned.length <= 20 ? cleaned : `${cleaned.slice(0, 18)}…`;

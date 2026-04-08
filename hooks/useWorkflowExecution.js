@@ -195,8 +195,12 @@ export function useWorkflowExecution({
 
             const curMaxTokens = Math.max(1024, Math.floor(maxTokens * (attempt === 0 ? 1 : attempt === 1 ? 0.7 : 0.5)));
 
+            const sysWorkflow =
+              'You are an AI diagnosis assistant for the 9-step workflow. Output valid JSON only (response_format json_object). '
+              + 'All narrative string values must be in English only — no Chinese/Japanese/Korean in analysis text. '
+              + 'Never use HTML character references such as &#39;, &#x27;, &apos;, or &quot; in strings; use plain ASCII apostrophe or standard JSON escaping.';
             const apiMessages = [
-              { role: 'system', content: `You are an AI diagnosis assistant. Output valid JSON.\n\n${currentPrompt}` },
+              { role: 'system', content: `${sysWorkflow}\n\n${currentPrompt}` },
               { role: 'user', content: currentStep === 0
                   ? 'Execute Step 0: Parse product data and output structured task list.'
                   : `Execute Step ${currentStep} based on previous analysis.` },

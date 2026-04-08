@@ -185,6 +185,7 @@ function analysisTemporalContextBlock() {
   return `\n\n## Analysis time anchor (internal reasoning only)\n- Use **${y}–${yNext}** as the default operational planning horizon for marketing calendars, holiday peaks, seasonal demand, campaign timing, launch windows, and country-specific retail events. All **forward-looking** timing must be consistent with **${y}** and later — never treat **2024 or earlier** as upcoming opportunities.\n- Do **not** recommend “next” holiday or season using years that have already passed. If training data mentions old years, reinterpret into **${y}+** context.\n- You do **not** need to repeatedly state “${y}” in user-facing prose; apply this rule silently unless a specific year is naturally useful for clarity.\n`;
 }
 
+/** @deprecated 9 段分析统一为英文输出；保留供非工作流通路如需恢复多语言 */
 function outputLanguageBlock(uiLang = 'en') {
   const map = {
     zh: '\n\n## CRITICAL — Output Language Rule\nJSON keys MUST stay in English. ALL human-readable text (analysis paragraphs, list items, table cells, descriptions) MUST be written entirely in **Simplified Chinese (简体中文)**. Do NOT mix English words into Chinese sentences except for proper nouns, brand names, and standard acronyms (ROI, CAC, SKU, etc.).',
@@ -193,6 +194,21 @@ function outputLanguageBlock(uiLang = 'en') {
     fr: '\n\n## CRITICAL — Output Language Rule\nJSON keys MUST stay in English. ALL human-readable text MUST be written entirely in **French (Français)**. Do NOT mix English or Chinese into French sentences except for proper nouns and standard acronyms.',
   };
   return map[uiLang] || map.en;
+}
+
+/**
+ * 9 段分析严格输出：全英文叙述 + 禁止 HTML 数字实体（如 &#39;）
+ */
+function nineStepStrictOutputRules() {
+  return `
+
+## CRITICAL — 9-Step Workflow Output Rules (strict, non-negotiable)
+
+- **JSON keys** must match each step schema and remain in English.
+- **All human-readable string values** (paragraphs, bullets, labels in content, table cells, \`markdown_summary\`, nested text) must be written in **English only**. Do **not** output Chinese, Japanese, or Korean characters in explanatory or analytical prose. (Verbatim **product/brand names** copied from input data may keep their original script only as factual labels.)
+- **Forbidden in any text field:** HTML/XML numeric character references and named entities, including \`&#39;\`, \`&#x27;\`, \`&apos;\`, \`&quot;\`, \`&amp;\`, \`&#\\d+;\`. Write a normal ASCII apostrophe \`'\` or rephrase; follow standard JSON string escaping.
+- Do **not** emit literal backslash-escaped entity sequences; the consumer must see plain UTF-8 English, not \`&#…;\`.
+`;
 }
 
 export function buildStepContext(stepNumber, productData, targetMarket, previousStates, options = {}) {
@@ -233,7 +249,7 @@ export function buildStepContext(stepNumber, productData, targetMarket, previous
     filledPrompt += `\n\n## Previous Steps — Key Insights Summary\n\n${stateContext}\n\nBased on the above prior analysis, proceed with the current step.`;
   }
 
-  return `${filledPrompt}${analysisTemporalContextBlock()}${outputLanguageBlock(uiLang)}`;
+  return `${filledPrompt}${analysisTemporalContextBlock()}${nineStepStrictOutputRules()}`;
 }
 
 /**

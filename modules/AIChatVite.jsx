@@ -2268,13 +2268,9 @@ export function ModuleAIChat({
           const maxTokens = Math.max(1024, Math.floor(baseMaxTokens * (attempt === 0 ? 1 : attempt === 1 ? 0.7 : 0.5)));
 
           const sysLang =
-            uiLang === 'zh'
-              ? 'You are an AI diagnosis assistant. Output valid JSON only. All narrative string values must be in Simplified Chinese.'
-              : uiLang === 'es'
-                ? 'You are an AI diagnosis assistant. Output valid JSON only. All narrative string values must be in Spanish.'
-                : uiLang === 'fr'
-                  ? 'You are an AI diagnosis assistant. Output valid JSON only. All narrative string values must be in French.'
-                  : 'You are an AI diagnosis assistant. Output valid JSON only. All narrative string values must be in English.';
+            'You are an AI diagnosis assistant for the 9-step workflow. Output valid JSON only (response_format json_object). '
+            + 'All narrative string values must be in English only — no Chinese/Japanese/Korean in analysis text. '
+            + 'Never use HTML character references such as &#39;, &#x27;, &apos;, or &quot; in strings; use plain ASCII apostrophe or standard JSON escaping.';
 
           const apiMessages = [
             { role: 'system', content: `${sysLang}\n\n${fullPrompt}` },
