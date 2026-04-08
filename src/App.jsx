@@ -27,11 +27,28 @@ import { ModuleAIChat } from '../modules/AIChatVite.jsx';
 import ProductInquiryModal from '../components/ProductInquiryModal.jsx';
 import InquiryMessagesPanel from '../components/InquiryMessagesPanel.jsx';
 
+/** 动态模块偶发断连时重试，减轻 net::ERR_CONNECTION_CLOSED 导致白屏 */
+function lazyWithRetry(importer, retries = 2, delayMs = 450) {
+  return React.lazy(async () => {
+    let lastErr;
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        if (attempt > 0) {
+          await new Promise((r) => setTimeout(r, delayMs * attempt));
+        }
+        return await importer();
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    throw lastErr;
+  });
+}
+
 const HotProducts = React.lazy(() => import('../components/HotProducts.jsx'));
 const MyLists = React.lazy(() => import('../components/MyLists.jsx'));
 const SourcingLandingPage = React.lazy(() => import('../components/SourcingLandingPage.jsx'));
-const AIReportList = React.lazy(() => import('../components/AIReportList.jsx'));
-const AIReportViewer = React.lazy(() => import('../components/AIReportViewer.jsx'));
+const AIReportsView = lazyWithRetry(() => import('../components/AIReportsView.jsx'));
 
 /** 本地 `vite` 开发服，或 `.env` 中 `VITE_ALLOW_GUEST_PRODUCT_SEARCH=true`：未 OAuth 也可从侧栏进入「商品搜索」浏览；页内 AI 诊断等仍走 guest 拦截。 */
 function allowGuestProductSearchNav() {
@@ -747,37 +764,30 @@ export default function App() {
           ) : activeView === 'inquiries' ? (
             <InquiryMessagesPanel uiLang={lang} authUser={authUser} refreshKey={inquiryListRefresh} />
           ) : activeView === 'aiReports' ? (
-            <>
-              {reportListVisible && (
-                <AIReportList 
-                  activeReportId={activeReportId}
-                  onSelectReport={(id) => {
-                    setActiveReportId(id);
-                    setReportListVisible(false);
-                  }}
-                  uiLang={lang}
-                  reports={reports}
-                  onDeleteReport={(id) => setReports(prev => prev.filter(r => r.id !== id))}
-                  onNewAnalysis={() => {
-                    setActiveReportId(null);
-                    setReportListVisible(false);
-                  }}
-                />
-              )}
-              <AIReportViewer 
-                reportId={activeReportId} 
-                uiLang={lang} 
-                onNewDiagnosis={(mode) => {
-                  setChatInitialMode(mode || null);
-                  handleNewConv();
-                  setActiveView('chat');
-                  if (sidebarCollapsed && sidebarAutoCollapsedRef.current) {
-                    setSidebarCollapsed(false);
-                    sidebarAutoCollapsedRef.current = false;
-                  }
-                }}
-              />
-            </>
+            <AIReportsView
+              reportListVisible={reportListVisible}
+              activeReportId={activeReportId}
+              onSelectReport={(id) => {
+                setActiveReportId(id);
+                setReportListVisible(false);
+              }}
+              uiLang={lang}
+              reports={reports}
+              onDeleteReport={(id) => setReports((prev) => prev.filter((r) => r.id !== id))}
+              onNewAnalysis={() => {
+                setActiveReportId(null);
+                setReportListVisible(false);
+              }}
+              onNewDiagnosis={(mode) => {
+                setChatInitialMode(mode || null);
+                handleNewConv();
+                setActiveView('chat');
+                if (sidebarCollapsed && sidebarAutoCollapsedRef.current) {
+                  setSidebarCollapsed(false);
+                  sidebarAutoCollapsedRef.current = false;
+                }
+              }}
+            />
           ) : (
             <ModuleAIChat
               key={activeId}

@@ -33,8 +33,9 @@ import {
   ensureKnowledgeBasesLoaded,
   buildTangbuySearchPicksFromContext,
   buildTangbuySearchPicksFromKeywords,
-  extractProductKeywordsForTangbuy,
+  extractTangbuyKeywordsWithInference,
   shouldAttachTangbuySearchPicks,
+  stripHallucinatedTangbuyMarkdownBlock,
 } from '../utils/tangbuyKnowledge.js';
 import {
   translateZhToEn,
@@ -51,6 +52,8 @@ import {
   parseCatalogProductJsonFromMarkdown,
   maskStreamingProductJsonBlock,
   partitionHotAndTrendMatches,
+  filterTrendMatchesForPreciseDisplay,
+  recommendationFallbackKind,
 } from '../utils/productSearch.js';
 import { decodeHtmlEntities, buildAggregatedSupplyChainBackbone } from '../utils/reportFormatter.js';
 import { PROMPTS } from '../utils/systemPrompts.js';
@@ -1126,6 +1129,12 @@ export function ModuleAIChat({
 
   const getStableMsgKey = React.useCallback((msg, idx) => {
     if (msg && typeof msg === 'object') {
+      const turnId = msg._streamId ?? msg._replyUid;
+      if (turnId != null) {
+        const kind =
+          msg.type === 'html' ? 'h' : msg.type === 'search_picks' ? 'p' : msg.type === 'products_trend' ? 'tr' : 't';
+        return `turn_${turnId}_${kind}`;
+      }
       const hit = msgKeyMapRef.current.get(msg);
       if (hit) return hit;
       const next = `m_${++msgKeySeqRef.current}`;
@@ -1417,7 +1426,10 @@ export function ModuleAIChat({
     }
 
     const streamId = Date.now();
-    setMessages((prev) => [...prev, { role: 'ai', type: 'text', content: '', _streamId: streamId }]);
+    setMessages((prev) => [
+      ...prev,
+      { role: 'ai', type: 'text', content: '', _streamId: streamId, _replyUid: streamId },
+    ]);
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
@@ -1448,7 +1460,11 @@ export function ModuleAIChat({
               if (cleanedDelta || lastProcessedLength === 0) {
                 lastProcessedLength = fullContent.length;
                 const cleanedFull = maskStreamingProductJsonBlock(polishAssistantText(fullContent), uiLang);
-                setMessages((prev) => prev.map((m) => (m._streamId === streamId ? { ...m, content: cleanedFull } : m)));
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m._streamId === streamId ? { ...m, content: cleanedFull, _replyUid: streamId } : m,
+                  ),
+                );
               }
             }
           } catch (_) {}
@@ -1460,7 +1476,7 @@ export function ModuleAIChat({
       clearTimeout(timeoutId);
     }
 
-    const finalContent = polishAssistantText(fullContent);
+    const finalContent = stripHallucinatedTangbuyMarkdownBlock(polishAssistantText(fullContent));
     const parts = finalContent.split(HTML_SPLIT_DELIM);
 
     let textPart = finalContent;
@@ -1473,7 +1489,7 @@ export function ModuleAIChat({
     const catalogFromAi = parseCatalogProductJsonFromMarkdown(textPart || finalContent);
 
     if (catalogFromAi?.products?.length) {
-      const textWithoutJson = (catalogFromAi.strippedText || '').trim();
+      const textWithoutJson = stripHallucinatedTangbuyMarkdownBlock((catalogFromAi.strippedText || '').trim());
       const seeds = catalogFromAi.products.map((p) => p.name || p.title).filter(Boolean);
       const picksData = buildTangbuySearchPicksFromContext({
         userText: '',
@@ -1497,9 +1513,15 @@ export function ModuleAIChat({
             type: 'search_picks',
             content: combinedContent,
             data: picksData,
+            _replyUid: streamId,
           });
         } else if (textWithoutJson.trim()) {
-          messages.push({ role: 'ai', type: 'text', content: textWithoutJson.trim() });
+          messages.push({
+            role: 'ai',
+            type: 'text',
+            content: textWithoutJson.trim(),
+            _replyUid: streamId,
+          });
         }
         if (htmlPart) messages.push({ role: 'ai', type: 'html', content: htmlPart });
         return messages;
@@ -1507,15 +1529,15 @@ export function ModuleAIChat({
     } else if (parts.length <= 1) {
       setMessages((prev) => {
         const without = prev.filter((m) => m._streamId !== streamId);
-        return [...without, { role: 'ai', type: 'text', content: finalContent }];
+        return [...without, { role: 'ai', type: 'text', content: finalContent, _replyUid: streamId }];
       });
     } else {
       setMessages((prev) => {
         const without = prev.filter((m) => m._streamId !== streamId);
         return [
           ...without,
-          ...(textPart ? [{ role: 'ai', type: 'text', content: textPart }] : []),
-          ...(htmlPart ? [{ role: 'ai', type: 'html', content: htmlPart }] : []),
+          ...(textPart ? [{ role: 'ai', type: 'text', content: textPart, _replyUid: streamId }] : []),
+          ...(htmlPart ? [{ role: 'ai', type: 'html', content: htmlPart, _replyUid: streamId }] : []),
         ];
       });
     }
@@ -1524,7 +1546,8 @@ export function ModuleAIChat({
       finalText: finalContent,
       textPart,
       htmlPart,
-      finalSearchText: (textPart || finalContent),
+      finalSearchText: textPart || finalContent,
+      streamId,
     };
   };
 
@@ -1664,11 +1687,8 @@ export function ModuleAIChat({
         if (trendCatalog.length) {
           const trendQuery = `${txt} ${(streamResult?.finalText || '').slice(0, 1200)}`;
           const { matched: trendMatched } = smartSearch(trendQuery, snapshot || '', trendCatalog);
-          let slice = trendMatched.slice(0, 18);
-          if (slice.length === 0) {
-            // smartSearch is tuned for mixed hot catalogs; trend-only pool may score empty.
-            slice = trendCatalog.slice(0, 18);
-          }
+          const preciseTrend = filterTrendMatchesForPreciseDisplay(trendQuery, trendMatched);
+          const slice = preciseTrend.slice(0, 18);
           if (slice.length > 0) {
             setMessages((p) => [...p, { role: 'ai', type: 'products_trend', content: '', data: slice }]);
             trendListAppended = true;
@@ -1678,16 +1698,18 @@ export function ModuleAIChat({
 
       const finalForKeyword = String(streamResult?.textPart || streamResult?.finalText || '').slice(0, 1800);
       const userForKeyword = String(txt || '').slice(0, 300);
-      const extractedKws = extractProductKeywordsForTangbuy(finalForKeyword, userForKeyword);
+      const extractedKws = extractTangbuyKeywordsWithInference(finalForKeyword, userForKeyword);
       const showTangbuySearchPicks =
         !hasAiHotProducts &&
         !trendListAppended &&
         shouldAttachTangbuySearchPicks({
           userWantsProductRecommendations,
+          userText: txt,
           aiText: streamResult?.finalText,
           extractedKeywords: extractedKws,
         });
 
+      let tangbuyPicksAppended = false;
       if (showTangbuySearchPicks) {
         const maxPicks = userWantsProductRecommendations ? 8 : 5;
         const picks = buildTangbuySearchPicksFromKeywords(extractedKws, uiLang, maxPicks);
@@ -1696,8 +1718,31 @@ export function ModuleAIChat({
             uiLang === 'zh'
               ? '### 📦 Tangbuy 货源搜索\n\n以下是可点击的款式/品类关键词：'
               : '### 📦 Tangbuy sourcing\n\nTap a product/category keyword:';
-          setMessages((p) => [...p, { role: 'ai', type: 'search_picks', content: hotLabel, data: picks }]);
+          setMessages((p) => [
+            ...p,
+            {
+              role: 'ai',
+              type: 'search_picks',
+              content: hotLabel,
+              data: picks,
+              _replyUid: streamResult?.streamId ?? Date.now(),
+            },
+          ]);
+          tangbuyPicksAppended = true;
         }
+      }
+
+      if (userWantsProductRecommendations && !hasAiHotProducts && !trendListAppended && !tangbuyPicksAppended) {
+        const kind = recommendationFallbackKind(txt);
+        const fallbackText =
+          kind === 'broad_audience'
+            ? uiLang === 'zh'
+              ? '您这次描述比较宽泛。若要**精准对口货源**，建议通过侧栏「找我们」或官方 WhatsApp 联系顾问，由人工帮您收窄品类与关键词。'
+              : 'That request is quite broad. For a **precise, on-brief** assortment, please reach our team via **Find us** in the sidebar or the official WhatsApp link so we can help narrow categories and keywords.'
+            : uiLang === 'zh'
+              ? '您提到的需求比较细，当前榜单里可能没有完全同款。若希望从供应链侧深挖匹配款，欢迎通过侧栏「找我们」或官方 WhatsApp 联系**寻源顾问**：我们可以帮您在货源池里做更精准的打捞与对接。'
+              : 'It sounds like you have specific needs! To make sure we find exactly what you are looking for, would you like a **sourcing specialist** to dig into our supply chain for the right match? Reach us via **Find us** in the sidebar or the official WhatsApp channel.';
+        setMessages((p) => [...p, { role: 'ai', type: 'text', content: fallbackText }]);
       }
 
       const ar = opts?.analysisReport;

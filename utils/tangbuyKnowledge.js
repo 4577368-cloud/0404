@@ -3,7 +3,17 @@
  * Handles knowledge base parsing, indexing, and context building
  */
 
-import { tryFetchJson, translateZhToEn } from './productSearch.js';
+import {
+  tryFetchJson,
+  translateZhToEn,
+  queryHasConcreteProductIntent,
+  shouldAttachTangbuyHotFromModelTrendAnalysis,
+} from './productSearch.js';
+import {
+  TANGBUY_ZH_EN_PRODUCT_PHRASES,
+  ACADEMIC_JUNK_SEARCH_TOKENS,
+  getIndustryDefaultEnglishKeywords,
+} from './tangbuyCommercePhrases.js';
 
 const TANGBUY_SEARCH_URL_TEMPLATE = 'https://dropshipping.tangbuy.com/en-US/search?keyword=<keyword>&type=text';
 
@@ -78,9 +88,17 @@ function isLikelyProductKeyword(raw) {
   if (/[，。！？,.]/.test(t) && t.length > 10) return false;
   /** 长定语 +「的」+ 品类（如「跨境…表现不错的牛仔裤」）不是可点击款式词 */
   if (/[\u4e00-\u9fff]{5,}的[\u4e00-\u9fff]/.test(t)) return false;
-  const maxLen = /[\u4e00-\u9fff]/.test(t) ? 16 : 42;
+  const maxLen = /[\u4e00-\u9fff]/.test(t) ? 24 : 42;
   if (t.length > maxLen) return false;
-  const zhCat = /(牛仔裤|休闲裤|运动裤|短裤|阔腿裤|直筒裤|连衣裙|半身裙|T恤|卫衣|开衫|外套|羽绒服|棉服|大衣|风衣|手机壳|耳机|背包|斜挎包|台灯|收纳|口红|面膜|眼影|假睫毛)$/;
+  if (TANGBUY_ZH_EN_PRODUCT_PHRASES.some(([zh]) => t === zh || t.includes(zh))) return true;
+  const careNiche =
+    /(产后护理套装|产妇卫生巾|产褥垫|暖宫贴|私处冲洗|会阴冲洗|一次性产褥|一次性内裤|防溢乳|骨盆带|束腹带|刀纸|计量卫生巾|产后护理|产妇护理|产后|产妇|护理垫|吸奶器|收腹带|妊娠纹|月子|哺乳|母婴|孕妇|哺乳枕|月子服|冲洗器|卫生巾|肚脐贴|乳垫|套装|postpartum|maternity|breast pump|breastfeeding|nursing pads?|belly band|nipple cream|nipple balm|uterus warming|peri bottle|underpad)/i;
+  if (careNiche.test(t)) return true;
+  const mainstreamSku =
+    /(瑜伽垫|筋膜枪|猫爬架|猫砂盆|空气炸锅|行车记录仪|露营帐篷|露营睡袋|露营灯|露营推车|折叠露营车|防潮垫|户外炊具|天幕|睡袋|充电宝|卷发棒|哑铃|弹力带|婴儿推车|狗窝|收纳箱|乳胶枕|香薰机|加湿器|美甲灯|拼图|积木|筋膜球|跳绳|护膝|宠物喂食|牵引绳|车载支架|平板支架|鼠标垫|筋膜贴|蒸汽眼罩|泡脚桶|洁面仪|剃须刀|榨汁机|破壁机|电煮锅|保温杯|咖啡杯|行李箱|托特包|腰包)/;
+  if (mainstreamSku.test(t)) return true;
+  const zhCat =
+    /(牛仔裤|休闲裤|运动裤|短裤|阔腿裤|直筒裤|连衣裙|半身裙|T恤|卫衣|开衫|外套|羽绒服|棉服|大衣|风衣|手机壳|耳机|背包|斜挎包|台灯|收纳|口红|面膜|眼影|假睫毛|瑜伽垫|筋膜枪|猫爬架|空气炸锅|露营灯|充电宝)$/;
   const enCat =
     /\b(jeans|joggers|shorts|dress|hoodies?|sneakers|earbuds|backpack|phone case|tee|tees|tops?|bags?|pants|cargo|crossbody|graphic)\b/i;
   if (zhCat.test(t)) return true;
@@ -91,7 +109,12 @@ function isLikelyProductKeyword(raw) {
 function toEnglishTangbuyKeyword(raw) {
   const src = String(raw || '').trim();
   if (!src) return '';
-  let s = src
+  let s = src;
+  for (const [zh, en] of TANGBUY_ZH_EN_PRODUCT_PHRASES) {
+    if (s.includes(zh)) s = s.split(zh).join(` ${en} `);
+  }
+
+  s = s
     .replace(/高腰/g, 'high waist ')
     .replace(/低腰/g, 'low waist ')
     .replace(/破洞/g, 'ripped ')
@@ -104,8 +127,9 @@ function toEnglishTangbuyKeyword(raw) {
     const translated = translateZhToEn(s)
       .map((x) => String(x || '').trim())
       .filter(Boolean)
+      .filter((tok) => !ACADEMIC_JUNK_SEARCH_TOKENS.has(tok.toLowerCase()))
       .join(' ');
-    s = translated || s;
+    s = `${s} ${translated}`;
   }
 
   s = s
@@ -113,6 +137,11 @@ function toEnglishTangbuyKeyword(raw) {
     .replace(/\s+/g, ' ')
     .trim()
     .toLowerCase();
+
+  const parts = [...new Set(s.split(/\s+/).filter(Boolean))].filter(
+    (tok) => !ACADEMIC_JUNK_SEARCH_TOKENS.has(tok),
+  );
+  s = parts.join(' ');
 
   if (!s || s.length < 3) return '';
   return s.slice(0, 80);
@@ -163,17 +192,39 @@ export function extractProductKeywordsForTangbuy(aiText, userText = '') {
 
   // 中文：修饰词 + 品类（高腰牛仔裤、破洞牛仔…）
   const zhClass =
-    /([\u4e00-\u9fff\d\w·]{0,10})(牛仔裤|休闲裤|运动裤|短裤|阔腿裤|直筒裤|连衣裙|半身裙|T恤|卫衣|开衫|外套|羽绒服|棉服|大衣|风衣|手机壳|耳机|背包|斜挎包|台灯|收纳|口红|面膜|眼影|假睫毛)/g;
+    /([\u4e00-\u9fff\d\w·]{0,10})(牛仔裤|休闲裤|运动裤|短裤|阔腿裤|直筒裤|连衣裙|半身裙|T恤|卫衣|开衫|外套|羽绒服|棉服|大衣|风衣|手机壳|耳机|背包|斜挎包|台灯|收纳|口红|面膜|眼影|假睫毛|瑜伽垫|筋膜枪|猫爬架|空气炸锅|露营帐篷|行车记录仪|充电宝|婴儿推车|狗窝|收纳箱|哑铃|弹力带)/g;
   let m;
   while ((m = zhClass.exec(blob)) !== null) {
     const phrase = `${m[1] || ''}${m[2]}`.trim();
     if (phrase.length >= 3) push(phrase);
   }
 
-  // 列表行：- 破洞牛仔裤 / 1. xxx裤
+  const zhCare = /(产后护理套装|产妇卫生巾|一次性产褥垫|一次性产坛垫|私处冲洗器|会阴冲洗器|暖宫贴|防溢乳垫|计量卫生巾|产后护理|产妇护理|产褥垫|产坛垫|护理垫|吸奶器|收腹带|哺乳内衣|哺乳枕|月子服|妊娠纹霜|骨盆带|束腹带|刀纸|肚脐贴)/g;
+  while ((m = zhCare.exec(blob)) !== null) {
+    push(m[0].trim());
+  }
+
+  const zhCamping = /(露营睡袋|四季睡袋|露营推车|折叠露营车|露营灯|便携式露营灯|防潮垫|户外炊具套装|户外炊具|露营炊具|露营帐篷|天幕|野餐垫|登山杖|户外折叠椅)/g;
+  while ((m = zhCamping.exec(blob)) !== null) {
+    push(m[0].trim());
+  }
+
+  for (const [zh] of TANGBUY_ZH_EN_PRODUCT_PHRASES) {
+    if (blob.includes(zh)) push(zh);
+  }
+
+  // 列表行：- 破洞牛仔裤 / 1. 暖宫贴 / 2. 产妇卫生巾
   for (const line of blob.split(/\n+/)) {
     const cleaned = line.replace(/^[\s*\-•\d.、]+/, '').trim();
-    if (cleaned.length >= 3 && cleaned.length <= 24 && /裤|裙|鞋|包|壳|表|灯|膜|红|衫|衣|帽/.test(cleaned) && !/[|:：，。！？,.]/.test(cleaned)) {
+    if (
+      cleaned.length >= 3 &&
+      cleaned.length <= 28 &&
+      /裤|裙|鞋|包|壳|表|灯|膜|红|衫|衣|帽|贴|垫|巾|器|套装|喷雾|带|枕|乳垫|内裤|文胸|奶瓶|泵|卫生巾|冲洗|产褥|暖宫|月子|哺乳|收腹|骨盆|刀纸|锅|杯|刀|架|壶|盆|窝|绳|铃|砂|轮|蓬|杖|笼|铲|勺|碗|盘|毯|帘|袜|秤|枪|罩|圈|霜|膏|液|粉|笔|本|箱|盒|帐|篷|幕|袋|炊|营/.test(
+        cleaned,
+      ) &&
+      !/[|:：]/.test(cleaned) &&
+      (cleaned.length <= 14 || !/[，。！？,.]/.test(cleaned))
+    ) {
       push(cleaned);
     }
   }
@@ -202,6 +253,20 @@ export function extractProductKeywordsForTangbuy(aiText, userText = '') {
     push(m[0].trim());
   }
 
+  const enCare =
+    /\b(postpartum|maternity)\s+(?:care kit|belly band|belt|pads?|underpads?|recovery kit|sanitary pads?)\b|\b(breast pump|nursing pads?|nursing bra|disposable underpads?|peri bottle|uterus warming patch|nipple cream)\b/gi;
+  while ((m = enCare.exec(blob)) !== null) {
+    hasEnglishPhrase = true;
+    push(m[0].trim());
+  }
+
+  const enMainstream =
+    /\b(air\s*fryer|yoga\s*mat|cat\s*tree|dash\s*cam|sleeping\s*bag|camping\s*tent|massage\s*gun|resistance\s*band|power\s*bank|wireless\s*earbuds|phone\s*holder|car\s*phone\s*mount|pet\s*feeder|dog\s*bed|makeup\s*brush|essential\s*oil\s*diffuser|robot\s*vacuum)\b/gi;
+  while ((m = enMainstream.exec(blob)) !== null) {
+    hasEnglishPhrase = true;
+    push(m[0].trim());
+  }
+
   // "Oversized Hoodie + Vintage Tee：…" — English bullets often omit Chinese 裤/衣 markers; split + / /
   for (const line of blob.split(/\n+/)) {
     const cleaned = line.replace(/^[\s*\-•\d.、]+/, '').trim();
@@ -226,13 +291,87 @@ export function extractProductKeywordsForTangbuy(aiText, userText = '') {
   return out.slice(0, 12);
 }
 
+const INFER_EN_AUDIENCE_ONLY = new Set([
+  'women',
+  'woman',
+  'female',
+  'male',
+  'man',
+  'men',
+  'girl',
+  'girls',
+  'boy',
+  'boys',
+  'lady',
+  'ladies',
+]);
+
+function inferTangbuyKeywordFromUserNeed(userText) {
+  const u = String(userText || '')
+    .trim()
+    .replace(/https?:\/\/[^\s]+/g, ' ')
+    .slice(0, 200);
+  if (!u || !queryHasConcreteProductIntent(u)) return '';
+  for (const [zh, en] of TANGBUY_ZH_EN_PRODUCT_PHRASES) {
+    if (u.includes(zh)) return en;
+  }
+  const en = toEnglishTangbuyKeyword(u);
+  if (!en || en.length < 5) return '';
+  const parts = en.split(/\s+/).filter(Boolean);
+  if (parts.length > 0 && parts.every((p) => INFER_EN_AUDIENCE_ONLY.has(p))) return '';
+  return en;
+}
+
 /**
- * 是否应在回复后展示 Tangbuy 搜索：须能抽出至少 2 个有效商品词，且用户显式要推荐或 AI 明显在举款式。
+ * 与 extractProductKeywordsForTangbuy 相同；抽不到时按**主流行业**给默认英文 SKU 词，再退回用户句推断。
  */
-export function shouldAttachTangbuySearchPicks({ userWantsProductRecommendations, aiText, extractedKeywords }) {
+export function extractTangbuyKeywordsWithInference(aiText, userText = '') {
+  const fromModel = extractProductKeywordsForTangbuy(aiText, userText);
+  if (fromModel.length) return fromModel;
+  const blob0 = `${userText}\n${aiText}`.slice(0, 2000);
+  const industryDefaults = getIndustryDefaultEnglishKeywords(blob0);
+  if (industryDefaults?.length) return industryDefaults;
+  const inferred = inferTangbuyKeywordFromUserNeed(userText);
+  return inferred ? [inferred] : [];
+}
+
+/**
+ * 是否应在回复后展示 Tangbuy 搜索：
+ * - 已有可检索关键词（抽取或行业默认）；
+ * - 且满足其一：用户显式要推荐 **或** 命中「趋势/品类市场展望」类对话策略（见 `shouldAttachTangbuyHotFromModelTrendAnalysis`，与具体行业词无关）。
+ */
+export function shouldAttachTangbuySearchPicks({
+  userWantsProductRecommendations,
+  userText = '',
+  aiText = '',
+  extractedKeywords,
+}) {
   const kws = Array.isArray(extractedKeywords) ? extractedKeywords : [];
   if (kws.length < 1) return false;
-  return !!userWantsProductRecommendations;
+  if (userWantsProductRecommendations) return true;
+  return shouldAttachTangbuyHotFromModelTrendAnalysis(userText, aiText);
+}
+
+/** 去掉模型在正文里自造的「### 📦 Tangbuy」空壳标题（避免与下方真实 search_picks 重复或只显示标题无链接）。 */
+export function stripHallucinatedTangbuyMarkdownBlock(text) {
+  let t = String(text || '');
+  t = t.replace(
+    /\n{0,2}#{1,3}\s*[^\n]*[Tt]angbuy[^\n]*\s*\n+(?:(?:[ \t]*[^\n#][^\n]*\n)+|[ \t]*\n+)/gi,
+    '\n\n',
+  );
+  t = t.replace(/\n{3,}/g, '\n\n').trim();
+  return t;
+}
+
+/** 英文行业默认词、模型输出的英文品类短语：不必过中文 isLikelyProductKeyword。 */
+function isLikelyEnglishCommercePhrase(k) {
+  const t = String(k || '').trim();
+  if (t.length < 5 || t.length > 80) return false;
+  if (!/^[a-z0-9][a-z0-9\s\-'.]+$/i.test(t)) return false;
+  const words = t.toLowerCase().split(/\s+/).filter(Boolean);
+  if (words.some((w) => w.length > 28)) return false;
+  if (words.length >= 2) return true;
+  return words.length === 1 && words[0].length >= 6;
 }
 
 /**
@@ -240,7 +379,9 @@ export function shouldAttachTangbuySearchPicks({ userWantsProductRecommendations
  */
 export function buildTangbuySearchPicksFromKeywords(keywords, _uiLang = 'zh', max = 8) {
   const cap = Math.min(12, Math.max(1, Number(max) || 8));
-  const list = (Array.isArray(keywords) ? keywords : []).filter((k) => isLikelyProductKeyword(k));
+  const list = (Array.isArray(keywords) ? keywords : []).filter(
+    (k) => isLikelyProductKeyword(k) || isLikelyEnglishCommercePhrase(k),
+  );
   const out = [];
   const seen = new Set();
   for (const keyword of list) {
@@ -275,7 +416,7 @@ export function buildTangbuySearchPicksFromContext(opts = {}) {
     .map((s) => String(s || '').trim())
     .filter((s) => s.length >= 3 && !isJunkSearchKeyword(s));
 
-  const extracted = extractProductKeywordsForTangbuy(aiText, userText);
+  const extracted = extractTangbuyKeywordsWithInference(aiText, userText);
   const merged = [];
   const seen = new Set();
   for (const x of [...fromSeeds, ...extracted]) {

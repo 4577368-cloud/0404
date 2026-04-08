@@ -133,6 +133,21 @@ export const ZH_EN_DICT = [
   ['户外', 'outdoor camping hiking'], ['自行车', 'bicycle bike'], ['跑步', 'running'],
   // Kids / Baby
   ['婴儿', 'baby infant'], ['儿童', 'kid children'], ['宝宝', 'baby toddler'], ['童装', 'kids clothing'],
+  // Maternity / postpartum — 用货源检索常用英文，避免「产褥→lochia」等医学词进搜索框
+  ['一次性产褥垫', 'disposable underpad'],
+  ['产后护理套装', 'postpartum care kit'],
+  ['产妇卫生巾', 'maternity sanitary pad'],
+  ['私处冲洗器', 'peri bottle'],
+  ['会阴冲洗器', 'peri bottle'],
+  ['暖宫贴', 'uterus warming patch'],
+  ['产褥垫', 'disposable underpad'],
+  ['防溢乳垫', 'nursing breast pads'],
+  ['一次性内裤', 'disposable postpartum underwear'],
+  ['骨盆带', 'postpartum pelvic support belt'],
+  ['月子服', 'maternity pajamas'],
+  ['产后', 'postpartum'], ['产妇', 'postpartum'], ['产后护理', 'postpartum care'], ['月子', 'postpartum recovery'],
+  ['哺乳', 'breastfeeding nursing'], ['吸奶器', 'breast pump'], ['收腹带', 'postpartum belly band'], ['妊娠纹', 'stretch mark cream'],
+  ['护理垫', 'disposable underpad'], ['母婴', 'mother baby maternity'],
   // Swimwear / Underwear
   ['泳衣', 'swimsuit swimwear'], ['泳装', 'swimwear'], ['比基尼', 'bikini'],
   ['内衣', 'lingerie underwear'], ['内裤', 'panties underwear briefs'], ['文胸', 'bra'],
@@ -172,11 +187,186 @@ export const CATEGORY_MAP = [
   { keywords: ['baby', 'kid', 'children', 'infant', 'toddler', '婴儿', '儿童', '宝宝', '童装'], label: 'kids' },
   { keywords: ['swimsuit', 'bikini', 'swim', 'swimwear', '泳衣', '泳装', '比基尼'], label: 'swimwear' },
   { keywords: ['lingerie', 'underwear', 'bra', 'panties', 'boxers', 'briefs', '内衣', '内裤', '文胸'], label: 'underwear' },
+  {
+    keywords: [
+      'postpartum',
+      'postnatal',
+      'maternity',
+      'breast pump',
+      'breastfeeding',
+      'nursing pad',
+      'belly band',
+      'peri bottle',
+      'underpad',
+      'uterus warming',
+      '产后',
+      '产妇',
+      '月子',
+      '哺乳',
+      '吸奶器',
+      '收腹',
+      '妊娠纹',
+      '护理垫',
+      '产褥垫',
+      '暖宫贴',
+      '卫生巾',
+      '母婴',
+      '孕妇',
+    ],
+    label: 'maternity_postpartum',
+  },
 ];
 
 export function detectCategories(text) {
   const lower = text.toLowerCase();
   return CATEGORY_MAP.filter((cat) => cat.keywords.some((kw) => lower.includes(kw)));
+}
+
+/** 与 smartSearch 一致的轻量分词（用于判断“是否只有人口统计学词命中”） */
+function extractFreeSearchTermsForIntent(combined) {
+  return String(combined || '')
+    .toLowerCase()
+    .replace(/https?:\/\/[^\s]+/g, '')
+    .replace(/[\d]+\s*[-~到至]\s*[\d]+/g, '')
+    .replace(
+      /(商品|产品|选品|爆款|热卖|采购|找货|推荐|价格|预算|月销|销量|supplier|products?|trending|best seller|sourcing|recommend|price|budget|sold|sales|under|below|above|over|不超过|低于|高于|至少|最少|最多|title|meta|description|url|snapshot|text|excerpt)/gi,
+      ''
+    )
+    .split(/[\s,，;；、]+/)
+    .filter((w) => w.length >= 2);
+}
+
+const DEMO_AUDIENCE_EN = new Set([
+  'women',
+  'woman',
+  'female',
+  'male',
+  'man',
+  'men',
+  'girl',
+  'girls',
+  'boy',
+  'boys',
+  'lady',
+  'ladies',
+  'guy',
+  'guys',
+]);
+
+const DEMO_AUDIENCE_ZH = new Set(['女性', '女士', '女装', '女款', '女式', '男士', '男性', '男装', '男款', '男式']);
+
+/**
+ * 去掉“只有女性/男性”这类泛词后的检索词；用于抑制英文只命中 women、中文只命中 女性 的误召回。
+ */
+export function getNonDemographicSearchTerms(combined) {
+  const translated = translateZhToEn(String(combined || '')).map((x) => String(x || '').toLowerCase());
+  const free = extractFreeSearchTermsForIntent(combined);
+  const merged = [...new Set([...free, ...translated])];
+  return merged.filter((t) => {
+    const x = String(t).toLowerCase();
+    if (x.length < 2) return false;
+    if (DEMO_AUDIENCE_EN.has(x)) return false;
+    if (DEMO_AUDIENCE_ZH.has(t) || DEMO_AUDIENCE_ZH.has(x)) return false;
+    return true;
+  });
+}
+
+const NICHE_INTENT_RE =
+  /(产后|产妇|月子|哺乳|母乳|妊娠纹|收腹带|收腹|盆底|开奶|催奶|吸奶器|护理垫|产褥|会阴|孕妇|孕期|母婴|一次性内裤|产褥垫|卫生裤|postpartum|postnatal|maternity|breast pump|breastfeeding|nipple|perineal|belly band|lochia|nursing pads?)/i;
+
+/**
+ * 用户是否表达了**可落地的品类/场景**（而非仅“女性/男性”等宽泛人群词）。
+ */
+export function queryHasConcreteProductIntent(text) {
+  const s = String(text || '').trim();
+  if (!s) return false;
+  if (detectCategories(s).length > 0) return true;
+  if (NICHE_INTENT_RE.test(s)) return true;
+  const lower = s.toLowerCase();
+  if (
+    /\b(skincare|skin care|hair care|body care|oral care|moisturizer|cleanser|serum|shampoo|toothbrush|massager)\b/i.test(
+      lower
+    )
+  ) {
+    return true;
+  }
+  if (/(护理用品|个人护理|湿巾|营养品|维生素|补充剂)/.test(s)) return true;
+  if (/\b(supplements?|vitamins?|omega)\b/i.test(lower)) return true;
+  const nd = getNonDemographicSearchTerms(s);
+  const generic = new Set([
+    'show',
+    'tell',
+    'give',
+    'send',
+    'find',
+    'list',
+    'need',
+    'want',
+    'some',
+    'any',
+    'more',
+    'best',
+    'hot',
+    'new',
+    'help',
+    'please',
+    'about',
+    'looking',
+    'recommend',
+    'suggest',
+    'idea',
+    'ideas',
+    'me',
+    'you',
+    'product',
+    'products',
+    'item',
+    'items',
+    'thing',
+    'things',
+    'stuff',
+    'something',
+    'everything',
+    'anything',
+    'good',
+    'great',
+    'nice',
+    'cool',
+  ]);
+  const substantive = nd.filter((t) => !generic.has(String(t).toLowerCase()));
+  return substantive.some((t) => t.length >= 4 || /[\u4e00-\u9fff]/.test(t));
+}
+
+/**
+ * 无榜单/无搜索词时的兜底话术分支：宽泛人群词 vs 具体需求 vs 长句无锚点。
+ */
+export function recommendationFallbackKind(userText) {
+  const t = String(userText || '').trim();
+  if (queryHasConcreteProductIntent(t)) return 'concrete';
+  const compactLen = t.replace(/\s+/g, '').length;
+  if (compactLen <= 14) return 'broad_audience';
+  return 'long_vague';
+}
+
+/**
+ * 趋势/榜单长列表：仅保留「类目或非标人群词」与商品标题/类目文本同时对齐的条目，避免只命中 women/女性。
+ */
+export function filterTrendMatchesForPreciseDisplay(query, matched) {
+  const arr = Array.isArray(matched) ? matched : [];
+  const q = String(query || '');
+  if (!queryHasConcreteProductIntent(q)) return [];
+  const cats = detectCategories(q);
+  const nonDemo = getNonDemographicSearchTerms(q);
+  const nicheInQuery = NICHE_INTENT_RE.test(q);
+
+  return arr.filter((p) => {
+    const low = String(p.searchLower || p.nameLower || '').toLowerCase();
+    if (!low) return false;
+    const catHit = cats.some((c) => c.keywords.some((kw) => low.includes(String(kw).toLowerCase())));
+    const termHit = nonDemo.some((t) => low.includes(String(t).toLowerCase()));
+    const nicheHit = !nicheInQuery || NICHE_INTENT_RE.test(low);
+    return nicheHit && (catHit || termHit);
+  });
 }
 
 export function parsePriceRange(text) {
@@ -690,27 +880,97 @@ export function maskStreamingProductJsonBlock(text, _uiLang) {
 }
 
 /**
- * 模型回复内容像在讨论 **商品/品牌/类目/平台趋势或选品分析** 时，允许在回复后附带横向 Tangbuy 同款（宽松于用户显式「推荐商品」）。
- * 仅用于 tangbuy-product 横滑卡片，不用于 Product/Best-selling 长列表。
+ * 宏观/政策类「趋势」——不应触发货源搜索（与具体卖什么无关）。
+ */
+const USER_MACRO_TREND_BLACKLIST_ZH =
+  /(经济|股市|金融|宏观|政策|房价|油价|汇率|人口|技术革命|行业周期|消费降级|GDP|通胀|利率|货币政策|地缘政治)/;
+
+/**
+ * 用户是否在问 **某一品类/场景下的市场、趋势、选品方向**（不限定露营/美妆等具体行业）。
+ * 用于：无「推荐商品」话术时，是否仍可在长文分析后附带 Tangbuy 搜索词。
+ */
+export function userAsksTrendOrCategoryMarketOutlook(userText) {
+  const u = String(userText || '').trim();
+  if (u.length < 4) return false;
+
+  /** 短句以「…趋势」结尾：任意 2～20 个汉字主题 + 趋势，排除宏观黑名单 */
+  const shortTailCategoryTrend =
+    /[\u4e00-\u9fff]{2,20}趋势$/.test(u) && !USER_MACRO_TREND_BLACKLIST_ZH.test(u);
+
+  /** 显式市场/选品/品类分析用语（中英） */
+  const explicitOutlook =
+    /(趋势分析|市场分析|行业分析|品类分析|市场概况|市场洞察|热门品类|品类方向|赛道|选品|爆款|热销|竞品|细分|前景|机会|消费人群|目标人群|带货|利润空间|客单价|流行趋势|消费趋势|行业趋势|品类趋势|热销趋势|流量趋势)/.test(
+      u,
+    ) ||
+    /\b(trend analysis|market analysis|category analysis|market outlook|industry outlook|product trend|market trend|category trend|niche analysis|winning products?|best sellers?|what'?s trending|sourcing ideas|analyze (the )?(market|category|niche|trends?))\b/i.test(
+      u,
+    );
+
+  /** 英文里「某主题 + trend(s)」类短问，如 outdoor camping trends */
+  const englishTopicTrends =
+    /\b[\w\s]{3,48}trends?\b/i.test(u) && /\b(market|product|category|consumer|industry|outdoor|ecommerce|e-commerce|retail)\b/i.test(u);
+
+  return shortTailCategoryTrend || explicitOutlook || englishTopicTrends;
+}
+
+/**
+ * 助手回复是否像 **可落地的商品/类目/平台趋势或选品分析**（与具体垂直无关）。
+ * 返回 0～3，用于与长度、用户意图组合决策。
+ */
+export function scoreAssistantProductTrendAnalysis(aiText) {
+  const a = String(aiText || '');
+  if (!a.trim()) return 0;
+  let s = 0;
+  if (
+    /趋势|爆款|选品|热销|同款|竞品|类目|品类|细分市场|赛道|蓝海|红海|品牌|对标|listing|利润|客单价|SKU|sku|亚马逊|tiktok|抖音|独立站|跨境|销量|转化|流量|人群|场景|刚需|标品|差异化/.test(
+      a,
+    )
+  ) {
+    s += 1;
+  }
+  const al = a.toLowerCase();
+  if (
+    /trend|bestseller|category|categories|niche|sourcing|competitor|market|product|brand|amazon|tiktok|shopify|seller|listing|winning|margin|audience|consumer|glamping|sku/.test(
+      al,
+    )
+  ) {
+    s += 1;
+  }
+  if (/tiktok|亚马逊|amazon|独立站|shopify|平台|跨境|dropship|1688|货源|Dropshipping/i.test(a)) s += 1;
+  return s;
+}
+
+/**
+ * 用户是否带一点 **电商/货源/卖什么** 语境（用于防止纯 SEO/闲聊长文误触 Tangbuy）。
+ */
+function userHasLightCommerceAnchor(userText) {
+  const u = String(userText || '');
+  return (
+    userAsksTrendOrCategoryMarketOutlook(u) ||
+    /(选品|货源|热销|爆款|趋势|品类|产品|商品|进货|跨境|独立站|亚马逊|tiktok|shopify|dropship|sourcing|niche|卖什么|好卖|爆款方向|货源池)/i.test(u)
+  );
+}
+
+/**
+ * **输出策略（此类情况的统一逻辑）**
+ *
+ * 在「用户问的是趋势/市场/品类方向」且「模型写出了足够像选品/趋势分析的正文」时，允许在消息后附带 Tangbuy 搜索（与露营/厨房等具体行业无关）。
+ *
+ * - 路径 A：用户意图 = 趋势/品类市场展望 ∧ 助手维度分 ≥ 1 ∧ 正文够长
+ * - 路径 B：用户至少带轻度电商语境 ∧ 助手维度分 ≥ 2 ∧ 正文更长（避免仅凭模型长篇而用户完全无关）
+ *
+ * 不替代 `shouldRecommendProducts`；仅用于比「显式要推荐」更宽一层。
  */
 export function shouldAttachTangbuyHotFromModelTrendAnalysis(userText, aiText) {
   const u = String(userText || '').trim();
   const a = String(aiText || '').trim();
   if (a.length < 90) return false;
 
-  const userStrong =
-    /(趋势分析|品牌分析|选品|爆款|热销|竞品|分析.*(趋势|品牌|商品)|商品.*趋势|品牌.*趋势|trend analysis|brand analysis|product trend|best seller|winning product|market analysis|analyze (the )?(brand|product|trend))/i.test(
-      u
-    );
+  const userOutlook = userAsksTrendOrCategoryMarketOutlook(u);
+  const dim = scoreAssistantProductTrendAnalysis(a);
 
-  const al = a.toLowerCase();
-  let dim = 0;
-  if (/趋势|爆款|选品|热销|同款|竞品|类目|细分市场|赛道|蓝海|红海|品牌|对标|listing|亚马逊|tiktok|抖音|独立站|跨境|销量|转化|流量/.test(a)) dim += 1;
-  if (/trend|bestseller|category|niche|sourcing|competitor|market|product|brand|amazon|tiktok|shopify|seller|listing|winning/i.test(al)) dim += 1;
-  if (/tiktok|亚马逊|amazon|独立站|shopify|平台|跨境|dropship|1688|货源/.test(a)) dim += 1;
-
-  if (userStrong && dim >= 1 && a.length >= 100) return true;
-  if (dim >= 2 && a.length >= 140) return true;
+  if (userOutlook && dim >= 1 && a.length >= 100) return true;
+  if (userHasLightCommerceAnchor(u) && dim >= 2 && a.length >= 140) return true;
   return false;
 }
 
