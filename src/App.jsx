@@ -29,7 +29,23 @@ import { ModuleAIChat } from '../modules/AIChatVite.jsx';
 import ProductInquiryModal from '../components/ProductInquiryModal.jsx';
 import InquiryMessagesPanel from '../components/InquiryMessagesPanel.jsx';
 
-/** 动态模块偶发断连时重试，减轻 net::ERR_CONNECTION_CLOSED 导致白屏 */
+/** 是否本次文档已是刷新结果（避免 chunk 404 时无限 reload） */
+function isDocumentLoadAfterReload() {
+  try {
+    const entries = typeof performance !== 'undefined' && performance.getEntriesByType?.('navigation');
+    const nav = entries && entries[0];
+    if (nav && nav.type === 'reload') return true;
+    if (typeof performance !== 'undefined' && performance.navigation?.type === 1) return true;
+  } catch (_) {}
+  return false;
+}
+
+const DYNAMIC_IMPORT_FAIL_RE =
+  /dynamically imported module|importing a module script failed|error loading dynamically imported module|failed to fetch module script/i;
+
+/**
+ * 动态 import 重试；失败且像「旧 index 引用已删 chunk」时整页刷新一次（与 AIReportsView 等路由共用）。
+ */
 function lazyWithRetry(importer, retries = 2, delayMs = 450) {
   return React.lazy(async () => {
     let lastErr;
@@ -43,13 +59,22 @@ function lazyWithRetry(importer, retries = 2, delayMs = 450) {
         lastErr = e;
       }
     }
+    const msg = String(lastErr?.message || lastErr || '');
+    if (
+      typeof window !== 'undefined' &&
+      DYNAMIC_IMPORT_FAIL_RE.test(msg) &&
+      !isDocumentLoadAfterReload()
+    ) {
+      window.location.reload();
+      return new Promise(() => {});
+    }
     throw lastErr;
   });
 }
 
-const HotProducts = React.lazy(() => import('../components/HotProducts.jsx'));
-const MyLists = React.lazy(() => import('../components/MyLists.jsx'));
-const SourcingLandingPage = React.lazy(() => import('../components/SourcingLandingPage.jsx'));
+const HotProducts = lazyWithRetry(() => import('../components/HotProducts.jsx'));
+const MyLists = lazyWithRetry(() => import('../components/MyLists.jsx'));
+const SourcingLandingPage = lazyWithRetry(() => import('../components/SourcingLandingPage.jsx'));
 const AIReportsView = lazyWithRetry(() => import('../components/AIReportsView.jsx'));
 
 /** 本地 `vite` 开发服，或 `.env` 中 `VITE_ALLOW_GUEST_PRODUCT_SEARCH=true`：未 OAuth 也可从侧栏进入「商品搜索」浏览；页内 AI 诊断等仍走 guest 拦截。 */

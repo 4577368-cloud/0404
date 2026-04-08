@@ -223,6 +223,150 @@
               "fallback_value": "store_authorization"
             }
           ]
+        },
+        {
+          "id": "competitor_comparison",
+          "name": "Competitor Comparison & Pricing Model",
+          "qa_pairs": [
+            {
+              "question_key": "pricing_model_zero_subscription",
+              "intent": "information",
+              "tags": [
+                "pricing model",
+                "subscription fee",
+                "free to use",
+                "zero cost",
+                "fee structure"
+              ],
+              "questions": [
+                "How does Tangbuy charge?",
+                "Is there a subscription fee?",
+                "How much does it cost to use Tangbuy?",
+                "What's the monthly fee?",
+                "Is there an annual fee?",
+                "What's your pricing model?",
+                "Is free usage real?",
+                "What does zero cost mean?",
+                "Do tools cost money to use?"
+              ],
+              "answer_template": "Tangbuy uses a zero-subscription-fee model—tools are completely free, with no monthly or annual fees. 💰 You only pay for actual fulfillment services: 1) Base service fee from ¥8/order (includes QC, packaging, shipping); 2) Value-added services (custom packaging, labeling from approx. ¥1/item); 3) Sourcing service fee (5% of procurement amount). You can browse the product pool, use sourcing tools, and calculate profit estimates at zero cost without placing orders—true 'pay-as-you-use'.",
+              "variables": {
+                "base_fee": "From ¥8/order",
+                "subscription_fee": "$0"
+              },
+              "fallback_action": "redirect",
+              "fallback_value": "https://dropshipping.tangbuy.com"
+            },
+            {
+              "question_key": "vs_autods_comparison",
+              "intent": "comparison",
+              "tags": [
+                "AutoDS",
+                "competitor",
+                "comparison",
+                "dropshipping service",
+                "advantages"
+              ],
+                "questions": [
+                "What's the difference between you and AutoDS?",
+                "What are Tangbuy's advantages over AutoDS?",
+                "Which is better, AutoDS or Tangbuy?",
+                "Why choose Tangbuy over AutoDS?",
+                "How are you different from AutoDS?"
+              ],
+              "answer_template": "Key differences between Tangbuy and AutoDS: 1) Pricing—Tangbuy has zero subscription fees; AutoDS starts at $19.9/month; 2) Service depth—Tangbuy provides 100% QC + custom packaging + cloud warehouse loop; AutoDS mainly handles product import and order forwarding; 3) Supply chain control—Tangbuy operates a 40,000m²+ central warehouse in China with direct QC and shipping control; AutoDS relies on third-party suppliers to ship directly; 4) Brand upgrade—Tangbuy supports low-MOQ customization (neck labels, hangtags, thank-you cards) to help white-label products become branded. Summary: AutoDS suits pure dropshipping starters; Tangbuy suits sellers wanting to build brand trust.",
+              "variables": {},
+              "fallback_action": "recommend_service",
+              "fallback_value": "brand_consultation"
+            },
+            {
+              "question_key": "vs_amazon_compete_strategy",
+              "intent": "consultation",
+              "tags": [
+                "Amazon",
+                "competition",
+                "price war",
+                "differentiation",
+                "shipping speed"
+              ],
+              "questions": [
+                "How do I compete with Amazon?",
+                "Amazon's prices are lower, what should I do?",
+                "Our shipping isn't as fast as Amazon, what now?",
+                "Will customers accept 10-day shipping?",
+                "You take 10 days to ship, Amazon only 2 days—will customers accept this?",
+                "How do I sell a $40 blender when Amazon has it for $28?",
+                "What advantages do you have over Amazon?",
+                "Will customers cancel orders because of slow shipping?",
+                "How do I compete with Prime?"
+              ],
+              "answer_template": "Competing with Amazon isn't about price and speed—it's about differentiation and brand trust: 📦 Logistics—EU/US delivery in 6-12 business days, as fast as 2-hour dispatch with inventory prep. The 10+ day scenario applies without prep; we recommend small-batch inventory to our warehouse for faster fulfillment; 🎯 Strategy—don't fight on price, build 'brand premium + differentiation': 1) 100% QC unboxing videos as trust proof; 2) Custom packaging/thank-you cards for unboxing experience (Amazon doesn't offer this); 3) Bundle shipping to create unique SKUs avoiding price comparison; 4) Target mid-to-high-end customers who value quality and brand over speed. Example: a $40 blender succeeded via 'custom packaging + QC video + brand story', avoiding direct competition with Amazon's $28 version.",
+              "variables": {
+                "delivery_time": "6-12 business days",
+                "rush_ship": "2 hours"
+              },
+              "fallback_action": "recommend_service",
+              "fallback_value": "inventory_consultation"
+            },
+            {
+              "question_key": "shipping_time_customer_concern",
+              "intent": "consultation",
+              "tags": [
+                "shipping time",
+                "customer acceptance",
+                "order cancellation",
+                "slow shipping",
+                "trust building",
+                "logistics safety",
+                "price value"
+              ],
+              "questions": [
+                "Will customers cancel with 10-day shipping?",
+                "Can customers accept such long shipping?",
+                "How do I explain shipping time?",
+                "Will slow shipping hurt my store?",
+                "How do I get customers to accept slower logistics?",
+                "How do I ensure customer experience with long shipping times?",
+                "Is Tangbuy logistics safe and reliable?",
+                "How's your shipping price/value ratio?"
+              ],
+              "answer_template": "Long shipping times are normal in cross-border dropshipping—the key is turning 'expectations' into 'trust': 📦 Set expectations upfront—clearly state 'Estimated 12-18 business days' on product pages, show again at checkout, use 'Standard Shipping' instead of misleading 'Free Shipping'; 🔒 Safety & reliability—Tangbuy integrates 50+ curated logistics lines with full tracking and proactive milestone notifications; 'QC miss = full compensation', 'over-24h dispatch = fee waiver'—building trust through service commitments; 💰 Price value—bundle shipping saves 30%-60% on freight, 90-day free warehousing reduces capital pressure; ⚡ Speed options—small-batch inventory prep enables 2-hour dispatch, compressing processing time from industry-standard 3-7 days to 2-3 days. 💡 Real data: with proper expectation management + transparent tracking + quality assurance, refund rates stay at approx. 2%, below industry average.",
+              "variables": {
+                "delivery_time": "6-12 business days",
+                "refund_rate": "approx. 2%",
+                "shipping_save": "30%-60%",
+                "rush_ship": "2 hours"
+              },
+              "fallback_action": "recommend_service",
+              "fallback_value": "inventory_consultation"
+            },
+            {
+              "question_key": "beginner_first_store_guide",
+              "intent": "onboarding",
+              "tags": [
+                "beginner",
+                "getting started",
+                "first step",
+                "Shopify",
+                "independent store",
+                "start"
+              ],
+              "questions": [
+                "How do I start dropshipping as a beginner?",
+                "What should be the first step?",
+                "How do beginners get started?",
+                "What should I pay attention to when building an independent store?",
+                "What do I need to prepare at the beginning?",
+                "How do I start with no experience?",
+                "How much does it cost to start an independent store?",
+                "What are the requirements to start?"
+              ],
+              "answer_template": "Three steps for beginners: 1️⃣ Product positioning—use Tangbuy trend selection or submit sourcing requests, avoid red-ocean competition, prioritize products with differentiation potential; 2️⃣ Store setup—Shopify recommended, focus on: differentiated product copy (highlight QC/customization value), honest shipping time disclosure, clear return/refund policy; 3️⃣ Supply chain integration—register Tangbuy (zero subscription fee), connect store, pick 3-5 test products, walk through the full order-to-receipt flow. 💡 Beginner tip: don't bulk list products upfront—start with small orders to test market response, validate logistics and quality before scaling.",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://dropshipping.tangbuy.com/en-US/productPool"
+            }
+          ]
         }
       ]
     },

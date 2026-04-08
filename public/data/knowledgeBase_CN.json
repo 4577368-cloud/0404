@@ -319,6 +319,151 @@
               "fallback_value": "store_authorization"
             }
           ]
+        },
+        {
+          "id": "competitor_comparison",
+          "name": "竞争对手对比与定价模式",
+          "qa_pairs": [
+            {
+              "question_key": "pricing_model_zero_subscription",
+              "intent": "information",
+              "tags": [
+                "定价模式",
+                "订阅费",
+                "0元使用",
+                "免费",
+                "费用结构"
+              ],
+              "questions": [
+                "Tangbuy怎么收费？",
+                "有订阅费吗？",
+                "使用Tangbuy需要多少钱？",
+                "月费多少？",
+                "年费多少？",
+                "你们收费模式是什么？",
+                "免费使用是真的吗？",
+                "0元使用是什么意思？",
+                "工具使用要钱吗？"
+              ],
+              "answer_template": "Tangbuy采用0订阅费模式，工具完全免费使用，无需月费/年费。💰 收费仅针对实际履约服务：1) 基础服务费 ¥8/单起（含质检、包材、发货）；2) 增值服务费（定制包装、贴标等约¥1/件起）；3) 采购服务费（采购金额的5%）。您可以在不产生订单的情况下零成本浏览产品池、使用寻源工具、计算利润预估，真正做到'按实际使用付费'。",
+              "variables": {
+                "base_fee": "¥8/单起",
+                "subscription_fee": "0元"
+              },
+              "fallback_action": "redirect",
+              "fallback_value": "https://dropshipping.tangbuy.com"
+            },
+            {
+              "question_key": "vs_autods_comparison",
+              "intent": "comparison",
+              "tags": [
+                "AutoDS",
+                "竞争对手",
+                "对比",
+                "代发服务",
+                "优势"
+              ],
+              "questions": [
+                "你们和AutoDS有什么区别？",
+                "Tangbuy对比AutoDS优势在哪？",
+                "AutoDS和Tangbuy哪个好？",
+                "为什么要选Tangbuy而不是AutoDS？",
+                "你们和AutoDS有什么不同？"
+              ],
+              "answer_template": "Tangbuy与AutoDS核心差异：1) 定价模式 - Tangbuy 0订阅费，AutoDS月费$19.9起；2) 服务深度 - Tangbuy提供100%质检+定制包装+云仓闭环，AutoDS主要做产品导入和订单转发；3) 供应链控制 - Tangbuy在中国本土有40000m²+中央仓，直接控制质检和发货，AutoDS依赖第三方供应商自发；4) 品牌升级 - Tangbuy支持低MOQ定制领标/吊牌/感谢卡，帮助白牌转品牌。总结：AutoDS适合纯代发起步，Tangbuy适合想建立品牌信任的卖家。",
+              "variables": {},
+              "fallback_action": "recommend_service",
+              "fallback_value": "brand_consultation"
+            },
+            {
+              "question_key": "vs_amazon_compete_strategy",
+              "intent": "consultation",
+              "tags": [
+                "亚马逊",
+                "Amazon",
+                "竞争",
+                "价格战",
+                "差异化",
+                "物流时效"
+              ],
+              "questions": [
+                "怎么和亚马逊竞争？",
+                "Amazon价格更低怎么办？",
+                "物流没有Amazon快怎么办？",
+                "客户会接受10天发货吗？",
+                "你们发货要10天，Amazon只要2天，客户能接受吗？",
+                "$40的搅拌机和Amazon $28比怎么卖？",
+                "和Amazon比有什么优势？",
+                "客户会因为物流慢取消订单吗？",
+                "怎么和Prime竞争？"
+              ],
+              "answer_template": "与Amazon竞争不靠价格和速度，靠差异化和品牌信任：📦 物流方面 - 欧美6-12个工作日，备货后最快2小时出库。10+天是未备货情况，建议小量备货到Tangbuy仓实现快速履约；🎯 竞争策略 - 不做价格战，做'品牌溢价+差异化'：1) 100%质检开箱视频作为信任背书；2) 定制包装/感谢卡提升开箱体验（Amazon没有）；3) 组合发货打造独特SKU避开比价；4) 定位中高端客群，他们愿意为品质和品牌付溢价。案例：$40搅拌机靠'定制包装+质检视频+品牌故事'卖出差异化，避开和$28 Amazon款直接竞争。",
+              "variables": {
+                "delivery_time": "6-12个工作日",
+                "rush_ship": "2小时"
+              },
+              "fallback_action": "recommend_service",
+              "fallback_value": "inventory_consultation"
+            },
+            {
+              "question_key": "shipping_time_customer_concern",
+              "intent": "consultation",
+              "tags": [
+                "物流时效",
+                "客户接受度",
+                "取消订单",
+                "发货慢",
+                "信任建设",
+                "物流安全",
+                "价格性价比"
+              ],
+              "questions": [
+                "10天发货客户会取消吗？",
+                "客户能接受这么久的发货吗？",
+                "怎么解释发货时间？",
+                "发货慢会影响店铺吗？",
+                "怎么让客户接受较慢的物流？",
+                "物流时间长客户体验怎么保障？",
+                "Tangbuy物流安全可靠吗？",
+                "你们物流性价比怎么样？"
+              ],
+              "answer_template": "长时效是跨境dropshipping常态，关键是把'预期'变成'信任'：📦 预期前置 - 产品页明确标注'预计12-18个工作日送达'，购物车再次显示，用'Standard Shipping'而非'Free Shipping'误导；🔒 安全可靠 - Tangbuy整合50+优选物流专线，全程可追踪，节点主动推送；漏检即赔付、发货超时免单，用服务承诺建立信任；💰 价格性价比 - 组合发货可省30%-60%运费，90天免费仓储降低资金压力；⚡ 提速方案 - 小量备货到仓最快2小时出库，处理时间从行业3-7天压缩至2-3天。💡 实测：做好预期管理+透明追踪+品质保障，退款率控制在约2%行业较低水平。",
+              "variables": {
+                "delivery_time": "6-12个工作日",
+                "refund_rate": "约2%",
+                "shipping_save": "30%-60%",
+                "rush_ship": "2小时"
+              },
+              "fallback_action": "recommend_service",
+              "fallback_value": "inventory_consultation"
+            },
+            {
+              "question_key": "beginner_first_store_guide",
+              "intent": "onboarding",
+              "tags": [
+                "新手",
+                "起步",
+                "第一步",
+                "Shopify",
+                "独立站",
+                "开始"
+              ],
+              "questions": [
+                "刚开始做dropshipping怎么开始？",
+                "第一步应该做什么？",
+                "新手怎么起步？",
+                "建独立站要注意什么？",
+                "刚开始需要准备什么？",
+                "没有经验怎么开始？",
+                "做独立站需要多少钱起步？",
+                "刚开始做需要什么条件？"
+              ],
+              "answer_template": "新手起步三步走：1️⃣ 选品定位 - 用Tangbuy趋势选品或提交寻源需求，避开红海竞争，优先选有差异化空间的产品；2️⃣ 店铺搭建 - 建议Shopify起步，重点做好：产品页差异化文案（突出质检/定制价值）、物流时效诚实标注、退换货政策明确；3️⃣ 供应链对接 - 注册Tangbuy（0订阅费），关联店铺，选3-5款测试品，走一遍从订单到收货的全流程。💡 起步建议：不要一上来大量铺货，先用小订单测试市场反应，验证物流和品质后再扩量。",
+              "variables": {},
+              "fallback_action": "redirect",
+              "fallback_value": "https://dropshipping.tangbuy.com/en-US/productPool"
+            }
+          ]
         }
       ]
     },
