@@ -142,6 +142,7 @@ function ViewLoadingFallback({ uiLang }) {
 const CONV_STORAGE_KEY = 'tb_conversations';
 const ACTIVE_CONV_KEY = 'tb_active_conv';
 const VIP_FLAG_KEY = 'tb_ai_vip_unlocked_v1';
+const LEGACY_CONV_IMPORTED_FLAG_PREFIX = 'tb_conversations_legacy_imported__';
 
 function getIsVipUnlocked() {
   try {
@@ -194,6 +195,11 @@ function loadActiveIdByKey(convs, activeStorageKey = ACTIVE_CONV_KEY) {
     if (id && convs.some((c) => c.id === id)) return id;
   } catch (_) {}
   return convs[0]?.id || '';
+}
+
+function getLegacyImportFlagKey(userId) {
+  const suffix = normalizeStorageSuffix(userId);
+  return suffix ? `${LEGACY_CONV_IMPORTED_FLAG_PREFIX}${suffix}` : '';
 }
 
 export default function App() {
@@ -479,8 +485,30 @@ export default function App() {
   React.useEffect(() => {
     if (!convoStorage?.convKey || !convoStorage?.activeKey) return;
     const loaded = loadConversations(convoStorage.convKey);
-    setConversations(loaded);
-    setActiveId(loadActiveIdByKey(loaded, convoStorage.activeKey));
+    const userId = authUser?.id || '';
+    const importedFlagKey = getLegacyImportFlagKey(userId);
+    let nextConvs = loaded;
+    let nextActiveId = loadActiveIdByKey(loaded, convoStorage.activeKey);
+
+    // 兼容旧版本（全局 key）→ 新版本（按账号 key）：每个账号仅迁移一次，避免反复覆盖。
+    if (loaded.length <= 1 && (!loaded[0]?.messages || loaded[0].messages.length === 0) && importedFlagKey) {
+      let alreadyImported = false;
+      try { alreadyImported = localStorage.getItem(importedFlagKey) === '1'; } catch (_) {}
+      if (!alreadyImported) {
+        const legacyConvs = loadConversations(CONV_STORAGE_KEY);
+        const hasLegacyData = legacyConvs.some((c) => Array.isArray(c?.messages) && c.messages.length > 0);
+        if (hasLegacyData) {
+          nextConvs = legacyConvs;
+          nextActiveId = loadActiveIdByKey(legacyConvs, ACTIVE_CONV_KEY);
+          try { localStorage.setItem(convoStorage.convKey, JSON.stringify(nextConvs)); } catch (_) {}
+          try { localStorage.setItem(convoStorage.activeKey, nextActiveId); } catch (_) {}
+        }
+        try { localStorage.setItem(importedFlagKey, '1'); } catch (_) {}
+      }
+    }
+
+    setConversations(nextConvs);
+    setActiveId(nextActiveId);
   }, [convoStorage]);
 
   React.useEffect(() => {
