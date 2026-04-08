@@ -3,7 +3,7 @@ const MAX_FREE_QUOTA = 30;
 const MAX_GUEST_QUOTA = 10;
 const QUOTA_KEY = 'tangbuy_chat_used';
 
-function getUsedCount() {
+export function getUsedCount() {
   try {
     return Math.max(0, parseInt(localStorage.getItem(QUOTA_KEY) || '0', 10) || 0);
   } catch (_) {

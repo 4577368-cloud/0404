@@ -82,12 +82,31 @@ function isJunkSearchKeyword(s) {
   return false;
 }
 
+/** 分析/策略类用语：含此类片段时不做「货品特征字」宽松放行，避免「分析工具箱」等误过 */
+const ZH_KEYWORD_ANALYSIS_HINT = /分析|报告|建议|策略|市场研究|用户画像|竞争格局|结论|概述|摘要|差异化|转化率|市场规模|行业趋势|投放策略/;
+
+/**
+ * 中文串里出现常见货品相关字/词，可作为长尾品类兜底（与 extract 列表行启发式对齐思路）
+ */
+const ZH_PRODUCTISH_HINT =
+  /(?:牛仔裤|连衣裙|半身裙|阔腿裤|直筒裤|休闲裤|运动裤|短裤|T恤|卫衣|开衫|外套|羽绒服|棉服|大衣|风衣|手机壳|数据线|充电器|充电宝|行车记录仪|空气炸锅|瑜伽垫|筋膜枪|猫爬架|露营帐篷|露营灯|婴儿推车|收纳箱|假睫毛|卫生巾|产褥垫|哺乳枕|月子服|保温杯|剃须刀|榨汁机|电煮锅|键盘|鼠标|置物架|挂钩|贴纸|瑜伽服|运动内衣)|裤|裙|鞋|包|壳|表|灯|膜|口红|面膜|眼影|耳机|背包|斜挎包|台灯|收纳|帐篷|天幕|睡袋|哑铃|弹力带|狗窝|乳胶枕|香薰机|加湿器|美甲灯|拼图|积木|跳绳|护膝|牵引绳|蒸汽眼罩|泡脚桶|洁面仪|行李箱|托特包|腰包|手套|袜子|帽子|围巾|皮带|钱包|雨伞|水杯|喷雾|乳垫|内裤|文胸|奶瓶|吸奶器|收腹带|骨盆带|刀纸|肚脐贴|暖宫贴|冲洗器|锅|杯|刀|架|壶|盆|窝|绳|铃|砂|轮|蓬|杖|笼|铲|勺|碗|盘|毯|帘|袜|秤|枪|罩|圈|霜|膏|液|粉|笔|本|箱|盒|帐|篷|幕|袋|炊|营|链|戒|镯|环|钉|贴|垫|巾|器|套装|带|枕|泵/;
+
 function isLikelyProductKeyword(raw) {
   const t = String(raw || '').trim();
   if (!t || isJunkSearchKeyword(t)) return false;
   if (/[，。！？,.]/.test(t) && t.length > 10) return false;
-  /** 长定语 +「的」+ 品类（如「跨境…表现不错的牛仔裤」）不是可点击款式词 */
-  if (/[\u4e00-\u9fff]{5,}的[\u4e00-\u9fff]/.test(t)) return false;
+  /**
+   * 过滤「长定语 + 的 + 品类尾」类分析/营销句，保留「高腰的牛仔裤」「高腰修身显瘦的牛仔裤」等短至中等修饰。
+   * - 连续 ≥12 个汉字 + 的 + 汉字：一律视为过长定语；
+   * - 连续 ≥5 个汉字 + 的 + 汉字：仅当整串含跨境/平台/表现等营销分析用语时再过滤。
+   */
+  if (/[\u4e00-\u9fff]{12,}的[\u4e00-\u9fff]/.test(t)) return false;
+  if (
+    /[\u4e00-\u9fff]{5,}的[\u4e00-\u9fff]/.test(t) &&
+    /跨境|电商平台|平台表现|市场表现|用户增长|市场规模|竞争格局|物流成本|差异化|转化率|行业趋势|爆款|增速|渗透率|建议关注|分析报告|结论认为/.test(t)
+  ) {
+    return false;
+  }
   const maxLen = /[\u4e00-\u9fff]/.test(t) ? 24 : 42;
   if (t.length > maxLen) return false;
   if (TANGBUY_ZH_EN_PRODUCT_PHRASES.some(([zh]) => t === zh || t.includes(zh))) return true;
@@ -98,11 +117,12 @@ function isLikelyProductKeyword(raw) {
     /(瑜伽垫|筋膜枪|猫爬架|猫砂盆|空气炸锅|行车记录仪|露营帐篷|露营睡袋|露营灯|露营推车|折叠露营车|防潮垫|户外炊具|天幕|睡袋|充电宝|卷发棒|哑铃|弹力带|婴儿推车|狗窝|收纳箱|乳胶枕|香薰机|加湿器|美甲灯|拼图|积木|筋膜球|跳绳|护膝|宠物喂食|牵引绳|车载支架|平板支架|鼠标垫|筋膜贴|蒸汽眼罩|泡脚桶|洁面仪|剃须刀|榨汁机|破壁机|电煮锅|保温杯|咖啡杯|行李箱|托特包|腰包)/;
   if (mainstreamSku.test(t)) return true;
   const zhCat =
-    /(牛仔裤|休闲裤|运动裤|短裤|阔腿裤|直筒裤|连衣裙|半身裙|T恤|卫衣|开衫|外套|羽绒服|棉服|大衣|风衣|手机壳|耳机|背包|斜挎包|台灯|收纳|口红|面膜|眼影|假睫毛|瑜伽垫|筋膜枪|猫爬架|空气炸锅|露营灯|充电宝)$/;
+    /(牛仔裤|休闲裤|运动裤|短裤|阔腿裤|直筒裤|连衣裙|半身裙|T恤|卫衣|开衫|外套|羽绒服|棉服|大衣|风衣|手机壳|耳机|背包|斜挎包|台灯|收纳|口红|面膜|眼影|假睫毛|瑜伽垫|筋膜枪|猫爬架|空气炸锅|露营灯|充电宝|数据线|充电器|快充|手机支架|平板支架|智能手表|手环|挂件|贴纸|手套|袜子|帽子|围巾|皮带|钱包|雨伞|水杯|键盘|鼠标)$/;
   const enCat =
-    /\b(jeans|joggers|shorts|dress|hoodies?|sneakers|earbuds|backpack|phone case|tee|tees|tops?|bags?|pants|cargo|crossbody|graphic)\b/i;
+    /\b(jeans|joggers|shorts|dress|hoodies?|sneakers|earbuds|backpack|phone case|tee|tees|tops?|bags?|pants|cargo|crossbody|graphic|charger|cable|smartwatch|trackers?|stickers?|umbrella|wallet|scarf|beanie|mittens?)\b/i;
   if (zhCat.test(t)) return true;
   if (enCat.test(t)) return true;
+  if (ZH_PRODUCTISH_HINT.test(t) && !ZH_KEYWORD_ANALYSIS_HINT.test(t)) return true;
   return false;
 }
 

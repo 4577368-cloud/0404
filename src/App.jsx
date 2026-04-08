@@ -2,7 +2,7 @@ import React from 'react';
 import Header from '../components/Header.jsx';
 import Sidebar from '../components/Sidebar.jsx';
 import GlassCard from '../components/GlassCard.jsx';
-import { getRemainingQuota, MAX_FREE_QUOTA, MAX_GUEST_QUOTA } from '../utils/quota.js';
+import { getRemainingQuota, MAX_FREE_QUOTA, MAX_GUEST_QUOTA, getUsedCount } from '../utils/quota.js';
 import { fetchUserStats, remainingFromStats } from '../utils/supabaseUsage.js';
 import { TRANSLATIONS } from '../utils/translations.js';
 import { loadAIReports } from '../utils/aiReports.js';
@@ -12,6 +12,8 @@ import {
   isAnonymousUser,
   persistLastOAuthProviderIfSocial,
   saveAnonymousSessionBeforeOAuth,
+  getSavedAnonymousUserId,
+  clearAnonymousSessionBackup,
 } from '../utils/supabaseAuth.js';
 import AuthModal from '../components/AuthModal.jsx';
 import { track, AnalyticsEvent } from '../utils/analytics.js';
@@ -255,12 +257,32 @@ export default function App() {
       // 匿名用户也可用 claim_vip 在服务端解锁；必须与 user_stats 同步，否则密钥成功但界面仍非 VIP
       setRemainingQuota(getRemainingQuota(MAX_GUEST_QUOTA));
       let cancelled = false;
+
+      // 同步 localStorage 配额到数据库（双向一致性）
+      const syncLocalQuotaToDb = async () => {
+        const localUsed = getUsedCount();
+        try {
+          const { data, error } = await supabase.rpc('sync_quota_from_local', {
+            p_local_used: localUsed,
+          });
+          if (error) {
+            console.warn('[quota] Failed to sync local quota to DB:', error.message);
+          } else if (data?.ok && data?.action !== 'no_change') {
+            console.log('[quota] Synced local quota to DB:', data);
+          }
+        } catch (e) {
+          console.warn('[quota] Error syncing quota:', e);
+        }
+      };
+
       fetchUserStats(supabase).then((row) => {
         if (cancelled) return;
         setIsVip(!!row?.is_vip);
         if (row?.is_vip) {
           setRemainingQuota(remainingFromStats(row, true));
         }
+        // 同步本地配额到数据库（异步，不阻塞）
+        syncLocalQuotaToDb();
       });
       return () => {
         cancelled = true;
@@ -342,6 +364,35 @@ export default function App() {
       setAuthModalOpen(false);
       setAuthModalReason('default');
       setActiveView('chat');
+
+      // 迁移匿名用户的配额到新 OAuth 用户（保持使用次数连续性）
+      const oldAnonUserId = getSavedAnonymousUserId();
+      if (oldAnonUserId && supabase) {
+        (async () => {
+          try {
+            const { data, error } = await supabase.rpc('migrate_quota_on_oauth_upgrade', {
+              p_old_anonymous_user_id: oldAnonUserId,
+            });
+            if (error) {
+              console.warn('[quota] Failed to migrate quota on OAuth upgrade:', error.message);
+            } else if (data?.ok) {
+              console.log('[quota] Migrated quota from anonymous user:', data);
+              // 刷新剩余额度显示
+              fetchUserStats(supabase).then((row) => {
+                if (row) {
+                  setIsVip(!!row.is_vip);
+                  setRemainingQuota(remainingFromStats(row, false));
+                }
+              });
+            }
+          } catch (e) {
+            console.warn('[quota] Error migrating quota:', e);
+          } finally {
+            // 清理备份，防止重复迁移
+            clearAnonymousSessionBackup();
+          }
+        })();
+      }
     }
     prevOAuthSessionRef.current = oauth;
   }, [authUser, authModalOpen]);

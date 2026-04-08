@@ -59,7 +59,32 @@ export async function saveAnonymousSessionBeforeOAuth(client) {
     localStorage.setItem(ANON_SESSION_BACKUP_KEY, JSON.stringify({
       access_token: session.access_token,
       refresh_token: session.refresh_token,
+      user_id: user.id, // Store user_id for quota migration on OAuth upgrade
     }));
+  } catch (_) { /* ignore */ }
+}
+
+/**
+ * 获取之前保存的匿名用户 ID（用于 OAuth 升级后的配额迁移）。
+ * @returns {string|null} 匿名用户 ID 或 null
+ */
+export function getSavedAnonymousUserId() {
+  try {
+    const raw = localStorage.getItem(ANON_SESSION_BACKUP_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed?.user_id || null;
+  } catch (_) {
+    return null;
+  }
+}
+
+/**
+ * 清除已保存的匿名 session（OAuth 升级成功后调用）。
+ */
+export function clearAnonymousSessionBackup() {
+  try {
+    localStorage.removeItem(ANON_SESSION_BACKUP_KEY);
   } catch (_) { /* ignore */ }
 }
 
