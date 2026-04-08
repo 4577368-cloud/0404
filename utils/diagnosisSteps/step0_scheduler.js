@@ -15,7 +15,7 @@ Parse the product data and target market inputs, extract key parameters, and est
 
 ## Tasks
 
-1. Extract product name, category, price, sales volume, rating, channel distribution, and other key parameters. Convert RMB prices to USD at 1:7.2. Standardize category as "L1 Category / L2 Category". Mark missing fields as null with a "estimated" label.
+1. Extract product name, category, price, sales volume, rating, channel distribution, and other key parameters. Convert RMB prices to USD at 1:7.2. Standardize \`product_basics.category\` as an **English-only** retail path: \`"L1 Category / L2 Category"\` (e.g. \`"Home & Kitchen / Cookware"\`). If the input category is in Chinese or another non-English language, translate it into standard English e-commerce wording — **do not** output Chinese/CJK characters in \`product_basics.category\`. Mark missing fields as null with a "estimated" label.
 
 2. Determine market region: US/Canada → North America; UK/FR/DE/IT/ES etc. → EU; Australia/Southeast Asia etc. → Emerging Markets.
 
@@ -38,7 +38,7 @@ Parse the product data and target market inputs, extract key parameters, and est
   "step": 0,
   "product_basics": {
     "name": "Product name",
-    "category": "L1 / L2 category",
+    "category": "English L1 / L2 category only (no Chinese characters)",
     "price_usd": 0,
     "price_rmb": 0,
     "monthly_sales": 0,

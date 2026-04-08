@@ -351,9 +351,15 @@ function renderStep0(data, stepName, uiLang) {
 
   let md = `## Step 0: ${stepName}\n\n`;
 
+  const rawCategory0 = val(pb.category, data.category);
+  const category0 =
+    rawCategory0 == null || rawCategory0 === ''
+      ? '-'
+      : translateCategory(String(rawCategory0), 'en');
+
   md += section(zh ? '商品基础信息' : 'Product Overview', kvBlock([
     [zh ? '商品名称' : 'Product', s(pb.name, data.product_name)],
-    [zh ? '类目' : 'Category', s(pb.category, data.category)],
+    [zh ? '类目' : 'Category', category0],
     [zh ? '价格 (USD)' : 'Price (USD)', s(pb.price_usd, data.price_usd)],
     [zh ? '价格 (RMB)' : 'Price (RMB)', s(pb.price_rmb, data.price_rmb)],
     [zh ? '月销量' : 'Monthly Sales', s(pb.monthly_sales, data.monthly_sales)],
@@ -912,8 +918,14 @@ function renderStep7(data, stepName, uiLang) {
       [zh ? '社群' : 'Community', ht.community],
       [zh ? '活动' : 'Campaign', ht.campaign],
     ];
+    const categoryLabel = zh ? '类目' : 'Category';
     groups.forEach(([label, tags]) => {
-      if (tags?.length) md += `**${label}：** ${tags.join(' ')}\n\n`;
+      if (!tags?.length) return;
+      const out =
+        label === categoryLabel
+          ? tags.map((t) => translateCategory(String(t), 'en'))
+          : tags;
+      md += `**${label}：** ${out.join(' ')}\n\n`;
     });
   }
 
@@ -1173,7 +1185,7 @@ function generateExecutiveSummary(report, uiLang) {
   const insight = val(es.key_insight, step9.key_insight);
 
   const prodName = report.productData?.name || '-';
-  const category = translateCategory(report.productData?.category || '-', uiLang);
+  const category = translateCategory(report.productData?.category || '-', 'en');
   const countries = report.targetMarket?.countries || '-';
   const ages = report.targetMarket?.ages || '-';
   const date = formatDate(report.createdAt, uiLang);

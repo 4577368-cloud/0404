@@ -3,6 +3,7 @@ import { isAnonymousUser } from '../utils/supabaseAuth.js';
 import { createPortal } from 'react-dom';
 import { GoogleGIcon, FacebookIcon, TikTokIcon, YouTubeIcon, WhatsAppIcon } from './BrandSocialIcons.jsx';
 import { FIND_US_WHATSAPP_URL } from '../utils/socialLinks.js';
+import { getAppVersionLabel } from '../utils/appVersion.js';
 
 const FIND_US_LINKS = [
   { key: 'tiktok', ariaLabel: 'TikTok', href: 'https://www.tiktok.com/@tangbuy_com', Icon: TikTokIcon },
@@ -958,6 +959,19 @@ export default function Sidebar({
               </a>
             ))}
           </div>
+          {isGuest && (
+            <div
+              style={{
+                padding: '6px 12px 10px',
+                fontSize: 11,
+                color: 'var(--theme-text-muted)',
+                textAlign: 'center',
+                letterSpacing: '0.02em',
+              }}
+            >
+              {getAppVersionLabel()}
+            </div>
+          )}
           {!isGuest && (
             <button
               type="button"
@@ -966,6 +980,19 @@ export default function Sidebar({
             >
               {uiLang === 'zh' ? '切换账号' : 'Switch account'}
             </button>
+          )}
+          {!isGuest && (
+            <div
+              style={{
+                padding: '2px 12px 8px',
+                fontSize: 11,
+                color: 'var(--theme-text-muted)',
+                textAlign: 'center',
+                letterSpacing: '0.02em',
+              }}
+            >
+              {getAppVersionLabel()}
+            </div>
           )}
           {!isGuest && (
             <button

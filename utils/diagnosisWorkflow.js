@@ -206,6 +206,7 @@ function nineStepStrictOutputRules() {
 
 - **JSON keys** must match each step schema and remain in English.
 - **All human-readable string values** (paragraphs, bullets, labels in content, table cells, \`markdown_summary\`, nested text) must be written in **English only**. Do **not** output Chinese, Japanese, or Korean characters in explanatory or analytical prose. (Verbatim **product/brand names** copied from input data may keep their original script only as factual labels.)
+- **Category fields** (\`product_basics.category\` in Step 0, and any JSON field that carries retail **Category / 类目** meaning): values must be **English retail category paths only** (e.g. \`"Home & Kitchen / Cookware"\`). If the source product data uses Chinese category labels, **translate** them into conventional English e-commerce category wording; **never** leave Chinese (or CJK) characters in those category value strings.
 - **Forbidden in any text field:** HTML/XML numeric character references and named entities, including \`&#39;\`, \`&#x27;\`, \`&apos;\`, \`&quot;\`, \`&amp;\`, \`&#\\d+;\`. Write a normal ASCII apostrophe \`'\` or rephrase; follow standard JSON string escaping.
 - Do **not** emit literal backslash-escaped entity sequences; the consumer must see plain UTF-8 English, not \`&#…;\`.
 `;
