@@ -56,20 +56,57 @@ function isNonPublicHost(hostname) {
   return false;
 }
 
+function hasImageTextRef(text) {
+  const s = String(text || '');
+  if (!s) return false;
+  if (/\[image\]\(https?:\/\/[^\s)]+\)/i.test(s)) return true;
+  if (/\[[^\]]+\]\((https?:\/\/[^\s)]+\.(?:png|jpe?g|webp|gif|bmp|svg)(?:\?[^)\s]*)?)\)/i.test(s)) return true;
+  if (/https?:\/\/[^\s)]+\.(?:png|jpe?g|webp|gif|bmp|svg)(?:\?[^)\s]*)?/i.test(s)) return true;
+  if (/https?:\/\/[^\s)]*tangbuy[^\s)]*(?:\/|%2F).*(?:png|jpe?g|webp|gif|bmp|svg)/i.test(s)) return true;
+  return false;
+}
+
+function messageHasImage(msg) {
+  const c = msg?.content;
+  if (typeof c === 'string') {
+    return hasImageTextRef(c);
+  }
+  if (Array.isArray(c)) {
+    return c.some((part) => {
+      if (!part) return false;
+      if (part.type === 'image_url') return true;
+      if (typeof part.text === 'string' && hasImageTextRef(part.text)) return true;
+      if (typeof part.image_url?.url === 'string' && hasImageTextRef(part.image_url.url)) return true;
+      return false;
+    });
+  }
+  return false;
+}
+
+function requestHasImage(body) {
+  const messages = Array.isArray(body?.messages) ? body.messages : [];
+  return messages.some(messageHasImage);
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
   }
 
-  const baseUrlRaw = process.env.VLLM_BASE_URL;
-  const apiKey = process.env.VLLM_API_KEY;
-  const modelId = process.env.VLLM_MODEL_ID;
+  const body = await readJsonBody(req);
+  const useSecondary = requestHasImage(body);
+  const modelRoute = useSecondary ? 'secondary' : 'primary';
+  const baseUrlRaw = useSecondary ? process.env.VLLM_SECONDARY_BASE_URL : process.env.VLLM_BASE_URL;
+  const apiKey = useSecondary ? process.env.VLLM_SECONDARY_API_KEY : process.env.VLLM_API_KEY;
+  const modelId = useSecondary ? process.env.VLLM_SECONDARY_MODEL_ID : process.env.VLLM_MODEL_ID;
 
   if (!baseUrlRaw || !apiKey || !modelId) {
     res.status(500).json({
       error: 'Missing VLLM configuration on server',
-      hint: 'Set VLLM_BASE_URL, VLLM_API_KEY, VLLM_MODEL_ID in Vercel → Environment Variables (Production + Preview), then redeploy.',
+      hint: useSecondary
+        ? 'Image request detected. Set VLLM_SECONDARY_BASE_URL, VLLM_SECONDARY_API_KEY, VLLM_SECONDARY_MODEL_ID in Vercel Environment Variables, then redeploy.'
+        : 'Set VLLM_BASE_URL, VLLM_API_KEY, VLLM_MODEL_ID in Vercel → Environment Variables (Production + Preview), then redeploy.',
     });
     return;
   }
@@ -95,7 +132,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    const body = await readJsonBody(req);
     const upstreamPayload = {
       stream: true,
       max_tokens: 4000,
@@ -144,6 +180,9 @@ export default async function handler(req, res) {
     res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache, no-transform');
     res.setHeader('Connection', 'keep-alive');
+    res.setHeader('x-ai-model-used', String(modelId || ''));
+    res.setHeader('x-ai-model-route', modelRoute);
+    res.setHeader('x-ai-has-image', useSecondary ? '1' : '0');
 
     try {
       const nodeReadable = Readable.fromWeb(upstream.body);

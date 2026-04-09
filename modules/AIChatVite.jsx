@@ -7,7 +7,7 @@ import { isAnonymousUser } from '../utils/supabaseAuth.js';
 import { FIND_US_WHATSAPP_URL, FIND_US_WHATSAPP_LABEL } from '../utils/socialLinks.js';
 import { track, AnalyticsEvent } from '../utils/analytics.js';
 import { supabase } from '../utils/supabaseClient.js';
-import { consumeChatTurn, claimVipRemote } from '../utils/supabaseUsage.js';
+import { consumeChatTurn, claimVipRemote, logAiModelReply } from '../utils/supabaseUsage.js';
 import { extractUrlsFromText } from '../utils/urlExtract.js';
 import { DIAGNOSIS_PROMPTS, fillPrompt } from '../utils/diagnosisPrompts.js';
 import { DiagnosisWorkflow } from '../utils/diagnosisWorkflow.js';
@@ -18,7 +18,7 @@ import {
   WORKFLOW_TOTAL_STEPS,
 } from '../utils/workflowProgress.js';
 import OverlayModal from '../components/OverlayModal.jsx';
-import GEOIntakePanel, { buildGeoIntakeUserMessage, countFilled } from '../components/GEOIntakePanel.jsx';
+import GEOIntakePanel, { buildGeoIntakeUserMessage } from '../components/GEOIntakePanel.jsx';
 import SimpleModeIntakePanel, {
   buildDiagnosisIntakeUserMessage,
   buildSeoIntakeUserMessage,
@@ -61,8 +61,58 @@ import { PROMPTS } from '../utils/systemPrompts.js';
 // ── Markdown renderer ──
 const mdRenderer = new marked.Renderer();
 mdRenderer.link = function ({ href, title, text }) {
+  const t = String(text || '').trim();
+  const hrefStr = String(href || '').trim();
+  const isTangbuySearch =
+    /^https?:\/\/dropshipping\.tangbuy\.com\/en-US\/search\?/i.test(hrefStr) ||
+    /^https?:\/\/dropshipping\.tangbuy\.com\/zh-CN\/search\?/i.test(hrefStr);
+  let displayText = t;
+  if (isTangbuySearch && (!displayText || displayText === hrefStr)) {
+    displayText = 'Tangbuy 产品池搜索';
+  }
+  if (/^image$/i.test(t)) {
+    const safeHref = escapeHtmlText(href || '');
+    return `<a href="${safeHref}" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin:6px 0;">
+      <img src="${safeHref}" alt="Image" style="max-width:220px;max-height:220px;border-radius:10px;border:1px solid var(--theme-border);object-fit:cover;" loading="lazy" referrerpolicy="no-referrer" />
+    </a>`;
+  }
   const titleAttr = title ? ` title="${title}"` : '';
-  return `<a href="${href}"${titleAttr} target="_blank" rel="noopener noreferrer" class="underline underline-offset-2 transition-opacity hover:opacity-80" style="color:var(--secondary)">${text}</a>`;
+  return `<a href="${href}"${titleAttr} target="_blank" rel="noopener noreferrer" class="underline underline-offset-2 transition-opacity hover:opacity-80" style="color:var(--secondary)">${displayText}</a>`;
+};
+function escapeHtmlText(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+mdRenderer.code = function ({ text, lang }) {
+  const language = String(lang || '').trim().toLowerCase();
+  const rawCode = String(text || '');
+  const escapedCode = escapeHtmlText(rawCode);
+  const copyLabel = language === 'html' ? 'Copy HTML' : 'Copy code';
+  if (language === 'html') {
+    const previewHtml = DOMPurify.sanitize(stripLiquidTemplateRefs(rawCode), {
+      ADD_ATTR: ['target', 'rel', 'class', 'id', 'style', 'itemprop', 'itemscope', 'itemtype'],
+      ALLOW_DATA_ATTR: true,
+    });
+    const encodedRaw = encodeURIComponent(rawCode);
+    return `<div class="tb-md-codewrap" data-raw-code="${escapeHtmlText(encodedRaw)}" style="margin:10px 0;border:1px solid var(--theme-border);border-radius:10px;overflow:hidden;background:var(--theme-card-bg);">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-bottom:1px solid var(--theme-border);background:var(--theme-surface);">
+        <span style="font-size:11px;color:var(--theme-text-muted);text-transform:uppercase;letter-spacing:.03em;">HTML Preview</span>
+        <button type="button" data-copy-code="1" class="tb-copy-code-btn" style="border:none;background:transparent;color:var(--secondary);font-size:12px;font-weight:600;cursor:pointer;">${copyLabel}</button>
+      </div>
+      <div style="padding:10px;background:var(--theme-card-bg);">${previewHtml}</div>
+    </div>`;
+  }
+  return `<div class="tb-md-codewrap" style="margin:10px 0;border:1px solid var(--theme-border);border-radius:10px;overflow:hidden;background:var(--theme-card-bg);">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-bottom:1px solid var(--theme-border);background:var(--theme-surface);">
+      <span style="font-size:11px;color:var(--theme-text-muted);text-transform:uppercase;letter-spacing:.03em;">${escapeHtmlText(language || 'code')}</span>
+      <button type="button" data-copy-code="1" class="tb-copy-code-btn" style="border:none;background:transparent;color:var(--secondary);font-size:12px;font-weight:600;cursor:pointer;">${copyLabel}</button>
+    </div>
+    <pre style="margin:0;padding:10px 12px;overflow:auto;"><code>${escapedCode}</code></pre>
+  </div>`;
 };
 
 function stripLiquidTemplateRefs(html) {
@@ -77,7 +127,7 @@ function renderMarkdown(text) {
   try {
     const cleaned = decodeHtmlEntities(String(text));
     const raw = marked.parse(cleaned, { breaks: true, gfm: true, renderer: mdRenderer });
-    const safe = DOMPurify.sanitize(raw, { ADD_ATTR: ['target', 'rel', 'class'], ALLOW_DATA_ATTR: true });
+    const safe = DOMPurify.sanitize(raw, { ADD_ATTR: ['target', 'rel', 'class', 'style'], ALLOW_DATA_ATTR: true });
     return stripLiquidTemplateRefs(safe);
   } catch (_) {
     return stripLiquidTemplateRefs(DOMPurify.sanitize(String(text)));
@@ -87,6 +137,13 @@ function renderMarkdown(text) {
 // User bubble markdown (colors follow --theme-bubble-user-* in index.html)
 const userMdRenderer = new marked.Renderer();
 userMdRenderer.link = function ({ href, title, text }) {
+  const t = String(text || '').trim();
+  if (/^image$/i.test(t)) {
+    const safeHref = escapeHtmlText(href || '');
+    return `<a href="${safeHref}" target="_blank" rel="noopener noreferrer" style="display:inline-block;">
+      <img src="${safeHref}" alt="Image" style="max-width:220px;max-height:220px;border-radius:10px;border:1px solid color-mix(in srgb, var(--theme-bubble-user-border) 70%, transparent);object-fit:cover;" loading="lazy" referrerpolicy="no-referrer" />
+    </a>`;
+  }
   const titleAttr = title ? ` title="${title}"` : '';
   return `<a href="${href}"${titleAttr} target="_blank" rel="noopener noreferrer" style="color:var(--theme-bubble-user-link)" class="underline underline-offset-2 hover:opacity-90">${text}</a>`;
 };
@@ -94,7 +151,7 @@ function renderUserMarkdown(text) {
   if (!text) return '';
   try {
     const raw = marked.parse(String(text), { breaks: true, gfm: true, renderer: userMdRenderer });
-    return DOMPurify.sanitize(raw, { ADD_ATTR: ['target', 'rel'], ALLOW_DATA_ATTR: true }).replace(/<p>\s*<\/p>/g, '').trim();
+    return DOMPurify.sanitize(raw, { ADD_ATTR: ['target', 'rel', 'style', 'loading', 'referrerpolicy'], ALLOW_DATA_ATTR: true }).replace(/<p>\s*<\/p>/g, '').trim();
   } catch (_) {
     return DOMPurify.sanitize(String(text));
   }
@@ -121,6 +178,35 @@ function extractFaqHtmlBlock(text) {
   const faqHtml = (nextHeading > 0 ? tail.slice(0, nextHeading) : tail).trim();
   const cleanText = (src.slice(0, start) + (nextHeading > 0 ? tail.slice(nextHeading) : '')).replace(/\n{3,}/g, '\n\n').trim();
   return { cleanText, faqHtml };
+}
+
+function looksLikeHtmlFragment(text) {
+  const s = String(text || '').trim();
+  if (!s) return false;
+  return /<\/?[a-z][\s\S]*>/i.test(s);
+}
+
+function splitImageRefsFromText(text) {
+  const src = String(text || '');
+  if (!src) return { cleanText: '', imageUrls: [] };
+  const urls = [];
+  const clean = src.replace(/\[image\]\((https?:\/\/[^\s)]+)\)/gi, (_m, u) => {
+    const url = String(u || '').trim();
+    if (url) urls.push(url);
+    return '';
+  }).replace(/\n{3,}/g, '\n\n').trim();
+  return { cleanText: clean, imageUrls: urls };
+}
+
+function toMultimodalUserContent(text) {
+  const { cleanText, imageUrls } = splitImageRefsFromText(text);
+  if (!imageUrls.length) return String(text || '');
+  const parts = [];
+  if (cleanText) parts.push({ type: 'text', text: cleanText });
+  imageUrls.forEach((url) => {
+    parts.push({ type: 'image_url', image_url: { url } });
+  });
+  return parts.length ? parts : String(text || '');
 }
 
 // ── Constants ──
@@ -276,6 +362,23 @@ function stripLinksForSearchPicks(text) {
     .trim();
 }
 
+function isMeaningfulPickLabel(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return false;
+  if (s.length < 3) return false;
+  if (/^[+*#\-\s.,/\\]+$/.test(s)) return false;
+  if (/^(bag|bags|mask|serum|essence|product|item)$/i.test(s)) return false;
+  if (/^[^a-zA-Z\u4e00-\u9fff]*$/i.test(s)) return false;
+  return true;
+}
+
+function normalizePickLabel(raw) {
+  return String(raw || '')
+    .replace(/^[+*#\-\s]+/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function polishAssistantText(raw) {
   if (!raw) return '';
   let t = String(raw)
@@ -400,6 +503,8 @@ const ChatInput = React.memo(function ChatInput({
   const [attachedImageUrl, setAttachedImageUrl] = React.useState(null);
   const [attachedProductRef, setAttachedProductRef] = React.useState(null);
   const [isUploading, setIsUploading] = React.useState(false);
+  const [uploadProgress, setUploadProgress] = React.useState(0);
+  const [isDragOver, setIsDragOver] = React.useState(false);
   const [isModeDropdownOpen, setIsModeDropdownOpen] = React.useState(false);
   const [inputHeight, setInputHeight] = React.useState(36);
   const composingRef = React.useRef(false);
@@ -540,29 +645,48 @@ const ChatInput = React.memo(function ChatInput({
 
   const handlePickFile = React.useCallback(async (file) => {
     if (!file) return;
-    setIsUploading(true);
-    try {
-      const fd = new FormData();
-      // Field name must match the backend proxy expectation (`file`).
-      fd.append('file', file);
-      // Direct upload from browser (avoids server-side DNS/network restrictions).
-      // If your browser blocks this due to CORS, we can fall back to a server proxy later.
-      const res = await fetch('https://www.tangbuy.com/gateway/resource/common/oss/upload', {
-        method: 'POST',
-        body: fd,
-        // Let browser set Content-Type boundary for multipart/form-data
-        mode: 'cors',
-      });
-      const json = await res.json().catch(() => null);
-      const url = json?.data;
-      if (!res.ok || !url) throw new Error(json?.msg || json?.error || `Upload failed (${res.status})`);
-
-      setAttachedImageUrl(url);
+    if (!String(file.type || '').startsWith('image/')) {
       setInput((prev) => {
-        const next = prev && prev.trim() ? `${prev}\nImage` : 'Image';
+        const next = prev && prev.trim() ? `${prev}\n[Only image files are supported]` : '[Only image files are supported]';
         setTimeout(() => flushDraftToParent(next), 0);
         return next;
       });
+      return;
+    }
+    setIsUploading(true);
+    setUploadProgress(0);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const json = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'https://www.tangbuy.com/gateway/resource/common/oss/upload', true);
+        xhr.responseType = 'json';
+        xhr.upload.onprogress = (evt) => {
+          if (!evt.lengthComputable) return;
+          const pct = Math.max(0, Math.min(100, Math.round((evt.loaded / evt.total) * 100)));
+          setUploadProgress(pct);
+        };
+        xhr.onerror = () => reject(new Error('Upload network error'));
+        xhr.onload = () => {
+          const body = xhr.response && typeof xhr.response === 'object'
+            ? xhr.response
+            : (() => {
+                try { return JSON.parse(xhr.responseText || '{}'); } catch { return null; }
+              })();
+          if (xhr.status < 200 || xhr.status >= 300) {
+            reject(new Error(body?.msg || body?.error || `Upload failed (${xhr.status})`));
+            return;
+          }
+          resolve(body);
+        };
+        xhr.send(fd);
+      });
+      const url = json?.data;
+      if (!url) throw new Error(json?.msg || json?.error || 'Upload failed');
+
+      setAttachedImageUrl(url);
+      setTimeout(() => flushDraftToParent(input), 0);
       textareaRef.current?.focus();
     } catch (e) {
       console.error('[upload] failed:', e);
@@ -574,8 +698,29 @@ const ChatInput = React.memo(function ChatInput({
       });
     } finally {
       setIsUploading(false);
+      setTimeout(() => setUploadProgress(0), 300);
     }
-  }, [flushDraftToParent]);
+  }, [flushDraftToParent, input]);
+
+  const handleDragOver = React.useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isDragOver) setIsDragOver(true);
+  }, [isDragOver]);
+
+  const handleDragLeave = React.useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = React.useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    const file = e.dataTransfer?.files?.[0];
+    if (file) handlePickFile(file);
+  }, [handlePickFile]);
 
   const isPortal = layout === 'portal';
 
@@ -586,19 +731,21 @@ const ChatInput = React.memo(function ChatInput({
         : { flexShrink: 0, paddingBottom: 'env(safe-area-inset-bottom, 0px)', background: 'transparent', transition: 'background 0.3s' }}>
       <div className={`${isPortal ? 'max-w-2xl px-0 py-0' : 'max-w-5xl px-4 md:px-6 py-3'} mx-auto space-y-2`}>
         {attachedImageUrl && (
-          <div className="flex items-center justify-between gap-2 px-1">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-[11px] font-semibold" style={{ color: 'var(--brand-primary-fixed)' }}>Image</span>
-              <a
-                href={attachedImageUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-[11px] underline underline-offset-2 truncate"
-                style={{ color: 'var(--theme-text-secondary)' }}
-                title={attachedImageUrl}
-              >
-                Preview
-              </a>
+          <div className="flex items-start justify-between gap-2 px-1">
+            <div className="flex items-start gap-3 min-w-0">
+              <img
+                src={attachedImageUrl}
+                alt="Uploaded preview"
+                style={{
+                  width: 64,
+                  height: 64,
+                  objectFit: 'cover',
+                  borderRadius: 10,
+                  border: '1px solid var(--theme-border)',
+                  background: 'var(--theme-surface)',
+                  flexShrink: 0,
+                }}
+              />
             </div>
             <button
               type="button"
@@ -629,15 +776,40 @@ const ChatInput = React.memo(function ChatInput({
         )}
         <div
           className={`relative ${isPortal ? 'rounded-[22px]' : 'rounded-[24px]'} px-3.5 py-2 transition-[background-color,box-shadow,border-color] duration-300`}
+          onDragOver={handleDragOver}
+          onDragEnter={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
           style={{
             background: isPortal ? 'rgba(255,255,255,0.72)' : 'var(--theme-card-bg)',
-            border: '1px solid var(--theme-border)',
+            border: isDragOver ? '1px solid var(--brand-primary-fixed)' : '1px solid var(--theme-border)',
             boxShadow: isPortal
               ? '0 18px 50px rgba(30,41,59,0.08), inset 0 1px 0 rgba(255,255,255,0.82)'
               : '0 18px 40px rgba(0,0,0,0.26), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 0 0 1px rgba(255,255,255,0.03)',
             minHeight: Math.max(58, inputHeight + 26),
           }}
         >
+          {isDragOver && (
+            <div
+              style={{
+                position: 'absolute',
+                inset: 4,
+                borderRadius: isPortal ? 18 : 20,
+                border: '1px dashed var(--brand-primary-fixed)',
+                background: 'rgba(255,59,48,0.08)',
+                pointerEvents: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--brand-primary-fixed)',
+                fontSize: 12,
+                fontWeight: 700,
+                zIndex: 3,
+              }}
+            >
+              Drop image to upload
+            </div>
+          )}
           <input
             ref={fileInputRef}
             type="file"
@@ -751,6 +923,15 @@ const ChatInput = React.memo(function ChatInput({
                 >
                   <div className={isUploading ? 'icon-loader animate-spin text-[13px]' : 'icon-paperclip text-[13px]'} />
                 </button>
+                {isUploading && (
+                  <span
+                    className="text-[10px] tabular-nums"
+                    style={{ color: 'var(--theme-text-secondary)', minWidth: 34, textAlign: 'right' }}
+                    aria-live="polite"
+                  >
+                    {uploadProgress}%
+                  </span>
+                )}
 
                 <button
                   onClick={handleSend}
@@ -1012,6 +1193,7 @@ export function ModuleAIChat({
   }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const [showVipModal, setShowVipModal] = React.useState(false);
+  const [copiedHtmlMsgKey, setCopiedHtmlMsgKey] = React.useState('');
   const [vipKeyInput, setVipKeyInput] = React.useState('');
   const [vipKeyError, setVipKeyError] = React.useState('');
 
@@ -1158,7 +1340,7 @@ export function ModuleAIChat({
   }, [showVipModal, guestFeatureLocked]);
 
   const isFirstRender = React.useRef(true);
-  const prevMessagesRef = React.useRef(propMessages);
+  const prevConversationIdRef = React.useRef(conversationId);
   const msgKeyMapRef = React.useRef(new WeakMap());
   const msgKeySeqRef = React.useRef(0);
 
@@ -1166,8 +1348,7 @@ export function ModuleAIChat({
     if (msg && typeof msg === 'object') {
       const turnId = msg._streamId ?? msg._replyUid;
       if (turnId != null) {
-        const kind =
-          msg.type === 'html' ? 'h' : msg.type === 'search_picks' ? 'p' : msg.type === 'products_trend' ? 'tr' : 't';
+        const kind = String(msg.type || msg.role || 'text');
         return `turn_${turnId}_${kind}`;
       }
       const hit = msgKeyMapRef.current.get(msg);
@@ -1180,13 +1361,13 @@ export function ModuleAIChat({
   }, []);
 
   React.useEffect(() => {
-    if (prevMessagesRef.current !== propMessages) {
-      prevMessagesRef.current = propMessages;
+    if (prevConversationIdRef.current !== conversationId) {
+      prevConversationIdRef.current = conversationId;
       isFirstRender.current = true;
       stickToBottomRef.current = true;
       initialMessageCountRef.current = Array.isArray(propMessages) ? propMessages.length : 0;
     }
-  }, [propMessages]);
+  }, [conversationId, propMessages]);
 
   const CHAT_SCROLL_PIN_PX = 100;
   const onChatScroll = React.useCallback(() => {
@@ -1462,6 +1643,10 @@ export function ModuleAIChat({
       throw new Error(`API ${res.status}: ${detail || res.statusText}`);
     }
 
+    const modelUsed = String(res.headers.get('x-ai-model-used') || '').trim();
+    const modelRoute = String(res.headers.get('x-ai-model-route') || '').trim();
+    const modelHasImage = String(res.headers.get('x-ai-has-image') || '') === '1';
+
     const streamId = Date.now();
     setMessages((prev) => [
       ...prev,
@@ -1585,6 +1770,9 @@ export function ModuleAIChat({
       htmlPart,
       finalSearchText: textPart || finalContent,
       streamId,
+      modelUsed,
+      modelRoute,
+      modelHasImage,
     };
   };
 
@@ -1646,8 +1834,11 @@ export function ModuleAIChat({
 
       const contextMessages = messages
         .filter((m) => m.role === 'user' || m.role === 'ai')
-        .map((m) => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content }));
-      contextMessages.push({ role: 'user', content: txt });
+        .map((m) => ({
+          role: m.role === 'ai' ? 'assistant' : 'user',
+          content: m.role === 'user' ? toMultimodalUserContent(m.content) : m.content,
+        }));
+      contextMessages.push({ role: 'user', content: toMultimodalUserContent(txt) });
 
       let snapshot = null;
       if (url0 && !isImageUrl) {
@@ -1678,6 +1869,14 @@ export function ModuleAIChat({
       const apiMessages = [systemMessage, ...(tangbuyRetrievalMessage ? [tangbuyRetrievalMessage] : []), ...contextMessages];
 
       const streamResult = await streamResponse(apiMessages);
+      if (supabase && authUser && streamResult?.modelUsed) {
+        logAiModelReply(supabase, {
+          conversationId,
+          modelId: streamResult.modelUsed,
+          modelRoute: streamResult.modelRoute || 'primary',
+          hasImage: !!streamResult.modelHasImage,
+        });
+      }
 
       if (mode === 'seo' && streamResult?.finalText && !/===HTML===/i.test(streamResult.finalText)) {
         try {
@@ -1882,12 +2081,7 @@ export function ModuleAIChat({
 
   /** 包裹当前显示的 intake 表单，用于「空白表单时点外部收起」 */
   const intakePanelWrapRef = React.useRef(null);
-  const emptyIntakePanelOpen = React.useMemo(() => {
-    if (showGeoIntakePanel && countFilled(geoIntake) === 0) return true;
-    if (showDiagnosisIntakePanel && !String(diagnosisIntakeUrl || '').trim()) return true;
-    if (showSeoIntakePanel && !String(seoIntakeUrl || '').trim()) return true;
-    return false;
-  }, [showGeoIntakePanel, showDiagnosisIntakePanel, showSeoIntakePanel, geoIntake, diagnosisIntakeUrl, seoIntakeUrl]);
+  const intakePanelOpen = showGeoIntakePanel || showDiagnosisIntakePanel || showSeoIntakePanel;
 
   const intakeDismissSnapRef = React.useRef({});
   React.useEffect(() => {
@@ -1902,18 +2096,18 @@ export function ModuleAIChat({
   });
 
   React.useEffect(() => {
-    if (!emptyIntakePanelOpen) return undefined;
-    const tryCollapseEmptyIntake = () => {
+    if (!intakePanelOpen) return undefined;
+    const collapseIntakePanel = () => {
       const snap = intakeDismissSnapRef.current;
-      if (snap.showGeoIntakePanel && countFilled(snap.geoIntake) === 0) {
+      if (snap.showGeoIntakePanel) {
         setGeoIntakeSubmitted(true);
         return;
       }
-      if (snap.showDiagnosisIntakePanel && !String(snap.diagnosisIntakeUrl || '').trim()) {
+      if (snap.showDiagnosisIntakePanel) {
         setDiagnosisIntakeSubmitted(true);
         return;
       }
-      if (snap.showSeoIntakePanel && !String(snap.seoIntakeUrl || '').trim()) {
+      if (snap.showSeoIntakePanel) {
         setSeoIntakeSubmitted(true);
       }
     };
@@ -1922,11 +2116,11 @@ export function ModuleAIChat({
       if (host && host.contains(e.target)) return;
       const inputBar = typeof document !== 'undefined' ? document.getElementById('chat-input-bar') : null;
       if (inputBar && inputBar.contains(e.target)) return;
-      tryCollapseEmptyIntake();
+      collapseIntakePanel();
     };
     const onKeyDown = (e) => {
       if (e.key !== 'Escape') return;
-      tryCollapseEmptyIntake();
+      collapseIntakePanel();
     };
     document.addEventListener('pointerdown', onPointerDown, true);
     window.addEventListener('keydown', onKeyDown, true);
@@ -1934,7 +2128,7 @@ export function ModuleAIChat({
       document.removeEventListener('pointerdown', onPointerDown, true);
       window.removeEventListener('keydown', onKeyDown, true);
     };
-  }, [emptyIntakePanelOpen]);
+  }, [intakePanelOpen]);
 
   const handleGeoField = React.useCallback((key, value) => {
     setGeoIntake((prev) => ({ ...prev, [key]: value }));
@@ -2025,6 +2219,28 @@ export function ModuleAIChat({
     chatInputRef.current?.setInput(prompt);
     chatInputRef.current?.focus();
   }, [onOpenSourcing]);
+
+  const handleChatContainerClick = React.useCallback(async (e) => {
+    const btn = e.target?.closest?.('[data-copy-code]');
+    if (!btn) return;
+    const wrap = btn.closest('.tb-md-codewrap');
+    const encoded = wrap?.getAttribute?.('data-raw-code') || '';
+    const codeNode = wrap?.querySelector('pre code');
+    let code = '';
+    if (encoded) {
+      try { code = decodeURIComponent(encoded); } catch (_) { code = ''; }
+    }
+    if (!code) code = codeNode?.textContent || '';
+    if (!code.trim()) return;
+    try {
+      await navigator.clipboard.writeText(code);
+      const old = btn.textContent;
+      btn.textContent = uiLang === 'zh' ? '已复制' : 'Copied';
+      setTimeout(() => {
+        btn.textContent = old || (uiLang === 'zh' ? '复制代码' : 'Copy code');
+      }, 1200);
+    } catch (_) {}
+  }, [uiLang]);
 
   const handleProductAskAi = React.useCallback((product) => {
     if (guestFeatureLocked) {
@@ -2470,6 +2686,7 @@ export function ModuleAIChat({
         id="chat-container"
         ref={chatContainerRef}
         onScroll={onChatScroll}
+        onClick={handleChatContainerClick}
         style={{ flex: '1 1 0', minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}
       >
         {isPortalView ? (
@@ -2496,7 +2713,13 @@ export function ModuleAIChat({
             if (msg._streamId && !msg.content) return null;
 
             if (msg.type === 'search_picks') {
-              const links = Array.isArray(msg.data) ? msg.data : [];
+              const links = (Array.isArray(msg.data) ? msg.data : [])
+                .map((row) => {
+                  const label = normalizePickLabel(row?.label || row?.keyword || '');
+                  return { ...row, label };
+                })
+                .filter((row) => isMeaningfulPickLabel(row.label))
+                .filter((row, idx, arr) => arr.findIndex((x) => x.label.toLowerCase() === row.label.toLowerCase()) === idx);
               return (
                 <div key={msgKey} className="flex justify-start w-full min-w-0">
                   <div
@@ -2618,10 +2841,47 @@ export function ModuleAIChat({
             }
 
             if (msg.type === 'html') {
+              const copied = copiedHtmlMsgKey === msgKey;
+              const htmlRaw = String(msg.content || '');
+              const htmlRenderable = looksLikeHtmlFragment(htmlRaw)
+                ? {
+                    __html: DOMPurify.sanitize(htmlRaw, { ADD_ATTR: ['target', 'rel', 'data-label', 'class', 'style'], ALLOW_DATA_ATTR: true }),
+                  }
+                : { __html: renderMarkdown(htmlRaw) };
               return (
                 <div key={msgKey} className="flex justify-start">
                   <div className="w-full max-w-[800px] rounded-2xl overflow-hidden" style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)' }}>
-                    <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(msg.content, { ADD_ATTR: ['target', 'rel', 'data-label'], ALLOW_DATA_ATTR: true }) }} />
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        alignItems: 'center',
+                        padding: '8px 10px',
+                        borderBottom: '1px solid var(--theme-border)',
+                        background: 'var(--theme-surface)',
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(String(msg.content || ''));
+                            setCopiedHtmlMsgKey(msgKey);
+                            setTimeout(() => {
+                              setCopiedHtmlMsgKey((prev) => (prev === msgKey ? '' : prev));
+                            }, 1300);
+                          } catch (_) {}
+                        }}
+                        className="inline-flex items-center gap-1.5 text-[12px] transition-opacity hover:opacity-80"
+                        style={{ color: 'var(--secondary)', fontWeight: 600 }}
+                        title={uiLang === 'zh' ? '复制 HTML 源代码' : 'Copy HTML source'}
+                        aria-label={uiLang === 'zh' ? '复制 HTML 源代码' : 'Copy HTML source'}
+                      >
+                        <span className={copied ? 'icon-check' : 'icon-copy'} aria-hidden />
+                        <span>{copied ? (uiLang === 'zh' ? '已复制' : 'Copied') : (uiLang === 'zh' ? '复制 HTML' : 'Copy HTML')}</span>
+                      </button>
+                    </div>
+                    <div dangerouslySetInnerHTML={htmlRenderable} />
                   </div>
                 </div>
               );
@@ -2678,14 +2938,18 @@ export function ModuleAIChat({
                     </div>
                     <div
                       className="md-body"
-                      dangerouslySetInnerHTML={{
-                        __html: stripLiquidTemplateRefs(
-                          DOMPurify.sanitize(faqHtml, {
-                            ADD_ATTR: ['itemprop', 'itemscope', 'itemtype', 'target', 'rel'],
-                            ALLOW_DATA_ATTR: true,
-                          }),
-                        ),
-                      }}
+                      dangerouslySetInnerHTML={
+                        looksLikeHtmlFragment(faqHtml)
+                          ? {
+                              __html: stripLiquidTemplateRefs(
+                                DOMPurify.sanitize(faqHtml, {
+                                  ADD_ATTR: ['itemprop', 'itemscope', 'itemtype', 'target', 'rel'],
+                                  ALLOW_DATA_ATTR: true,
+                                }),
+                              ),
+                            }
+                          : { __html: renderMarkdown(faqHtml) }
+                      }
                     />
                   </div>
                 ) : null}

@@ -49,17 +49,6 @@ function apiChatMiddleware() {
           return;
         }
 
-        const baseUrl = process.env.VLLM_BASE_URL;
-        const apiKey = process.env.VLLM_API_KEY;
-        const modelId = process.env.VLLM_MODEL_ID;
-
-        if (!baseUrl || !apiKey || !modelId) {
-          res.statusCode = 500;
-          res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ error: 'Missing VLLM env vars. Create a .env file with VLLM_BASE_URL, VLLM_API_KEY, VLLM_MODEL_ID.' }));
-          return;
-        }
-
         // Collect request body
         const chunks: Buffer[] = [];
         for await (const chunk of req) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
@@ -67,6 +56,47 @@ function apiChatMiddleware() {
 
         try {
           const body = rawBody ? JSON.parse(rawBody) : {};
+          const messages = Array.isArray(body?.messages) ? body.messages : [];
+          const hasImageTextRef = (text: string) => {
+            const s = String(text || '');
+            if (!s) return false;
+            if (/\[image\]\(https?:\/\/[^\s)]+\)/i.test(s)) return true;
+            if (/\[[^\]]+\]\((https?:\/\/[^\s)]+\.(?:png|jpe?g|webp|gif|bmp|svg)(?:\?[^)\s]*)?)\)/i.test(s)) return true;
+            if (/https?:\/\/[^\s)]+\.(?:png|jpe?g|webp|gif|bmp|svg)(?:\?[^)\s]*)?/i.test(s)) return true;
+            if (/https?:\/\/[^\s)]*tangbuy[^\s)]*(?:\/|%2F).*(?:png|jpe?g|webp|gif|bmp|svg)/i.test(s)) return true;
+            return false;
+          };
+          const hasImage = messages.some((m: any) => {
+            const c = m?.content;
+            if (typeof c === 'string') return hasImageTextRef(c);
+            if (Array.isArray(c)) {
+              return c.some((p: any) => {
+                if (p?.type === 'image_url') return true;
+                if (typeof p?.text === 'string' && hasImageTextRef(p.text)) return true;
+                if (typeof p?.image_url?.url === 'string' && hasImageTextRef(p.image_url.url)) return true;
+                return false;
+              });
+            }
+            return false;
+          });
+
+          const baseUrl = hasImage ? process.env.VLLM_SECONDARY_BASE_URL : process.env.VLLM_BASE_URL;
+          const apiKey = hasImage ? process.env.VLLM_SECONDARY_API_KEY : process.env.VLLM_API_KEY;
+          const modelId = hasImage ? process.env.VLLM_SECONDARY_MODEL_ID : process.env.VLLM_MODEL_ID;
+
+          if (!baseUrl || !apiKey || !modelId) {
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(
+              JSON.stringify({
+                error: hasImage
+                  ? 'Missing SECONDARY VLLM env vars. Add VLLM_SECONDARY_BASE_URL, VLLM_SECONDARY_API_KEY, VLLM_SECONDARY_MODEL_ID.'
+                  : 'Missing VLLM env vars. Create a .env file with VLLM_BASE_URL, VLLM_API_KEY, VLLM_MODEL_ID.',
+              }),
+            );
+            return;
+          }
+
           const payload = { stream: true, max_tokens: 4000, temperature: 0.7, ...body, model: modelId };
           const bodyStr = JSON.stringify(payload);
 
@@ -103,6 +133,9 @@ function apiChatMiddleware() {
                 'Content-Type': upstreamRes.headers['content-type'] ?? 'text/event-stream',
                 'Cache-Control': 'no-cache, no-transform',
                 'Connection': 'keep-alive',
+                'x-ai-model-used': String(modelId || ''),
+                'x-ai-model-route': hasImage ? 'secondary' : 'primary',
+                'x-ai-has-image': hasImage ? '1' : '0',
               });
               upstreamRes.pipe(res);
             }

@@ -69,3 +69,23 @@ export async function logTangbuyClick(client, eventKind, targetUrl, meta = {}) {
     /* ignore */
   }
 }
+
+/**
+ * Log which model generated the current assistant reply.
+ * @param {import('@supabase/supabase-js').SupabaseClient | null} client
+ * @param {{ conversationId?: string, modelId?: string, modelRoute?: 'primary'|'secondary'|string, hasImage?: boolean }} p
+ */
+export async function logAiModelReply(client, { conversationId = '', modelId = '', modelRoute = 'primary', hasImage = false } = {}) {
+  if (!client) return;
+  if (!modelId) return;
+  try {
+    await client.rpc('log_ai_model_reply', {
+      p_conversation_id: conversationId ?? '',
+      p_model_id: String(modelId || ''),
+      p_model_route: String(modelRoute || 'primary'),
+      p_has_image: !!hasImage,
+    });
+  } catch (_) {
+    /* ignore */
+  }
+}
