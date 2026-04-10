@@ -66,7 +66,7 @@ function apiChatMiddleware() {
             if (/https?:\/\/[^\s)]*tangbuy[^\s)]*(?:\/|%2F).*(?:png|jpe?g|webp|gif|bmp|svg)/i.test(s)) return true;
             return false;
           };
-          const hasImage = messages.some((m: any) => {
+          const messageHasImage = (m: any) => {
             const c = m?.content;
             if (typeof c === 'string') return hasImageTextRef(c);
             if (Array.isArray(c)) {
@@ -78,11 +78,33 @@ function apiChatMiddleware() {
               });
             }
             return false;
-          });
+          };
+          const hasImage = messages.some((m: any) => messageHasImage(m));
+          let useSecondary = false;
+          if (hasImage) {
+            useSecondary = true;
+          } else {
+            let lastImageUserIdx = -1;
+            for (let i = messages.length - 1; i >= 0; i -= 1) {
+              const m = messages[i];
+              if (String(m?.role || '') !== 'user') continue;
+              if (messageHasImage(m)) {
+                lastImageUserIdx = i;
+                break;
+              }
+            }
+            if (lastImageUserIdx >= 0) {
+              let assistantRepliesAfterImage = 0;
+              for (let i = lastImageUserIdx + 1; i < messages.length; i += 1) {
+                if (String(messages[i]?.role || '') === 'assistant') assistantRepliesAfterImage += 1;
+              }
+              useSecondary = assistantRepliesAfterImage < 2;
+            }
+          }
 
-          const baseUrl = hasImage ? process.env.VLLM_SECONDARY_BASE_URL : process.env.VLLM_BASE_URL;
-          const apiKey = hasImage ? process.env.VLLM_SECONDARY_API_KEY : process.env.VLLM_API_KEY;
-          const modelId = hasImage ? process.env.VLLM_SECONDARY_MODEL_ID : process.env.VLLM_MODEL_ID;
+          const baseUrl = useSecondary ? process.env.VLLM_SECONDARY_BASE_URL : process.env.VLLM_BASE_URL;
+          const apiKey = useSecondary ? process.env.VLLM_SECONDARY_API_KEY : process.env.VLLM_API_KEY;
+          const modelId = useSecondary ? process.env.VLLM_SECONDARY_MODEL_ID : process.env.VLLM_MODEL_ID;
 
           if (!baseUrl || !apiKey || !modelId) {
             res.statusCode = 500;
@@ -134,7 +156,7 @@ function apiChatMiddleware() {
                 'Cache-Control': 'no-cache, no-transform',
                 'Connection': 'keep-alive',
                 'x-ai-model-used': String(modelId || ''),
-                'x-ai-model-route': hasImage ? 'secondary' : 'primary',
+                'x-ai-model-route': useSecondary ? 'secondary' : 'primary',
                 'x-ai-has-image': hasImage ? '1' : '0',
               });
               upstreamRes.pipe(res);

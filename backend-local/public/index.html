@@ -27,11 +27,35 @@
     .mini-cards .card .v { font-size: 20px; }
     .preview-cell { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .urls-cell { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: #98a6c6; }
+    textarea { background: #0b1020; color: #e6eaf2; border: 1px solid #243253; border-radius: 8px; padding: 10px; width: 100%; }
     h3.panel-title { margin: 0 0 10px 0; font-size: 15px; font-weight: 600; color: #c8d4ee; }
     .url-link { color: #7fe7ff; text-decoration: none; }
     .url-link:hover { color: #b9f3ff; text-decoration: underline; }
+    .nlq-presets { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 10px; }
+    .nlq-preset-btn { background: #1e293b; color: #dbeafe; border: 1px solid #334155; border-radius: 999px; padding: 6px 10px; font-size: 12px; cursor: pointer; }
+    .nlq-chat { border: 1px solid #1f2a44; border-radius: 10px; background: #0b1020; min-height: 160px; max-height: 360px; overflow: auto; overflow-anchor: none; padding: 8px 10px; }
+    .nlq-card { border: 1px solid #243253; border-radius: 8px; background: #0f172a; margin-bottom: 8px; }
+    .nlq-card-head { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-bottom: 1px solid #2d5a46; gap: 8px; background: linear-gradient(90deg, #142a1f 0%, #1e293b 100%); }
+    .nlq-card-q { font-size: 12px; color: #7dffb3; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .nlq-card-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .nlq-card-btn { background: #1e293b; color: #dbeafe; border: 1px solid #334155; border-radius: 6px; padding: 2px 8px; font-size: 11px; cursor: pointer; }
+    .nlq-card-body { padding: 8px 10px; }
+    .nlq-card-body.nlq-card-body--loading { min-height: 100px; }
+    .nlq-msg { margin-bottom: 6px; max-width: 100%; white-space: pre-wrap; line-height: 1.35; word-break: break-word; font-size: 13px; }
+    .nlq-msg-ai { color: #e2e8f0; }
+    .nlq-msg-ai strong { color: #f8fafc; font-weight: 700; }
+    .nlq-msg-ai a { color: #7fe7ff; text-decoration: underline; }
+    .nlq-msg-ai a:hover { color: #b9f3ff; }
+    .nlq-hi-token { color: #f8fafc; font-weight: 700; }
+    .nlq-msg-ai p { margin: 0 0 4px; }
+    .nlq-msg-ai p:last-child { margin-bottom: 0; }
+    .nlq-msg-ai ul, .nlq-msg-ai ol { margin: 2px 0 4px 16px; padding: 0; }
+    .nlq-msg-ai li { margin: 0 0 2px; }
+    .nlq-msg-ai br + br { display: none; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
 </head>
 <body>
   <div class="wrap">
@@ -57,6 +81,20 @@
         <option value="30" selected>30 天</option>
         <option value="90">90 天</option>
       </select>
+    </div>
+
+    <div class="panel">
+      <h3 class="panel-title">数据看板</h3>
+      <div class="nlq-presets" id="nlqPresets"></div>
+      <div class="row" style="align-items:flex-start;">
+        <textarea id="nlqInput" rows="3" placeholder="请输入你要查询的数据问题"></textarea>
+      </div>
+      <div class="row">
+        <button type="button" id="nlqRunBtn">发送</button>
+        <button type="button" id="nlqResetBtn" style="background:#475569;">新建会话</button>
+      </div>
+      <div class="err" id="errNlq"></div>
+      <div class="nlq-chat" id="nlqChat"></div>
     </div>
 
     <div class="panel">
@@ -223,6 +261,28 @@
       let r;
       try {
         r = await fetch(url);
+      } catch (e) {
+        throw new Error(e?.message || '网络请求失败（请确认本地后端已启动）');
+      }
+      const text = await r.text();
+      let j;
+      try {
+        j = text ? JSON.parse(text) : {};
+      } catch {
+        throw new Error(`HTTP ${r.status}，响应不是 JSON：${text.slice(0, 160)}`);
+      }
+      if (!r.ok || !j.ok) throw new Error(j.error || `HTTP ${r.status}`);
+      return j.data;
+    }
+
+    async function apiPost(url, body) {
+      let r;
+      try {
+        r = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body || {}),
+        });
       } catch (e) {
         throw new Error(e?.message || '网络请求失败（请确认本地后端已启动）');
       }
@@ -681,6 +741,127 @@
       el('promptsMeta').textContent = `匹配用户 ${matched} 个 · 明细共 ${d.total || 0} 条 · 第 ${d.page || 1} 页`;
     }
 
+    let nlqSessionId = '';
+    const nlqPresets = [
+      '今日注册用户数和注册邮箱分别是什么？',
+      '使用对话最多的用户是谁，使用了多少次，平均每日使用次数是多少？',
+      '昨天注册用户数是多少？',
+      '最近7天每天注册用户数分别是多少？',
+    ];
+
+    function renderNlqPresets() {
+      el('nlqPresets').innerHTML = nlqPresets
+        .map((q) => `<button type="button" class="nlq-preset-btn" data-q="${escapeHtml(q)}">${escapeHtml(q)}</button>`)
+        .join('');
+      Array.from(document.querySelectorAll('.nlq-preset-btn')).forEach((btn) => {
+        btn.addEventListener('click', () => {
+          el('nlqInput').value = btn.getAttribute('data-q') || '';
+          el('nlqInput').focus();
+        });
+      });
+    }
+
+    function rowToLine(row) {
+      if (row == null) return '';
+      if (typeof row !== 'object' || Array.isArray(row)) return String(row);
+      return Object.values(row)
+        .map((v) => (typeof v === 'object' ? JSON.stringify(v) : String(v)))
+        .join('  ');
+    }
+
+    function appendNlqChat(role, content) {
+      const cls = role === 'user' ? 'nlq-msg-user' : 'nlq-msg-ai';
+      let body = escapeHtml(content || '');
+      if (role === 'ai') body = renderAiMarkdown(content || '');
+      return `<div class="nlq-msg ${cls}">${body}</div>`;
+    }
+
+    function renderAiMarkdown(content) {
+      try {
+        const src = String(content || '')
+          .replace(/([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/gi, '**$1**');
+        const html = marked.parse(src);
+        let safe = DOMPurify.sanitize(html, { ALLOWED_ATTR: ['href', 'target', 'rel', 'class'] });
+        safe = safe.replace(/<strong>([^<]+)<\/strong>/g, '<strong class="nlq-hi-token">$1</strong>');
+        return safe;
+      } catch (_) {
+        return escapeHtml(content || '');
+      }
+    }
+
+    function nlqChatNearBottom(thresholdPx) {
+      const box = el('nlqChat');
+      const th = typeof thresholdPx === 'number' ? thresholdPx : 120;
+      return box.scrollHeight - box.scrollTop - box.clientHeight <= th;
+    }
+
+    function createNlqCard(question) {
+      const id = `nlq_card_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      const html = `
+        <div class="nlq-card" id="${id}">
+          <div class="nlq-card-head">
+            <div class="nlq-card-q" title="${escapeHtml(question)}">${escapeHtml(question)}</div>
+            <div class="nlq-card-actions">
+              <button type="button" class="nlq-card-btn" data-action="toggle" data-id="${id}">折叠</button>
+              <button type="button" class="nlq-card-btn" data-action="delete" data-id="${id}">删除</button>
+            </div>
+          </div>
+          <div class="nlq-card-body nlq-card-body--loading">查询中...</div>
+        </div>`;
+      const box = el('nlqChat');
+      const stickToBottom = nlqChatNearBottom(120);
+      box.insertAdjacentHTML('beforeend', html);
+      if (stickToBottom) box.scrollTop = box.scrollHeight;
+      return id;
+    }
+
+    function setNlqCardBody(cardId, content) {
+      const root = document.getElementById(cardId);
+      if (!root) return;
+      const body = root.querySelector('.nlq-card-body');
+      if (!body) return;
+      const pinned = nlqChatNearBottom(120);
+      body.classList.remove('nlq-card-body--loading');
+      body.innerHTML = appendNlqChat('ai', content || '');
+      if (pinned) {
+        const box = el('nlqChat');
+        box.scrollTop = box.scrollHeight;
+      }
+    }
+
+    async function runNlq() {
+      el('errNlq').textContent = '';
+      const question = (el('nlqInput').value || '').trim();
+      if (!question) {
+        el('errNlq').textContent = '请输入自然语言指令';
+        return;
+      }
+      const cardId = createNlqCard(question);
+      try {
+        const d = await apiPost('/admin/api/nlq', { question, session_id: nlqSessionId || undefined });
+        nlqSessionId = d.session_id || nlqSessionId;
+        const rows = Array.isArray(d.rows) ? d.rows : [];
+        const lines = rows.map((r) => rowToLine(r)).filter(Boolean);
+        const output = d.answer_text || lines.join('\n') || `返回 ${d.row_count || 0} 行`;
+        setNlqCardBody(cardId, output || `返回 ${d.row_count || 0} 行`);
+        el('nlqInput').value = '';
+      } catch (e) {
+        setNlqCardBody(cardId, `查询失败：${e?.message || String(e)}`);
+        throw e;
+      } finally {
+      }
+    }
+
+    async function resetNlqContext() {
+      const d = await apiPost('/admin/api/nlq/context/reset', { session_id: nlqSessionId || undefined });
+      nlqSessionId = d.session_id || '';
+      el('nlqChat').innerHTML = '';
+    }
+
+    async function syncNlqSchema() {
+      await apiPost('/admin/api/nlq/schema/refresh', {});
+    }
+
     async function refreshAll() {
       el('errOverview').textContent = '';
       el('errUsers').textContent = '';
@@ -689,7 +870,9 @@
       el('errShare').textContent = '';
       el('errShareList').textContent = '';
       el('errUrlInputs').textContent = '';
+      el('errNlq').textContent = '';
       const results = await Promise.allSettled([
+        syncNlqSchema(),
         loadOverview(),
         loadUsers(1),
         loadTrends(),
@@ -698,8 +881,8 @@
         loadShareList(1),
         loadUrlInputs(1),
       ]);
-      const labels = ['总览', '用户列表', '趋势', '对话用量', '分享裂变', '分享列表', '链接网站维度'];
-      const errIds = ['errOverview', 'errUsers', 'errTrends', 'errConv', 'errShare', 'errShareList', 'errUrlInputs'];
+      const labels = ['NLQ结构同步', '总览', '用户列表', '趋势', '对话用量', '分享裂变', '分享列表', '链接网站维度'];
+      const errIds = ['errNlq', 'errOverview', 'errUsers', 'errTrends', 'errConv', 'errShare', 'errShareList', 'errUrlInputs'];
       results.forEach((r, i) => {
         if (r.status === 'rejected') {
           el(errIds[i]).textContent = `${labels[i]} 拉取失败：${r.reason?.message || r.reason}`;
@@ -739,6 +922,40 @@
         await loadPromptLogs(1);
       } catch (e) {
         el('errPrompts').textContent = e?.message || String(e);
+      }
+    });
+    el('nlqRunBtn').addEventListener('click', async () => {
+      try {
+        await runNlq();
+      } catch (e) {
+        el('errNlq').textContent = e?.message || String(e);
+      }
+    });
+    el('nlqResetBtn').addEventListener('click', async () => {
+      try {
+        await resetNlqContext();
+      } catch (e) {
+        el('errNlq').textContent = e?.message || String(e);
+      }
+    });
+    el('nlqChat').addEventListener('click', (ev) => {
+      const btn = ev.target?.closest?.('.nlq-card-btn');
+      if (!btn) return;
+      const action = btn.getAttribute('data-action');
+      const id = btn.getAttribute('data-id');
+      if (!id) return;
+      const card = document.getElementById(id);
+      if (!card) return;
+      if (action === 'delete') {
+        card.remove();
+        return;
+      }
+      if (action === 'toggle') {
+        const body = card.querySelector('.nlq-card-body');
+        if (!body) return;
+        const collapsed = body.style.display === 'none';
+        body.style.display = collapsed ? '' : 'none';
+        btn.textContent = collapsed ? '折叠' : '展开';
       }
     });
     el('promptPrev').addEventListener('click', async () => {
@@ -806,6 +1023,7 @@
         el('errUrlInputs').textContent = e?.message || String(e);
       }
     });
+    renderNlqPresets();
     refreshAll();
   </script>
 </body>

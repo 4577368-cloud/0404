@@ -772,6 +772,15 @@ export default function App() {
       <div style={{ position: 'absolute', bottom: '-25%', right: '-10%', width: 800, height: 800, borderRadius: '50%', background: 'var(--theme-glow-2)', filter: 'blur(160px)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', top: '-20%', left: '30%', width: 600, height: 600, borderRadius: '50%', background: 'var(--theme-glow-2)', filter: 'blur(200px)', pointerEvents: 'none', opacity: 0.5 }} />
 
+      {/* 欢迎态侧栏 `hidden` 不占宽，首条消息出现后侧栏占位会导致主栏突然变窄；桌面端用等宽占位避免横向跳动 */}
+      {sidebarDockedHidden ? (
+        <div
+          className="hidden md:block shrink-0"
+          style={{ width: sidebarCollapsed ? 60 : 260 }}
+          aria-hidden="true"
+        />
+      ) : null}
+
       {/* Sidebar */}
       <Sidebar
         conversations={conversations}
@@ -926,7 +935,6 @@ export default function App() {
             />
           ) : (
             <ModuleAIChat
-              key={activeId}
               t={t} uiLang={lang} theme={theme}
               messages={activeConv?.messages}
               setMessages={setActiveMessages}

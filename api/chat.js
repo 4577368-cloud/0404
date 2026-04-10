@@ -88,6 +88,35 @@ function requestHasImage(body) {
   return messages.some(messageHasImage);
 }
 
+function shouldUseSecondaryModel(body) {
+  const messages = Array.isArray(body?.messages) ? body.messages : [];
+  if (messages.length === 0) return { useSecondary: false, hasImageInRequest: false };
+  const hasImageInRequest = requestHasImage(body);
+  if (hasImageInRequest) return { useSecondary: true, hasImageInRequest: true };
+
+  // Rule: after a user image message, allow at most 2 Qwen replies total.
+  // Since current request has no image, this follow-up can use Qwen only when
+  // assistant replies after last image-user-message are < 2.
+  let lastImageUserIdx = -1;
+  for (let i = messages.length - 1; i >= 0; i -= 1) {
+    const m = messages[i];
+    if (String(m?.role || '') !== 'user') continue;
+    if (messageHasImage(m)) {
+      lastImageUserIdx = i;
+      break;
+    }
+  }
+  if (lastImageUserIdx < 0) return { useSecondary: false, hasImageInRequest: false };
+
+  let assistantRepliesAfterImage = 0;
+  for (let i = lastImageUserIdx + 1; i < messages.length; i += 1) {
+    if (String(messages[i]?.role || '') === 'assistant') {
+      assistantRepliesAfterImage += 1;
+    }
+  }
+  return { useSecondary: assistantRepliesAfterImage < 2, hasImageInRequest: false };
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -95,7 +124,8 @@ export default async function handler(req, res) {
   }
 
   const body = await readJsonBody(req);
-  const useSecondary = requestHasImage(body);
+  const route = shouldUseSecondaryModel(body);
+  const useSecondary = route.useSecondary;
   const modelRoute = useSecondary ? 'secondary' : 'primary';
   const baseUrlRaw = useSecondary ? process.env.VLLM_SECONDARY_BASE_URL : process.env.VLLM_BASE_URL;
   const apiKey = useSecondary ? process.env.VLLM_SECONDARY_API_KEY : process.env.VLLM_API_KEY;
@@ -182,7 +212,7 @@ export default async function handler(req, res) {
     res.setHeader('Connection', 'keep-alive');
     res.setHeader('x-ai-model-used', String(modelId || ''));
     res.setHeader('x-ai-model-route', modelRoute);
-    res.setHeader('x-ai-has-image', useSecondary ? '1' : '0');
+    res.setHeader('x-ai-has-image', route.hasImageInRequest ? '1' : '0');
 
     try {
       const nodeReadable = Readable.fromWeb(upstream.body);

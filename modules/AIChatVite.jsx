@@ -1366,6 +1366,18 @@ export function ModuleAIChat({
       isFirstRender.current = true;
       stickToBottomRef.current = true;
       initialMessageCountRef.current = Array.isArray(propMessages) ? propMessages.length : 0;
+      workflowAbortRef.current = true;
+      pendingWorkflowRef.current = null;
+      workflowRef.current = null;
+      setDiagnosisWorkflow(null);
+      setWorkflowStepResults([]);
+      setIsWorkflowRunning(false);
+      setCurrentWorkflowStep(-1);
+      setWorkflowProgressPercent(0);
+      setCurrentStepName('');
+      setShowDiagnosisStartModal(false);
+      setShowDiagnosisCompleteModal(false);
+      setCompletedReport(null);
     }
   }, [conversationId, propMessages]);
 
@@ -2687,7 +2699,13 @@ export function ModuleAIChat({
         ref={chatContainerRef}
         onScroll={onChatScroll}
         onClick={handleChatContainerClick}
-        style={{ flex: '1 1 0', minHeight: 0, overflowY: 'auto', overflowX: 'hidden' }}
+        style={{
+          flex: '1 1 0',
+          minHeight: 0,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          overflowAnchor: 'none',
+        }}
       >
         {isPortalView ? (
           <WelcomePortal
