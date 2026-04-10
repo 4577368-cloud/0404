@@ -736,6 +736,27 @@ const ChatInput = React.memo(function ChatInput({
     if (file) handlePickFile(file);
   }, [handlePickFile]);
 
+  const handlePaste = React.useCallback((e) => {
+    const cd = e.clipboardData;
+    if (!cd) return;
+    const items = Array.from(cd.items || []);
+    const imageItem = items.find((it) => String(it?.type || '').startsWith('image/'));
+    if (imageItem) {
+      e.preventDefault();
+      const file = imageItem.getAsFile?.();
+      if (file) {
+        handlePickFile(file);
+        return;
+      }
+    }
+    const files = Array.from(cd.files || []);
+    const fileImage = files.find((f) => String(f?.type || '').startsWith('image/'));
+    if (fileImage) {
+      e.preventDefault();
+      handlePickFile(fileImage);
+    }
+  }, [handlePickFile]);
+
   const isPortal = layout === 'portal';
 
   return (
@@ -841,6 +862,7 @@ const ChatInput = React.memo(function ChatInput({
                 ref={textareaRef}
                 value={input}
                 onChange={(e) => handleInputChange(e.target.value.replace(/^\s+/, ''))}
+                onPaste={handlePaste}
                 onBlur={() => {
                   const v = (textareaRef.current?.value ?? '').replace(/^\s+/, '');
                   flushDraftToParent(v);

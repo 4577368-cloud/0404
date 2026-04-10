@@ -126,14 +126,26 @@ const JUNK_SEARCH_PHRASES_ZH = [
 const JUNK_EXACT_ZH = new Set([
   '信息', '链接', '分析', '好的', '可以', '选择', '以下', '建议', '用户', '内容', '步骤', '方面', '问题',
 ]);
+const JUNK_EXACT_EN = new Set([
+  'pdp', 'copywriting', 'seo', 'meta', 'title', 'description', 'url', 'snapshot', 'keyword', 'keywords',
+  'product', 'products', 'category', 'categories', 'trend', 'trending',
+]);
+const EN_PRODUCT_NOUN_WHITELIST =
+  /\b(jeans?|pants?|joggers?|shorts?|dress(?:es)?|hood(?:ie|ies)|tee|tees|tops?|shirt(?:s)?|blouse(?:s)?|skirt(?:s)?|sneakers?|shoes?|boots?|sandals?|bag|bags|backpack(?:s)?|crossbody|wallet(?:s)?|belt(?:s)?|hat(?:s)?|cap(?:s)?|scarf(?:s)?|socks?|earbuds?|headphones?|charger(?:s)?|cable(?:s)?|phone\s*case|case(?:s)?|watch(?:es)?|tracker(?:s)?|lamp(?:s)?|light(?:s)?|organizer(?:s)?|storage|tent(?:s)?|sleeping\s*bag|mat(?:s)?|bottle(?:s)?|cup(?:s)?|kettle(?:s)?|pump(?:s)?|pad(?:s)?|underpad(?:s)?|sanitary\s*pads?|peri\s*bottle|nursing\s*pads?|belly\s*band|kit(?:s)?)\b/i;
 
 function isJunkSearchKeyword(s) {
   const t = String(s || '').trim();
   if (t.length < 3 || t.length > 64) return true;
   if (/\n|https?:\/\/|[|]/i.test(t)) return true;
+  if (/[*`]/.test(t)) return true;
+  if (/^[()\[\]{}]+$/.test(t)) return true;
+  if (/[()]/.test(t) && (t.includes('(') !== t.includes(')'))) return true;
+  if (/[\\/]/.test(t) && !/\b[a-z]+\s*\/\s*[a-z]+\b/i.test(t)) return true;
   if (/[:：]/.test(t) && t.length > 10) return true;
   if (/\d{4}/.test(t)) return true;
   if (JUNK_EXACT_ZH.has(t)) return true;
+  if (JUNK_EXACT_EN.has(t.toLowerCase())) return true;
+  if (/^(pdp|copywriting|seo|meta|title|description)(?:\s*[/\\]\s*(pdp|copywriting|seo|meta|title|description))*$/i.test(t)) return true;
   for (const j of JUNK_SEARCH_PHRASES_ZH) {
     if (t === j || t.startsWith(j + '，') || t.startsWith(j + '。')) return true;
   }
@@ -249,12 +261,23 @@ function formatTangbuySearchLabel(enKeyword) {
   const s = String(enKeyword || '')
     .trim()
     .toLowerCase()
+    .replace(/[*`()[\]{}]/g, ' ')
+    .replace(/[\\/]+/g, ' ')
     .replace(/\s+/g, ' ');
   if (!s) return '';
   return s
     .split(' ')
     .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : ''))
     .join(' ');
+}
+
+function passesTangbuyKeywordWhitelist(enKeyword) {
+  const s = String(enKeyword || '').trim().toLowerCase();
+  if (!s || s.length < 3) return false;
+  if (JUNK_EXACT_EN.has(s)) return false;
+  // Strong guard: only allow terms that look like concrete product/category nouns.
+  if (!EN_PRODUCT_NOUN_WHITELIST.test(s)) return false;
+  return true;
 }
 
 export function isTangbuySearchPickHrefValid(href) {
@@ -492,6 +515,7 @@ export function buildTangbuySearchPicksFromKeywords(keywords, _uiLang = 'zh', ma
     if (
       !enKeyword ||
       !isMeaningfulTangbuyKeyword(enKeyword) ||
+      !passesTangbuyKeywordWhitelist(enKeyword) ||
       isNonProductTangbuySearchToken(enKeyword) ||
       seen.has(enKeyword)
     ) continue;
