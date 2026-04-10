@@ -88,33 +88,46 @@ function requestHasImage(body) {
   return messages.some(messageHasImage);
 }
 
-function shouldUseSecondaryModel(body) {
-  const messages = Array.isArray(body?.messages) ? body.messages : [];
-  if (messages.length === 0) return { useSecondary: false, hasImageInRequest: false };
-  const hasImageInRequest = requestHasImage(body);
-  if (hasImageInRequest) return { useSecondary: true, hasImageInRequest: true };
+function getUpstreamTimeoutMs() {
+  const raw = String(process.env.VLLM_UPSTREAM_TIMEOUT_MS || '').trim();
+  if (raw === '0') return 0;
+  const n = Number(raw);
+  if (Number.isFinite(n) && n >= 0) return Math.floor(n);
+  return 1_200_000;
+}
 
-  // Rule: after a user image message, allow at most 2 Qwen replies total.
-  // Since current request has no image, this follow-up can use Qwen only when
-  // assistant replies after last image-user-message are < 2.
-  let lastImageUserIdx = -1;
-  for (let i = messages.length - 1; i >= 0; i -= 1) {
-    const m = messages[i];
-    if (String(m?.role || '') !== 'user') continue;
-    if (messageHasImage(m)) {
-      lastImageUserIdx = i;
-      break;
-    }
+function buildModelConfig(route) {
+  if (route === 'secondary') {
+    const baseUrlRaw = process.env.VLLM_SECONDARY_BASE_URL;
+    const apiKey = process.env.VLLM_SECONDARY_API_KEY;
+    const modelId = process.env.VLLM_SECONDARY_MODEL_ID;
+    if (!baseUrlRaw || !apiKey || !modelId) return null;
+    return { route, baseUrlRaw, apiKey, modelId };
   }
-  if (lastImageUserIdx < 0) return { useSecondary: false, hasImageInRequest: false };
+  const baseUrlRaw = process.env.VLLM_BASE_URL;
+  const apiKey = process.env.VLLM_API_KEY;
+  const modelId = process.env.VLLM_MODEL_ID;
+  if (!baseUrlRaw || !apiKey || !modelId) return null;
+  return { route, baseUrlRaw, apiKey, modelId };
+}
 
-  let assistantRepliesAfterImage = 0;
-  for (let i = lastImageUserIdx + 1; i < messages.length; i += 1) {
-    if (String(messages[i]?.role || '') === 'assistant') {
-      assistantRepliesAfterImage += 1;
+function validateConfig(cfg) {
+  const baseUrl = normalizeBaseUrl(cfg.baseUrlRaw);
+  try {
+    const parsed = new URL(baseUrl);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      return { ok: false, error: `${cfg.route}: VLLM URL must start with https:// or http://` };
     }
+    if (isNonPublicHost(parsed.hostname)) {
+      return {
+        ok: false,
+        error: `${cfg.route}: VLLM URL points to localhost/private network; use public endpoint or tunnel.`,
+      };
+    }
+    return { ok: true, baseUrl };
+  } catch {
+    return { ok: false, error: `${cfg.route}: VLLM URL is invalid` };
   }
-  return { useSecondary: assistantRepliesAfterImage < 2, hasImageInRequest: false };
 }
 
 export default async function handler(req, res) {
@@ -124,73 +137,77 @@ export default async function handler(req, res) {
   }
 
   const body = await readJsonBody(req);
-  const route = shouldUseSecondaryModel(body);
-  const useSecondary = route.useSecondary;
-  const modelRoute = useSecondary ? 'secondary' : 'primary';
-  const baseUrlRaw = useSecondary ? process.env.VLLM_SECONDARY_BASE_URL : process.env.VLLM_BASE_URL;
-  const apiKey = useSecondary ? process.env.VLLM_SECONDARY_API_KEY : process.env.VLLM_API_KEY;
-  const modelId = useSecondary ? process.env.VLLM_SECONDARY_MODEL_ID : process.env.VLLM_MODEL_ID;
+  const hasImageInRequest = requestHasImage(body);
+  // New priority: prefer current secondary model; MiniMax(primary) is timeout fallback only.
+  const preferredCfg = buildModelConfig('secondary') || buildModelConfig('primary');
+  const fallbackCfg = buildModelConfig('secondary') && buildModelConfig('primary') ? buildModelConfig('primary') : null;
 
-  if (!baseUrlRaw || !apiKey || !modelId) {
+  if (!preferredCfg) {
     res.status(500).json({
       error: 'Missing VLLM configuration on server',
-      hint: useSecondary
-        ? 'Image request detected. Set VLLM_SECONDARY_BASE_URL, VLLM_SECONDARY_API_KEY, VLLM_SECONDARY_MODEL_ID in Vercel Environment Variables, then redeploy.'
-        : 'Set VLLM_BASE_URL, VLLM_API_KEY, VLLM_MODEL_ID in Vercel → Environment Variables (Production + Preview), then redeploy.',
+      hint: 'Set VLLM_SECONDARY_* (preferred) and VLLM_* (fallback MiniMax) in Vercel env, then redeploy.',
     });
     return;
   }
-
-  const baseUrl = normalizeBaseUrl(baseUrlRaw);
-
-  try {
-    const parsed = new URL(baseUrl);
-    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
-      res.status(500).json({ error: 'VLLM_BASE_URL must start with https:// or http://' });
-      return;
-    }
-    if (isNonPublicHost(parsed.hostname)) {
-      res.status(500).json({
-        error:
-          'VLLM_BASE_URL points to localhost or a private network. Vercel cannot reach your laptop/LAN. Use a public API endpoint (HTTPS) or tunnel (e.g. ngrok) for development.',
-      });
-      return;
-    }
-  } catch {
-    res.status(500).json({ error: 'VLLM_BASE_URL is not a valid URL' });
+  const preferredValid = validateConfig(preferredCfg);
+  if (!preferredValid.ok) {
+    res.status(500).json({ error: preferredValid.error });
     return;
   }
+  const fallbackValid = fallbackCfg ? validateConfig(fallbackCfg) : null;
 
   try {
-    const upstreamPayload = {
-      stream: true,
-      max_tokens: 4000,
-      temperature: 0.7,
-      ...body,
-      model: modelId,
+    const timeoutMs = getUpstreamTimeoutMs();
+    const callUpstream = async (cfg, baseUrl) => {
+      const upstreamPayload = {
+        stream: true,
+        max_tokens: 4000,
+        temperature: 0.7,
+        ...body,
+        model: cfg.modelId,
+      };
+      const target = `${baseUrl}/chat/completions`;
+      const abortCtrl = new AbortController();
+      let timer = null;
+      if (timeoutMs > 0) {
+        timer = setTimeout(() => abortCtrl.abort(new Error('upstream_timeout')), timeoutMs);
+      }
+      try {
+        const upstream = await fetch(target, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${cfg.apiKey}`,
+          },
+          body: JSON.stringify(upstreamPayload),
+          signal: abortCtrl.signal,
+        });
+        if (timer) clearTimeout(timer);
+        return { ok: true, upstream, cfg, modelRoute: cfg.route };
+      } catch (e) {
+        if (timer) clearTimeout(timer);
+        const isTimeout = String(e?.name || '').toLowerCase() === 'aborterror' || String(e?.message || '').includes('upstream_timeout');
+        return { ok: false, error: e, isTimeout, cfg };
+      }
     };
 
-    const target = `${baseUrl}/chat/completions`;
-    let upstream;
-    try {
-      upstream = await fetch(target, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify(upstreamPayload),
-      });
-    } catch (fetchErr) {
-      const msg = fetchErr?.message || String(fetchErr);
+    let result = await callUpstream(preferredCfg, preferredValid.baseUrl);
+    if (!result.ok && result.isTimeout && fallbackCfg && fallbackValid?.ok) {
+      result = await callUpstream(fallbackCfg, fallbackValid.baseUrl);
+      if (result.ok) result.modelRoute = 'secondary_timeout_fallback_primary';
+    }
+
+    if (!result.ok) {
+      const msg = result?.error?.message || String(result?.error || 'Upstream request failed');
       console.error('[api/chat] fetch failed:', msg);
-      res.status(500).json({
-        error: `Upstream fetch failed: ${msg}`,
-        hint: 'Check VLLM_BASE_URL, firewall, TLS, and that the API allows Vercel egress IPs.',
+      res.status(result.isTimeout ? 504 : 500).json({
+        error: result.isTimeout ? `Upstream timeout after ${timeoutMs}ms` : `Upstream fetch failed: ${msg}`,
+        hint: 'Secondary is preferred. MiniMax(primary) is used only when secondary times out.',
       });
       return;
     }
 
+    const { upstream, cfg, modelRoute } = result;
     if (!upstream.ok) {
       const text = await upstream.text().catch(() => '');
       console.error('[api/chat] upstream status', upstream.status, text?.slice(0, 500));
@@ -210,9 +227,9 @@ export default async function handler(req, res) {
     res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache, no-transform');
     res.setHeader('Connection', 'keep-alive');
-    res.setHeader('x-ai-model-used', String(modelId || ''));
+    res.setHeader('x-ai-model-used', String(cfg.modelId || ''));
     res.setHeader('x-ai-model-route', modelRoute);
-    res.setHeader('x-ai-has-image', route.hasImageInRequest ? '1' : '0');
+    res.setHeader('x-ai-has-image', hasImageInRequest ? '1' : '0');
 
     try {
       const nodeReadable = Readable.fromWeb(upstream.body);

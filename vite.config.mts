@@ -80,123 +80,118 @@ function apiChatMiddleware() {
             return false;
           };
           const hasImage = messages.some((m: any) => messageHasImage(m));
-          let useSecondary = false;
-          if (hasImage) {
-            useSecondary = true;
-          } else {
-            let lastImageUserIdx = -1;
-            for (let i = messages.length - 1; i >= 0; i -= 1) {
-              const m = messages[i];
-              if (String(m?.role || '') !== 'user') continue;
-              if (messageHasImage(m)) {
-                lastImageUserIdx = i;
-                break;
-              }
-            }
-            if (lastImageUserIdx >= 0) {
-              let assistantRepliesAfterImage = 0;
-              for (let i = lastImageUserIdx + 1; i < messages.length; i += 1) {
-                if (String(messages[i]?.role || '') === 'assistant') assistantRepliesAfterImage += 1;
-              }
-              useSecondary = assistantRepliesAfterImage < 2;
-            }
-          }
+          const secondaryCfg = {
+            baseUrl: process.env.VLLM_SECONDARY_BASE_URL,
+            apiKey: process.env.VLLM_SECONDARY_API_KEY,
+            modelId: process.env.VLLM_SECONDARY_MODEL_ID,
+          };
+          const primaryCfg = {
+            baseUrl: process.env.VLLM_BASE_URL,
+            apiKey: process.env.VLLM_API_KEY,
+            modelId: process.env.VLLM_MODEL_ID,
+          };
+          const preferSecondary = !!(secondaryCfg.baseUrl && secondaryCfg.apiKey && secondaryCfg.modelId);
+          const preferred = preferSecondary ? secondaryCfg : primaryCfg;
 
-          const baseUrl = useSecondary ? process.env.VLLM_SECONDARY_BASE_URL : process.env.VLLM_BASE_URL;
-          const apiKey = useSecondary ? process.env.VLLM_SECONDARY_API_KEY : process.env.VLLM_API_KEY;
-          const modelId = useSecondary ? process.env.VLLM_SECONDARY_MODEL_ID : process.env.VLLM_MODEL_ID;
-
-          if (!baseUrl || !apiKey || !modelId) {
+          if (!preferred.baseUrl || !preferred.apiKey || !preferred.modelId) {
             res.statusCode = 500;
             res.setHeader('Content-Type', 'application/json');
             res.end(
               JSON.stringify({
-                error: hasImage
-                  ? 'Missing SECONDARY VLLM env vars. Add VLLM_SECONDARY_BASE_URL, VLLM_SECONDARY_API_KEY, VLLM_SECONDARY_MODEL_ID.'
-                  : 'Missing VLLM env vars. Create a .env file with VLLM_BASE_URL, VLLM_API_KEY, VLLM_MODEL_ID.',
+                error: 'Missing VLLM env vars. Configure VLLM_SECONDARY_* (preferred) and VLLM_* (fallback MiniMax).',
               }),
             );
             return;
           }
 
-          const payload = { stream: true, max_tokens: 4000, temperature: 0.7, ...body, model: modelId };
-          const bodyStr = JSON.stringify(payload);
+          const doRequest = (cfg: { baseUrl?: string; apiKey?: string; modelId?: string }, routeLabel: string, allowFallback: boolean) => {
+            const payload = { stream: true, max_tokens: 4000, temperature: 0.7, ...body, model: cfg.modelId };
+            const bodyStr = JSON.stringify(payload);
+            const target = new URL(`${cfg.baseUrl}/chat/completions`);
+            const transport = target.protocol === 'https:' ? https : http;
 
-          const target = new URL(`${baseUrl}/chat/completions`);
-          const transport = target.protocol === 'https:' ? https : http;
+            // 工作流常用 stream:false + 大 JSON，上游可能超过 2 分钟才返回首字节；默认 20 分钟，可用 VLLM_UPSTREAM_TIMEOUT_MS 覆盖；0=不限制
+            const rawTimeout = process.env.VLLM_UPSTREAM_TIMEOUT_MS;
+            const upstreamTimeoutMs =
+              rawTimeout === '0' || rawTimeout === ''
+                ? 0
+                : Math.max(0, Number(rawTimeout) || 1_200_000);
 
-          // 工作流常用 stream:false + 大 JSON，上游可能超过 2 分钟才返回首字节；默认 20 分钟，可用 VLLM_UPSTREAM_TIMEOUT_MS 覆盖；0=不限制
-          const rawTimeout = process.env.VLLM_UPSTREAM_TIMEOUT_MS;
-          const upstreamTimeoutMs =
-            rawTimeout === '0' || rawTimeout === ''
-              ? 0
-              : Math.max(0, Number(rawTimeout) || 1_200_000);
-
-          const upstreamReq = transport.request(
-            {
-              hostname: target.hostname,
-              port: target.port || (target.protocol === 'https:' ? 443 : 80),
-              path: target.pathname + target.search,
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Length': Buffer.byteLength(bodyStr),
+            const upstreamReq = transport.request(
+              {
+                hostname: target.hostname,
+                port: target.port || (target.protocol === 'https:' ? 443 : 80),
+                path: target.pathname + target.search,
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${cfg.apiKey}`,
+                  'Content-Length': Buffer.byteLength(bodyStr),
+                },
+                ...(upstreamTimeoutMs > 0 ? { timeout: upstreamTimeoutMs } : {}),
               },
-              ...(upstreamTimeoutMs > 0 ? { timeout: upstreamTimeoutMs } : {}),
-            },
-            (upstreamRes) => {
-              // 避免读完整响应体时因 socket 空闲被切断（尤其非流式大包）
-              try {
-                upstreamRes.setTimeout(0);
-              } catch (_) {}
-              console.log(`[api/chat] upstream ${upstreamRes.statusCode}`);
-              res.writeHead(upstreamRes.statusCode ?? 500, {
-                'Content-Type': upstreamRes.headers['content-type'] ?? 'text/event-stream',
-                'Cache-Control': 'no-cache, no-transform',
-                'Connection': 'keep-alive',
-                'x-ai-model-used': String(modelId || ''),
-                'x-ai-model-route': useSecondary ? 'secondary' : 'primary',
-                'x-ai-has-image': hasImage ? '1' : '0',
-              });
-              upstreamRes.pipe(res);
-            }
-          );
+              (upstreamRes) => {
+                try {
+                  upstreamRes.setTimeout(0);
+                } catch (_) {}
+                console.log(`[api/chat] upstream ${upstreamRes.statusCode}`);
+                if (res.headersSent) return;
+                res.writeHead(upstreamRes.statusCode ?? 500, {
+                  'Content-Type': upstreamRes.headers['content-type'] ?? 'text/event-stream',
+                  'Cache-Control': 'no-cache, no-transform',
+                  'Connection': 'keep-alive',
+                  'x-ai-model-used': String(cfg.modelId || ''),
+                  'x-ai-model-route': routeLabel,
+                  'x-ai-has-image': hasImage ? '1' : '0',
+                });
+                upstreamRes.pipe(res);
+              }
+            );
 
-          if (upstreamTimeoutMs > 0) {
-            upstreamReq.setTimeout(upstreamTimeoutMs);
-          } else {
-            upstreamReq.setTimeout(0);
-          }
-
-          upstreamReq.on('timeout', () => {
-            console.error(`[api/chat] upstream timed out after ${upstreamTimeoutMs || '∞'}ms`);
-            upstreamReq.destroy();
-            if (!res.headersSent) {
-              res.writeHead(504, { 'Content-Type': 'application/json' });
-              res.end(
-                JSON.stringify({
-                  error:
-                    'Upstream LLM request timed out. Increase VLLM_UPSTREAM_TIMEOUT_MS in .env or shorten prompts.',
-                })
-              );
+            if (upstreamTimeoutMs > 0) {
+              upstreamReq.setTimeout(upstreamTimeoutMs);
             } else {
-              res.end();
+              upstreamReq.setTimeout(0);
             }
-          });
 
-          upstreamReq.on('error', (e) => {
-            console.error('[api/chat] request error:', e.message);
-            if (!res.headersSent) {
-              res.writeHead(500, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ error: e.message }));
-            } else {
-              res.end();
-            }
-          });
+            upstreamReq.on('timeout', () => {
+              console.error(`[api/chat] upstream timed out after ${upstreamTimeoutMs || '∞'}ms (${routeLabel})`);
+              upstreamReq.destroy();
+              const canFallback =
+                allowFallback &&
+                !!(primaryCfg.baseUrl && primaryCfg.apiKey && primaryCfg.modelId) &&
+                routeLabel === 'secondary';
+              if (canFallback) {
+                doRequest(primaryCfg, 'secondary_timeout_fallback_primary', false);
+                return;
+              }
+              if (!res.headersSent) {
+                res.writeHead(504, { 'Content-Type': 'application/json' });
+                res.end(
+                  JSON.stringify({
+                    error:
+                      'Upstream LLM request timed out. Increase VLLM_UPSTREAM_TIMEOUT_MS in .env or shorten prompts.',
+                  })
+                );
+              } else {
+                res.end();
+              }
+            });
 
-          upstreamReq.write(bodyStr);
-          upstreamReq.end();
+            upstreamReq.on('error', (e) => {
+              console.error('[api/chat] request error:', e.message, `(${routeLabel})`);
+              if (!res.headersSent) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: e.message }));
+              } else {
+                res.end();
+              }
+            });
+
+            upstreamReq.write(bodyStr);
+            upstreamReq.end();
+          };
+          doRequest(preferred, preferSecondary ? 'secondary' : 'primary', true);
         } catch (e: any) {
           console.error('[api/chat] parse error:', e);
           if (!res.headersSent) {
