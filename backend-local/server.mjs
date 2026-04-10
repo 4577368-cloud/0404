@@ -444,6 +444,10 @@ function sanitizeSessionId(v) {
   return id.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
 }
 
+function sqlQuote(value) {
+  return `'${String(value ?? '').replace(/'/g, "''")}'`;
+}
+
 function getNlqSessionTurns(sessionId) {
   const turns = nlqSessions.get(sessionId);
   return Array.isArray(turns) ? turns : [];
@@ -857,6 +861,94 @@ app.get('/admin/api/url-inputs', async (req, res) => {
     });
   } catch (e) {
     console.error('[admin] /admin/api/url-inputs:', e);
+    return res.status(500).json({ ok: false, error: e?.message || String(e) });
+  }
+});
+
+app.get('/admin/api/model-usage', async (req, res) => {
+  try {
+    const days = Math.max(1, Math.min(365, Number(req.query.days) || 30));
+    const sql = `
+      WITH logs AS (
+        SELECT *
+        FROM public.ai_model_reply_logs
+        WHERE created_at >= now() - make_interval(days => ${days})
+      )
+      SELECT
+        model_id,
+        model_route,
+        count(*)::int AS total_replies,
+        count(*) FILTER (WHERE coalesce(has_image, false))::int AS image_replies,
+        count(DISTINCT user_id)::int AS distinct_users,
+        count(DISTINCT conversation_id)::int AS distinct_conversations,
+        max(created_at) AS last_seen_at
+      FROM logs
+      GROUP BY model_id, model_route
+      ORDER BY total_replies DESC, model_id ASC, model_route ASC
+    `.trim();
+    const { data, error } = await supabase.rpc('admin_execute_select_sql', { p_sql: sql });
+    if (error) {
+      console.error('[admin] model usage:', error.message, error);
+      return res.status(500).json({ ok: false, error: error.message, code: error.code });
+    }
+    return res.json({ ok: true, data: { days, rows: Array.isArray(data?.rows) ? data.rows : [] } });
+  } catch (e) {
+    console.error('[admin] /admin/api/model-usage:', e);
+    return res.status(500).json({ ok: false, error: e?.message || String(e) });
+  }
+});
+
+app.get('/admin/api/model-replies', async (req, res) => {
+  try {
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const pageSize = Math.max(1, Math.min(100, Number(req.query.pageSize) || 20));
+    const days = Math.max(1, Math.min(365, Number(req.query.days) || 30));
+    const offset = (page - 1) * pageSize;
+    const to = offset + pageSize - 1;
+    const modelId = String(req.query.modelId || '').trim();
+    const keyword = String(req.query.keyword || '').trim();
+
+    const sinceIso = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+    let query = supabase
+      .from('ai_model_reply_logs')
+      .select('id, created_at, user_id, conversation_id, model_id, model_route, has_image, user_prompt_preview, assistant_reply_preview', { count: 'exact' })
+      .gte('created_at', sinceIso)
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+      .range(offset, to);
+
+    if (modelId) query = query.eq('model_id', modelId);
+    if (keyword) {
+      const like = `%${keyword}%`;
+      query = query.or(`conversation_id.ilike.${like},user_prompt_preview.ilike.${like},assistant_reply_preview.ilike.${like}`);
+    }
+
+    let { data, error, count } = await query;
+    if (error && /user_prompt_preview|assistant_reply_preview/i.test(error.message || '')) {
+      let fallback = supabase
+        .from('ai_model_reply_logs')
+        .select('id, created_at, user_id, conversation_id, model_id, model_route, has_image', { count: 'exact' })
+        .gte('created_at', sinceIso)
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
+        .range(offset, to);
+      if (modelId) fallback = fallback.eq('model_id', modelId);
+      if (keyword) fallback = fallback.ilike('conversation_id', `%${keyword}%`);
+      const fallbackRes = await fallback;
+      data = (fallbackRes.data || []).map((r) => ({ ...r, user_prompt_preview: '', assistant_reply_preview: '' }));
+      error = fallbackRes.error;
+      count = fallbackRes.count;
+    }
+    if (error) {
+      console.error('[admin] model replies:', error.message, error);
+      return res.status(500).json({ ok: false, error: error.message, code: error.code });
+    }
+
+    const total = Number(count) || 0;
+    const rows = Array.isArray(data) ? data : [];
+    return res.json({ ok: true, data: { page, page_size: pageSize, total, rows } });
+  } catch (e) {
+    console.error('[admin] /admin/api/model-replies:', e);
     return res.status(500).json({ ok: false, error: e?.message || String(e) });
   }
 });

@@ -328,6 +328,24 @@ function stripInternalUiDisclaimers(text) {
     .trim();
 }
 
+/** Normalize accidental formatting artifacts in model replies. */
+function sanitizeTangbuyReplyArtifacts(text) {
+  if (!text) return '';
+  return String(text)
+    // Remove "code-copy shell" wrappers sometimes emitted by upstream model UIs.
+    .replace(/(^|\n)\s*代码\s*\n\s*复制代码\s*(\n|$)/gi, '\n')
+    // Turn raw Tangbuy search links into labeled Markdown links (hide long URL text).
+    .replace(
+      /\b(https?:\/\/dropshipping\.tangbuy\.com\/en-US\/search\?keyword=[^\s)]+&type=text)\b/gi,
+      '[Tangbuy 产品池搜索]($1)'
+    )
+    // Suppress fixed warehouse disclaimer in generic answers unless user explicitly asked.
+    .replace(/^\s*(?:注意|Note)[:：]\s*Tangbuy.*(?:没有|无).*?(?:欧洲仓|EU(?:\s+local)?\s+stock).*$/gim, '')
+    .replace(/^\s*Tangbuy.*(?:ships?|shipping).*from\s+China.*(?:no|without)\s+EU(?:\s+local)?\s+stock.*$/gim, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 /**
  * search_picks 正文仅保留「合法 Tangbuy 搜索链接」；
  * 其它模型自带链接会被降级为纯文本，避免 ### / 30%-50% 这类噪音词可点击。
@@ -387,6 +405,7 @@ function polishAssistantText(raw) {
   t = sanitizeYear(t);
   t = stripLlmToolArtifacts(t);
   t = stripInternalUiDisclaimers(t);
+  t = sanitizeTangbuyReplyArtifacts(t);
   // Some streams leave only a blockquote marker or whitespace — would render as a stray “>” / empty box.
   if (/^[>\s\u00a0\u200b]+$/u.test(t)) return '';
   t = decodeHtmlEntities(t);
@@ -529,13 +548,8 @@ const ChatInput = React.memo(function ChatInput({
   const handleInputChange = React.useCallback(
     (value) => {
       setInput(value);
-      if (draftDebounceRef.current) clearTimeout(draftDebounceRef.current);
-      draftDebounceRef.current = setTimeout(() => {
-        draftDebounceRef.current = null;
-        setDraft?.(value);
-      }, 320);
     },
-    [setDraft]
+    []
   );
 
   // Sync input with draft when draft prop changes (e.g., switching conversations)
@@ -554,12 +568,11 @@ const ChatInput = React.memo(function ChatInput({
 
   React.useEffect(
     () => () => {
-      if (draftDebounceRef.current) {
-        clearTimeout(draftDebounceRef.current);
-        draftDebounceRef.current = null;
-      }
+      flushDraftToParent(textareaRef.current?.value?.replace(/^\s+/, '') || '');
+      if (draftDebounceRef.current) clearTimeout(draftDebounceRef.current);
+      draftDebounceRef.current = null;
     },
-    []
+    [flushDraftToParent]
   );
 
   React.useEffect(() => {
@@ -1887,6 +1900,8 @@ export function ModuleAIChat({
           modelId: streamResult.modelUsed,
           modelRoute: streamResult.modelRoute || 'primary',
           hasImage: !!streamResult.modelHasImage,
+          userPrompt: txt,
+          assistantReply: streamResult.finalSearchText || streamResult.finalText || '',
         });
       }
 

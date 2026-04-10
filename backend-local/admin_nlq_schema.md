@@ -1,6 +1,6 @@
 # Admin NLQ Schema (auto-generated)
 
-Updated at: 2026-04-10T01:48:04.603Z
+Updated at: 2026-04-10T06:37:17.652Z
 
 Use this schema to answer admin natural-language questions by generating SELECT SQL only.
 
@@ -95,6 +95,8 @@ Use this schema to answer admin natural-language questions by generating SELECT 
   - `model_route` text
   - `has_image` boolean
   - `created_at` timestamp with time zone
+  - `user_prompt_preview` text
+  - `assistant_reply_preview` text
 
 - `auth.audit_log_entries`
   - `instance_id` uuid

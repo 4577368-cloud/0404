@@ -26,6 +26,7 @@
     .mini-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px; }
     .mini-cards .card .v { font-size: 20px; }
     .preview-cell { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .context-cell { max-width: 380px; white-space: normal; word-break: break-word; line-height: 1.45; }
     .urls-cell { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: #98a6c6; }
     textarea { background: #0b1020; color: #e6eaf2; border: 1px solid #243253; border-radius: 8px; padding: 10px; width: 100%; }
     h3.panel-title { margin: 0 0 10px 0; font-size: 15px; font-weight: 600; color: #c8d4ee; }
@@ -190,6 +191,41 @@
       <div class="row" style="margin-top:10px;">
         <button type="button" id="promptPrev">上一页</button>
         <button type="button" id="promptNext">下一页</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3 class="panel-title">模型使用统计与上下文</h3>
+      <div class="row" style="flex-wrap:wrap;">
+        <span class="muted">统计天数</span>
+        <select id="modelUsageDays" style="padding:6px 10px;">
+          <option value="14">14 天</option>
+          <option value="30" selected>30 天</option>
+          <option value="90">90 天</option>
+        </select>
+      </div>
+      <div class="err" id="errModelUsage"></div>
+      <table style="margin-bottom:12px;">
+        <thead>
+          <tr><th>模型</th><th>路由</th><th>回复数</th><th>图片回复</th><th>用户数</th><th>会话数</th><th>最近出现</th></tr>
+        </thead>
+        <tbody id="modelUsageTbody"></tbody>
+      </table>
+      <div class="row">
+        <input id="modelRepliesKw" type="text" placeholder="筛选：会话ID / 用户问题 / 模型回答" style="min-width:240px;flex:1;" />
+        <input id="modelRepliesModel" type="text" placeholder="按模型ID筛选（可选）" style="min-width:180px;" />
+        <button type="button" id="queryModelRepliesBtn">查询</button>
+      </div>
+      <div class="muted" id="modelRepliesMeta" style="margin:6px 0;"></div>
+      <table>
+        <thead>
+          <tr><th>时间</th><th>模型</th><th>会话</th><th>用户问了什么</th><th>模型怎么回答</th></tr>
+        </thead>
+        <tbody id="modelRepliesTbody"></tbody>
+      </table>
+      <div class="row" style="margin-top:10px;">
+        <button type="button" id="modelRepliesPrev">上一页</button>
+        <button type="button" id="modelRepliesNext">下一页</button>
       </div>
     </div>
 
@@ -741,6 +777,59 @@
       el('promptsMeta').textContent = `匹配用户 ${matched} 个 · 明细共 ${d.total || 0} 条 · 第 ${d.page || 1} 页`;
     }
 
+    let modelRepliesPage = 1;
+    let modelRepliesKeyword = '';
+    let modelRepliesModelId = '';
+    const modelRepliesPageSize = 20;
+
+    async function loadModelUsage() {
+      el('errModelUsage').textContent = '';
+      const days = el('modelUsageDays').value || '30';
+      const d = await api(`/admin/api/model-usage?days=${encodeURIComponent(days)}`);
+      const rows = Array.isArray(d.rows) ? d.rows : [];
+      el('modelUsageTbody').innerHTML = rows.map((r) => `
+        <tr>
+          <td>${escapeHtml(r.model_id || '')}</td>
+          <td>${escapeHtml(r.model_route || '')}</td>
+          <td>${fmt(r.total_replies)}</td>
+          <td>${fmt(r.image_replies)}</td>
+          <td>${fmt(r.distinct_users)}</td>
+          <td>${fmt(r.distinct_conversations)}</td>
+          <td>${escapeHtml(fmtCst(r.last_seen_at))}</td>
+        </tr>
+      `).join('');
+    }
+
+    async function loadModelReplies(page) {
+      el('errModelUsage').textContent = '';
+      modelRepliesKeyword = (el('modelRepliesKw').value || '').trim();
+      modelRepliesModelId = (el('modelRepliesModel').value || '').trim();
+      modelRepliesPage = Math.max(1, page || 1);
+      const days = el('modelUsageDays').value || '30';
+      const qs = new URLSearchParams({
+        page: String(modelRepliesPage),
+        pageSize: String(modelRepliesPageSize),
+        days: String(days),
+        keyword: modelRepliesKeyword,
+        modelId: modelRepliesModelId,
+      });
+      const d = await api(`/admin/api/model-replies?${qs.toString()}`);
+      const rows = Array.isArray(d.rows) ? d.rows : [];
+      const total = Number(d.total) || 0;
+      const ps = Number(d.page_size) || modelRepliesPageSize;
+      const maxPage = Math.max(1, Math.ceil(total / ps) || 1);
+      el('modelRepliesTbody').innerHTML = rows.map((r) => `
+        <tr>
+          <td>${escapeHtml(fmtCst(r.created_at))}</td>
+          <td title="${escapeHtml(r.model_id || '')}">${escapeHtml(r.model_id || '')}<br /><span class="muted">${escapeHtml(r.model_route || '')}${r.has_image ? ' · image' : ''}</span></td>
+          <td><code>${escapeHtml(r.conversation_id || '')}</code></td>
+          <td class="context-cell">${escapeHtml(r.user_prompt_preview || '')}</td>
+          <td class="context-cell">${escapeHtml(r.assistant_reply_preview || '')}</td>
+        </tr>
+      `).join('');
+      el('modelRepliesMeta').textContent = `共 ${total} 条模型回复记录 · 第 ${modelRepliesPage} / ${maxPage} 页`;
+    }
+
     let nlqSessionId = '';
     const nlqPresets = [
       '今日注册用户数和注册邮箱分别是什么？',
@@ -870,6 +959,7 @@
       el('errShare').textContent = '';
       el('errShareList').textContent = '';
       el('errUrlInputs').textContent = '';
+      el('errModelUsage').textContent = '';
       el('errNlq').textContent = '';
       const results = await Promise.allSettled([
         syncNlqSchema(),
@@ -880,9 +970,11 @@
         loadShareInsights(),
         loadShareList(1),
         loadUrlInputs(1),
+        loadModelUsage(),
+        loadModelReplies(1),
       ]);
-      const labels = ['NLQ结构同步', '总览', '用户列表', '趋势', '对话用量', '分享裂变', '分享列表', '链接网站维度'];
-      const errIds = ['errNlq', 'errOverview', 'errUsers', 'errTrends', 'errConv', 'errShare', 'errShareList', 'errUrlInputs'];
+      const labels = ['NLQ结构同步', '总览', '用户列表', '趋势', '对话用量', '分享裂变', '分享列表', '链接网站维度', '模型使用统计', '模型上下文列表'];
+      const errIds = ['errNlq', 'errOverview', 'errUsers', 'errTrends', 'errConv', 'errShare', 'errShareList', 'errUrlInputs', 'errModelUsage', 'errModelUsage'];
       results.forEach((r, i) => {
         if (r.status === 'rejected') {
           el(errIds[i]).textContent = `${labels[i]} 拉取失败：${r.reason?.message || r.reason}`;
@@ -894,9 +986,9 @@
     el('usageDays').addEventListener('change', async () => {
       el('errConv').textContent = '';
       el('errShare').textContent = '';
-      const results = await Promise.allSettled([loadConversationUsage(), loadShareInsights()]);
-      const errIds = ['errConv', 'errShare'];
-      const labels = ['对话用量', '分享裂变'];
+      const results = await Promise.allSettled([loadConversationUsage(), loadShareInsights(), loadModelUsage(), loadModelReplies(1)]);
+      const errIds = ['errConv', 'errShare', 'errModelUsage', 'errModelUsage'];
+      const labels = ['对话用量', '分享裂变', '模型使用统计', '模型上下文列表'];
       results.forEach((r, i) => {
         if (r.status === 'rejected') {
           el(errIds[i]).textContent = `${labels[i]} 拉取失败：${r.reason?.message || r.reason}`;
@@ -973,6 +1065,39 @@
         await loadPromptLogs(promptLogsPage + 1);
       } catch (e) {
         el('errPrompts').textContent = e?.message || String(e);
+      }
+    });
+    el('modelUsageDays').addEventListener('change', async () => {
+      try {
+        await Promise.all([loadModelUsage(), loadModelReplies(1)]);
+      } catch (e) {
+        el('errModelUsage').textContent = e?.message || String(e);
+      }
+    });
+    el('queryModelRepliesBtn').addEventListener('click', async () => {
+      try {
+        await loadModelReplies(1);
+      } catch (e) {
+        el('errModelUsage').textContent = e?.message || String(e);
+      }
+    });
+    el('modelRepliesPrev').addEventListener('click', async () => {
+      if (modelRepliesPage <= 1) return;
+      el('modelRepliesKw').value = modelRepliesKeyword;
+      el('modelRepliesModel').value = modelRepliesModelId;
+      try {
+        await loadModelReplies(modelRepliesPage - 1);
+      } catch (e) {
+        el('errModelUsage').textContent = e?.message || String(e);
+      }
+    });
+    el('modelRepliesNext').addEventListener('click', async () => {
+      el('modelRepliesKw').value = modelRepliesKeyword;
+      el('modelRepliesModel').value = modelRepliesModelId;
+      try {
+        await loadModelReplies(modelRepliesPage + 1);
+      } catch (e) {
+        el('errModelUsage').textContent = e?.message || String(e);
       }
     });
     el('queryShareListBtn').addEventListener('click', async () => {
