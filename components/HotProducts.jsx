@@ -3,6 +3,7 @@ import {
   tryFetchJson,
   inferHotCatalogPlatform,
   normalizeCatalogItem,
+  prioritizeDirectTangbuyUrl,
   pickField,
   ensureJsonArray,
   getDataJsonFetchPaths,
@@ -336,12 +337,12 @@ export default function HotProducts({
     const afterFilters = showFilterBar ? applyFilters(base, filters, usdPrice) : base;
 
     if (filter === 'all') {
-      return shuffleWithCategoryPriority(afterFilters, shuffleSeed);
+      return prioritizeDirectTangbuyUrl(shuffleWithCategoryPriority(afterFilters, shuffleSeed));
     }
     if (filter === 'tangbuy') {
-      return seededShuffle(afterFilters, shuffleSeed);
+      return prioritizeDirectTangbuyUrl(seededShuffle(afterFilters, shuffleSeed));
     }
-    return afterFilters;
+    return prioritizeDirectTangbuyUrl(afterFilters);
   }, [filter, tangbuyRows, bestRows, trendRows, shuffleSeed, filters, selectedBestMonth, selectedTrendMonth, usdPrice]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));

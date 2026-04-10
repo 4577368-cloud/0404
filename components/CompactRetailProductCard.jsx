@@ -101,7 +101,7 @@ export function CompactRetailProductCard({
       ? pickViewHrefForChatPicks(p)
       : retailVariant === 'hot'
         ? p.tangbuyUrl || p.url
-        : tangbuySearchUrlForTrendCategory(p) || p.url || p.tangbuyUrl;
+        : p.tangbuyUrl || tangbuySearchUrlForTrendCategory(p) || p.url;
 
   const logView = () => {
     const u = viewHref || '';

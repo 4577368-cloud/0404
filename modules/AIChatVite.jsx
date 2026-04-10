@@ -55,6 +55,7 @@ import {
   partitionHotAndTrendMatches,
   filterTrendMatchesForPreciseDisplay,
   recommendationFallbackKind,
+  prioritizeDirectTangbuyUrl,
 } from '../utils/productSearch.js';
 import { decodeHtmlEntities, buildAggregatedSupplyChainBackbone } from '../utils/reportFormatter.js';
 import { PROMPTS } from '../utils/systemPrompts.js';
@@ -1959,7 +1960,7 @@ export function ModuleAIChat({
             trendResultCap: TREND_WIDE_CARD_REPLY_CAP,
           });
           const preciseTrend = filterTrendMatchesForPreciseDisplay(trendQuery, trendMatched);
-          const ranked = preciseTrend.length > 0 ? preciseTrend : trendMatched;
+          const ranked = prioritizeDirectTangbuyUrl(preciseTrend.length > 0 ? preciseTrend : trendMatched);
           const slice = ranked.slice(0, TREND_WIDE_CARD_REPLY_CAP);
           if (slice.length > 0) {
             setMessages((p) => [...p, { role: 'ai', type: 'products_trend', content: '', data: slice }]);

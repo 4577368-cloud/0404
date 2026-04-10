@@ -13,7 +13,9 @@ function base64EncodeUtf8(str) {
 
 function toDropshippingUrl(sourceUrl) {
   if (!sourceUrl) return '';
-  const s = String(sourceUrl);
+  const s = String(sourceUrl).trim();
+  if (!s) return '';
+  if (/^https?:\/\/dropshipping\.tangbuy\.com\//i.test(s)) return s;
   return s.startsWith(DROPSHIPPING_PREFIX) ? s : DROPSHIPPING_PREFIX + base64EncodeUtf8(s);
 }
 
@@ -482,6 +484,7 @@ export function normalizeCatalogItem(item, i, platform) {
     const influencerCount = Number(pickField(item, ['达人数量', '带货达人数', 'influencer_count']) || 0);
     const influencerOrderRate = String(pickField(item, ['达人出单率', '出单率', 'influencer_rate']) || '');
     const tiktokUrl = String(pickField(item, ['TikTok链接', 'tiktok_url', 'product_url']) || '');
+    const tangbuySourceUrl = pickField(item, ['tangbuy_product_url', 'tangbuyUrl', 'tangbuy_url', 'Tangbuy链接', 'Tangbuy URL']);
     const categoryEnTokens = translateZhToEn(categoryCn).join(' ').trim();
     const categorySearchEn = String(
       pickField(item, ['category_en', 'category_l3_en', '三级类目_en', 'l3_category_en', 'category_l3']) || ''
@@ -501,7 +504,7 @@ export function normalizeCatalogItem(item, i, platform) {
       url: tiktokUrl,
       priceRmb: priceUsd,
       tangbuyPriceRmb: NaN,
-      tangbuyUrl: '',
+      tangbuyUrl: tangbuySourceUrl ? toDropshippingUrl(tangbuySourceUrl) : '',
       monthSoldNum: Number.isFinite(sold) ? sold : 0,
       sold: Number.isFinite(sold) ? String(sold) : 'N/A',
       dateRangeCn,
@@ -635,6 +638,20 @@ export async function loadTrendCatalogOnly() {
     return { ...row, id: safeId, variant: 'bestseller', platform: 'MonthlyTop' };
   });
   return [...trendItems, ...bestItems];
+}
+
+export function hasDirectTangbuyUrl(product) {
+  return String(product?.tangbuyUrl || '').trim().length > 0;
+}
+
+export function prioritizeDirectTangbuyUrl(items) {
+  const arr = Array.isArray(items) ? items.slice() : [];
+  return arr.sort((a, b) => {
+    const ah = hasDirectTangbuyUrl(a) ? 1 : 0;
+    const bh = hasDirectTangbuyUrl(b) ? 1 : 0;
+    if (ah !== bh) return bh - ah;
+    return 0;
+  });
 }
 
 export function partitionHotAndTrendMatches(matched) {
@@ -1007,5 +1024,19 @@ export function isProductConfirmation(text, prevMessages) {
   const lastAiMsg = [...prevMessages].reverse().find((m) => m.role === 'ai' && m.type === 'text' && m.content);
   if (!lastAiMsg) return false;
   const aiText = String(lastAiMsg.content).toLowerCase();
-  return /(是否需要.*商品|是否.*推荐.*商品|是否.*趋势|要不要.*推荐|需要.*推荐.*商品|需要.*商品|would you like.*product|want.*recommend|want.*trending|shall i.*product|want me to show|提供.*趋势商品|提供.*商品推荐)/i.test(aiText);
+  const askPatterns = [
+    '是否需要.*(?:商品|产品|单品|趋势)',
+    '是否.*推荐.*(?:商品|产品|单品|趋势)',
+    '要不要.*推荐',
+    '需要.*推荐.*(?:商品|产品|单品|趋势)',
+    '需要.*(?:商品|产品|单品|趋势)',
+    '展示.{0,18}(?:\\d+\\s*[-–—~到至]\\s*\\d+|几).{0,18}(?:款|个).{0,24}(?:商品|产品|单品|爆款)',
+    'would you like.*(?:product|products|item|items|trending)',
+    'want.*(?:recommend|show).*(?:product|products|item|items|trending)',
+    'shall i.*(?:show|recommend).*(?:product|products|trending)',
+    'want me to show',
+    'provide.*(?:trending|product).*(?:list|items)?',
+  ];
+  const askRe = new RegExp(`(?:${askPatterns.join('|')})`, 'i');
+  return askRe.test(aiText);
 }

@@ -119,7 +119,7 @@ function ChatTrendWideCard({ p, uiLang, displayUrl, onAskAi, onSendInquiry, gues
   const ratingVal = Number(p.rating);
   const ratingText = Number.isFinite(ratingVal) ? ratingVal.toFixed(1).replace(/\.0$/, '') : 'N/A';
 
-  const tangbuyCategorySearchHref = tangbuySearchUrlForTrendCategory(p);
+  const tangbuyCategorySearchHref = p.tangbuyUrl || tangbuySearchUrlForTrendCategory(p);
 
   const metricCell = (label, value) => {
     const v = String(value ?? '');
@@ -163,7 +163,7 @@ function ChatTrendWideCard({ p, uiLang, displayUrl, onAskAi, onSendInquiry, gues
             </div>
             <div className="flex gap-1.5 mt-1 shrink-0">
               <a href={tangbuyCategorySearchHref} target="_blank" rel="noreferrer"
-                onClick={() => logTangbuyClick(supabase, 'chat_trend_tangbuy_category', tangbuyCategorySearchHref, { productId: p.id, name: p.name })}
+                onClick={() => logTangbuyClick(supabase, p.tangbuyUrl ? 'chat_trend_tangbuy_product' : 'chat_trend_tangbuy_category', tangbuyCategorySearchHref, { productId: p.id, name: p.name })}
                 className="flex-1 text-[10px] text-center py-1.5 rounded-lg transition-opacity duration-150 font-semibold flex items-center justify-center gap-1 hover:opacity-90"
                 style={{ background: '#ef6b66', color: '#fff', border: '1px solid rgba(239,107,102,0.75)', boxShadow: '0 6px 14px rgba(239,107,102,0.20)' }}>
                 <span className="icon-external-link text-[10px]" />
