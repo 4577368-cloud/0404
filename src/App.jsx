@@ -236,6 +236,7 @@ export default function App() {
   const [authModalReason, setAuthModalReason] = React.useState('default');
   const prevOAuthSessionRef = React.useRef(false);
   const [hotProductDiagnosisRequest, setHotProductDiagnosisRequest] = React.useState(null);
+  const [hotProductsViewNonce, setHotProductsViewNonce] = React.useState(0);
   const [inquiryProduct, setInquiryProduct] = React.useState(null);
   const [inquiryListRefresh, setInquiryListRefresh] = React.useState(0);
 
@@ -801,6 +802,7 @@ export default function App() {
             requireOAuthToastAndModal('nav_hot_products');
             return;
           }
+          setHotProductsViewNonce((n) => n + 1);
           setActiveView('hotProducts');
           if (sidebarCollapsed && sidebarAutoCollapsedRef.current) {
             setSidebarCollapsed(false);
@@ -870,6 +872,7 @@ export default function App() {
           <React.Suspense fallback={<ViewLoadingFallback uiLang={lang} />}>
           {activeView === 'hotProducts' ? (
             <HotProducts
+              viewNonce={hotProductsViewNonce}
               t={t}
               uiLang={lang}
               guestFeatureLocked={guestFeatureLocked}

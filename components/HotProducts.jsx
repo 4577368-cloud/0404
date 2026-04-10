@@ -236,6 +236,7 @@ function applyFilters(rows, filters, usdPriceAccessor) {
 // ── Main ──
 
 export default function HotProducts({
+  viewNonce = 0,
   uiLang,
   t: _t,
   guestFeatureLocked = false,
@@ -252,7 +253,10 @@ export default function HotProducts({
   const [filter, setFilter] = React.useState('all');
   const [listHint, setListHint] = React.useState('');
 
-  const [shuffleSeed] = React.useState(() => Math.floor(Math.random() * 2147483646) + 1);
+  const [shuffleSeed, setShuffleSeed] = React.useState(() => Math.floor(Math.random() * 2147483646) + 1);
+  React.useEffect(() => {
+    setShuffleSeed(Math.floor(Math.random() * 2147483646) + 1);
+  }, [viewNonce]);
 
   const [filters, setFilters] = React.useState({ keyword: '', priceMin: '', priceMax: '', soldMin: '', creatorsMin: '', convRateMin: '' });
 
@@ -342,7 +346,8 @@ export default function HotProducts({
     if (filter === 'tangbuy') {
       return prioritizeDirectTangbuyUrl(seededShuffle(afterFilters, shuffleSeed));
     }
-    return prioritizeDirectTangbuyUrl(afterFilters);
+    // monthly / trend: randomize on each view entry, then keep URL-available items in front.
+    return prioritizeDirectTangbuyUrl(seededShuffle(afterFilters, shuffleSeed));
   }, [filter, tangbuyRows, bestRows, trendRows, shuffleSeed, filters, selectedBestMonth, selectedTrendMonth, usdPrice]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
