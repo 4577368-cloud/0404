@@ -59,6 +59,10 @@ import {
 } from '../utils/productSearch.js';
 import { decodeHtmlEntities, buildAggregatedSupplyChainBackbone } from '../utils/reportFormatter.js';
 import { PROMPTS } from '../utils/systemPrompts.js';
+import {
+  shouldInjectProductImageBrandSystem,
+  PRODUCT_IMAGE_BRAND_SYSTEM_APPENDIX,
+} from '../utils/productImageBrandAnalysis.js';
 // ── Markdown renderer ──
 const mdRenderer = new marked.Renderer();
 mdRenderer.link = function ({ href, title, text }) {
@@ -1664,7 +1668,24 @@ export function ModuleAIChat({
       ? `\n\n[Brief greeting — user has not asked a concrete question yet]\n- Reply warmly in a few sentences. You may use a short bullet list of **what you can help with** (e.g. 独立站诊断、SEO、选品思路).\n- Do **not** ask the user to “provide a product URL / category” or similar intake-style questions. Do **not** use numbered “请提供…” questionnaires.\n- End with a single open line such as: 有具体问题或链接时直接发我即可 — not a list of demands.\n`
       : '';
 
-    return { role: 'system', content: activePrompt + tangbuyBaseGuidance + tangbuyKnowledgeCtx + langConstraint + yearConstraint + siteCtx + diagnosisCtx + tangbuyExecutionHint + greetingHint };
+    const productImageBrandHint = shouldInjectProductImageBrandSystem(currentInput)
+      ? `\n\n${PRODUCT_IMAGE_BRAND_SYSTEM_APPENDIX}\n`
+      : '';
+
+    return {
+      role: 'system',
+      content:
+        activePrompt +
+        tangbuyBaseGuidance +
+        tangbuyKnowledgeCtx +
+        langConstraint +
+        yearConstraint +
+        siteCtx +
+        diagnosisCtx +
+        tangbuyExecutionHint +
+        greetingHint +
+        productImageBrandHint,
+    };
   }, [mode, knownSite, uiLang, uiLangLabel, diagnosisContext]);
 
   // ── SSE streaming response ──
