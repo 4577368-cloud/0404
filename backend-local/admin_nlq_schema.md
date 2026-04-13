@@ -1,6 +1,6 @@
 # Admin NLQ Schema (auto-generated)
 
-Updated at: 2026-04-13T10:37:05.040Z
+Updated at: 2026-04-13T11:50:00.411Z
 
 Use this schema to answer admin natural-language questions by generating SELECT SQL only.
 
@@ -368,6 +368,12 @@ Use this schema to answer admin natural-language questions by generating SELECT 
   - `status` text
   - `created_at` timestamp with time zone
   - `updated_at` timestamp with time zone
+  - `reply_content` text
+  - `reply_at` timestamp with time zone
+  - `replied_by` text
+  - `reply_messages` jsonb
+  - `reply_count` integer
+  - `user_seen_reply_count` integer
 
 - `public.tangbuy_click_events`
   - `id` bigint

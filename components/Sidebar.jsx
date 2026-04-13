@@ -246,6 +246,7 @@ function generateSmartName(messages, uiLang = 'zh') {
 export default function Sidebar({
   conversations, activeId, onSelect, onNew, onDelete, onRename, isOpen, onClose, onHotProducts, onSourcing, onAIReports, onInquiryMessages, onMyLists, activeView, uiLang, collapsed, onToggleCollapse,
   supabaseReady, authUser, onOpenAuthModal, onLinkGoogle, onLinkFacebook, onSignOut, onSwitchAccount, myListsCount,
+  inquiryUnreadCount = 0,
   /** 真正「新用户」欢迎态：不占用桌面窄栏，仅用 Header 菜单拉出抽屉 */
   dockedHidden = false,
 }) {
@@ -494,13 +495,28 @@ export default function Sidebar({
               background: activeView === 'inquiries' ? 'color-mix(in srgb, var(--brand-primary-fixed) 10%, transparent)' : 'transparent',
               color: activeView === 'inquiries' ? 'var(--brand-primary-fixed)' : 'var(--theme-text)',
               border: activeView === 'inquiries' ? '1px solid color-mix(in srgb, var(--brand-primary-fixed) 15%, transparent)' : 'none',
-              fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
+              fontSize: 13, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', position: 'relative',
             }}
             onMouseEnter={(e) => { if (activeView !== 'inquiries') e.currentTarget.style.background = 'color-mix(in srgb, var(--brand-primary-fixed) 5%, transparent)'; }}
             onMouseLeave={(e) => { if (activeView !== 'inquiries') e.currentTarget.style.background = 'transparent'; }}
           >
             <span className="icon-inbox text-[14px]" style={collapsed ? { color: 'var(--brand-primary-fixed)' } : undefined} />
             {!collapsed && <span>{uiLang === 'zh' ? '询盘消息' : 'Messages'}</span>}
+            {inquiryUnreadCount > 0 && (
+              <span style={{
+                position: collapsed ? 'absolute' : 'static',
+                top: collapsed ? 4 : undefined,
+                right: collapsed ? 4 : undefined,
+                fontSize: 9,
+                fontWeight: 700,
+                lineHeight: 1,
+                padding: '2px 5px',
+                borderRadius: 99,
+                background: '#ef4444',
+                color: '#fff',
+                marginLeft: collapsed ? 0 : 'auto',
+              }}>{Math.min(99, inquiryUnreadCount)}</span>
+            )}
           </button>
           <button onClick={() => { onMyLists?.(); onClose?.(); }}
             title={uiLang === 'zh' ? '我的列表' : 'My Lists'}

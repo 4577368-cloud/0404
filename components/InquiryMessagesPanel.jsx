@@ -1,10 +1,10 @@
 import React from 'react';
 import { supabase } from '../utils/supabaseClient.js';
-import { fetchMyProductInquiries } from '../utils/productInquiries.js';
+import { fetchMyProductInquiries, markMyInquiryRepliesSeen, resolveInquiryPrimaryLink } from '../utils/productInquiries.js';
 import { isAnonymousUser } from '../utils/supabaseAuth.js';
 
 export default function InquiryMessagesPanel({ uiLang, authUser, refreshKey = 0 }) {
-  const [tab, setTab] = React.useState('submitted'); // submitted | replied
+  const [tab, setTab] = React.useState('replied'); // submitted | replied
   const [rows, setRows] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [err, setErr] = React.useState(null);
@@ -31,6 +31,12 @@ export default function InquiryMessagesPanel({ uiLang, authUser, refreshKey = 0 
   React.useEffect(() => {
     void load();
   }, [load, refreshKey]);
+
+  React.useEffect(() => {
+    if (!supabase || !authUser?.id || isAnonymousUser(authUser)) return;
+    // Entering message center marks current replies as read.
+    void markMyInquiryRepliesSeen(supabase).then(() => load());
+  }, [authUser?.id, load]);
 
   if (!authUser?.id || isAnonymousUser(authUser)) {
     return (
@@ -149,7 +155,13 @@ export default function InquiryMessagesPanel({ uiLang, authUser, refreshKey = 0 
               const snap = row.product_snapshot || {};
               const name = snap.name || '—';
               const img = snap.image && String(snap.image).startsWith('http') ? snap.image : null;
+              const productLink = resolveInquiryPrimaryLink(snap);
               const date = row.created_at ? new Date(row.created_at).toLocaleString() : '';
+              const replies = Array.isArray(row.reply_messages) && row.reply_messages.length
+                ? row.reply_messages
+                : (row.reply_content
+                  ? [{ content: row.reply_content, at: row.reply_at, by: row.replied_by }]
+                  : []);
               return (
                 <li
                   key={row.id}
@@ -186,6 +198,18 @@ export default function InquiryMessagesPanel({ uiLang, authUser, refreshKey = 0 
                         {name}
                       </div>
                       <div style={{ fontSize: 11, color: 'var(--theme-text-muted)', marginTop: 4 }}>{date}</div>
+                      {productLink ? (
+                        <div style={{ fontSize: 11, marginTop: 6 }}>
+                          <a
+                            href={productLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: 'var(--secondary)', textDecoration: 'underline', textUnderlineOffset: 2 }}
+                          >
+                            {uiLang === 'zh' ? '查看商品链接' : 'Open product link'}
+                          </a>
+                        </div>
+                      ) : null}
                       <div style={{ fontSize: 12, color: 'var(--theme-text-secondary)', marginTop: 10, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
                         <strong style={{ color: 'var(--theme-text)' }}>{uiLang === 'zh' ? '需求：' : 'Request: '}</strong>
                         {row.demand || '—'}
@@ -193,6 +217,33 @@ export default function InquiryMessagesPanel({ uiLang, authUser, refreshKey = 0 
                       <div style={{ fontSize: 11, color: 'var(--theme-text-muted)', marginTop: 8 }}>
                         WhatsApp: {row.whatsapp || '—'}
                       </div>
+                      {row.status === 'replied' && replies.length > 0 && (
+                        <div
+                          style={{
+                            marginTop: 12,
+                            padding: '10px 12px',
+                            borderRadius: 10,
+                            background: 'color-mix(in srgb, var(--brand-primary-fixed) 8%, transparent)',
+                            border: '1px solid color-mix(in srgb, var(--brand-primary-fixed) 18%, transparent)',
+                          }}
+                        >
+                          {replies.map((rp, idx) => (
+                            <div key={`${row.id}_${idx}`} style={{ marginTop: idx === 0 ? 0 : 10, paddingTop: idx === 0 ? 0 : 10, borderTop: idx === 0 ? 'none' : '1px dashed color-mix(in srgb, var(--brand-primary-fixed) 28%, transparent)' }}>
+                              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--brand-primary-fixed)', marginBottom: 4 }}>
+                                {rp?.by || row.replied_by || 'TangbuyDropshipping'}
+                              </div>
+                              <div style={{ fontSize: 12, color: 'var(--theme-text)', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
+                                {String(rp?.content || '')}
+                              </div>
+                              {rp?.at ? (
+                                <div style={{ fontSize: 10, color: 'var(--theme-text-muted)', marginTop: 6 }}>
+                                  {new Date(rp.at).toLocaleString()}
+                                </div>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </li>

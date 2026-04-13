@@ -253,6 +253,53 @@
     </div>
 
     <div class="panel">
+      <h3 class="panel-title">询盘管理</h3>
+      <div class="row" style="flex-wrap:wrap;">
+        <select id="inquiryStatusFilter" style="padding:6px 10px;">
+          <option value="">全部状态</option>
+          <option value="submitted">已提交</option>
+          <option value="replied">已回复</option>
+        </select>
+        <input id="inquiryKw" type="text" placeholder="筛选：邮箱 / WhatsApp / 需求" style="min-width:220px;flex:1;" />
+        <button type="button" id="queryInquiriesBtn">查询</button>
+      </div>
+      <div class="err" id="errInquiries"></div>
+      <div class="muted" id="inquiriesMeta" style="margin:6px 0;"></div>
+      <table>
+        <thead>
+          <tr>
+            <th>用户</th>
+            <th>WhatsApp</th>
+            <th>商品</th>
+            <th>商品链接</th>
+            <th>需求</th>
+            <th>状态</th>
+            <th>提交时间</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="inquiriesTbody"></tbody>
+      </table>
+      <div class="row" style="margin-top:10px;">
+        <button type="button" id="inquiriesPrev">上一页</button>
+        <button type="button" id="inquiriesNext">下一页</button>
+      </div>
+    </div>
+
+    <div id="inquiryReplyOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.55);display:none;align-items:center;justify-content:center;">
+      <div style="background:#11182d;border:1px solid #1f2a44;border-radius:14px;padding:20px 24px;max-width:520px;width:92%;">
+        <h3 style="margin:0 0 10px;font-size:16px;color:#e2e8f0;">回复询盘</h3>
+        <div class="muted" id="replyInquiryInfo" style="margin-bottom:10px;line-height:1.5;"></div>
+        <textarea id="replyContentInput" rows="4" placeholder="请输入回复内容…" style="width:100%;margin-bottom:10px;"></textarea>
+        <div class="err" id="errReply"></div>
+        <div class="row" style="justify-content:flex-end;gap:8px;">
+          <button type="button" id="replyCancel" style="background:#475569;">取消</button>
+          <button type="button" id="replySendBtn">发送回复</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
       <div class="row">
         <input id="kw" placeholder="邮箱关键词" />
         <label><input type="checkbox" id="vipOnly" /> 仅 VIP</label>
@@ -311,6 +358,16 @@
       const t = String(s || '').replace(/\s+/g, ' ').trim();
       if (t.length <= max) return t;
       return `${t.slice(0, max)}…`;
+    }
+
+    function resolveInquiryLink(snap) {
+      const s = snap && typeof snap === 'object' ? snap : {};
+      const candidates = [s.tangbuyUrl, s.url, s.image, s.imageFallback];
+      for (const c of candidates) {
+        const x = String(c || '').trim();
+        if (/^https?:\/\//i.test(x)) return x;
+      }
+      return '';
     }
 
     function formatModelReplyUser(r) {
@@ -1025,6 +1082,106 @@
       await apiPost('/admin/api/nlq/schema/refresh', {});
     }
 
+    // ── 询盘管理 ──
+    let inquiriesPage = 1;
+    let inquiriesKeyword = '';
+    let inquiriesStatus = '';
+    let currentReplyInquiryId = null;
+
+    async function loadInquiries(page = 1) {
+      el('errInquiries').textContent = '';
+      inquiriesPage = page;
+      inquiriesKeyword = el('inquiryKw').value.trim();
+      inquiriesStatus = el('inquiryStatusFilter').value;
+      const params = new URLSearchParams({ page, pageSize: 20 });
+      if (inquiriesStatus) params.set('status', inquiriesStatus);
+      if (inquiriesKeyword) params.set('keyword', inquiriesKeyword);
+      const d = await api(`/admin/api/inquiries?${params}`);
+      const rows = Array.isArray(d.rows) ? d.rows : [];
+      el('inquiriesMeta').textContent = `共 ${d.total || 0} 条，当前第 ${d.page || 1} 页`;
+      el('inquiriesTbody').innerHTML = rows.map((r) => {
+        const snap = r.product_snapshot || {};
+        const productName = truncateOneLine(snap.name || '—', 30);
+        const productLink = resolveInquiryLink(snap);
+        const shortLink = productLink ? truncateOneLine(productLink, 56) : '—';
+        const linkCell = productLink
+          ? `<a class="url-link" href="${escapeHtml(productLink)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(productLink)}">${escapeHtml(shortLink)}</a>`
+          : '<span class="muted">—</span>';
+        const statusLabel = r.status === 'replied' ? '<span style="color:#22c55e;">已回复</span>' : '<span style="color:#f59e0b;">已提交</span>';
+        const replyInfo = r.reply_content ? `<br><span style="font-size:11px;color:#94a3b8;">回复：${escapeHtml(truncateOneLine(r.reply_content, 40))}</span>` : '';
+        const actionBtn = r.status === 'submitted'
+          ? `<button type="button" class="inquiry-reply-btn" data-id="${r.id}" data-email="${escapeHtml(r.user_email || '')}" data-product="${escapeHtml(productName)}" data-demand="${escapeHtml(truncateOneLine(r.demand, 60))}" data-link="${escapeHtml(productLink)}" style="background:#3b82f6;color:#fff;border:0;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">回复</button>`
+          : `<span class="muted" style="font-size:11px;">已处理</span>`;
+        return `<tr>
+          <td>${escapeHtml(r.user_email || r.user_id?.slice(0, 8) || '—')}</td>
+          <td>${escapeHtml(r.whatsapp || '—')}</td>
+          <td title="${escapeHtml(snap.name || '')}">${escapeHtml(productName)}</td>
+          <td style="max-width:280px;white-space:normal;word-break:break-all;line-height:1.4;">${linkCell}</td>
+          <td style="max-width:200px;white-space:normal;word-break:break-word;line-height:1.4;">${escapeHtml(truncateOneLine(r.demand, 60))}</td>
+          <td>${statusLabel}${replyInfo}</td>
+          <td>${fmtCst(r.created_at)}</td>
+          <td>${actionBtn}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    function openReplyOverlay(inquiryId, info) {
+      currentReplyInquiryId = inquiryId;
+      el('replyInquiryInfo').innerHTML = info;
+      el('replyContentInput').value = '';
+      el('errReply').textContent = '';
+      const overlay = el('inquiryReplyOverlay');
+      overlay.style.display = 'flex';
+    }
+    function closeReplyOverlay() {
+      currentReplyInquiryId = null;
+      el('inquiryReplyOverlay').style.display = 'none';
+    }
+
+    async function sendInquiryReply() {
+      const content = el('replyContentInput').value.trim();
+      if (!content) { el('errReply').textContent = '请输入回复内容'; return; }
+      if (!currentReplyInquiryId) return;
+      el('errReply').textContent = '';
+      el('replySendBtn').disabled = true;
+      try {
+        await apiPost(`/admin/api/inquiries/${currentReplyInquiryId}/reply`, { reply_content: content });
+        closeReplyOverlay();
+        await loadInquiries(inquiriesPage);
+      } catch (e) {
+        el('errReply').textContent = e?.message || String(e);
+      } finally {
+        el('replySendBtn').disabled = false;
+      }
+    }
+
+    // 询盘表格点击回复按钮代理
+    el('inquiriesTbody').addEventListener('click', (ev) => {
+      const btn = ev.target?.closest?.('.inquiry-reply-btn');
+      if (!btn) return;
+      const id = btn.getAttribute('data-id');
+      const email = btn.getAttribute('data-email') || '—';
+      const product = btn.getAttribute('data-product') || '—';
+      const demand = btn.getAttribute('data-demand') || '—';
+      const link = btn.getAttribute('data-link') || '';
+      const linkHtml = link
+        ? `商品链接：<a class="url-link" href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(truncateOneLine(link, 72))}</a><br>`
+        : '';
+      openReplyOverlay(id, `用户：${escapeHtml(email)}<br>商品：${escapeHtml(product)}<br>${linkHtml}需求：${escapeHtml(demand)}`);
+    });
+    el('replyCancel').addEventListener('click', closeReplyOverlay);
+    el('replySendBtn').addEventListener('click', sendInquiryReply);
+    el('queryInquiriesBtn').addEventListener('click', async () => {
+      try { await loadInquiries(1); } catch (e) { el('errInquiries').textContent = e?.message || String(e); }
+    });
+    el('inquiriesPrev').addEventListener('click', async () => {
+      if (inquiriesPage <= 1) return;
+      try { await loadInquiries(inquiriesPage - 1); } catch (e) { el('errInquiries').textContent = e?.message || String(e); }
+    });
+    el('inquiriesNext').addEventListener('click', async () => {
+      try { await loadInquiries(inquiriesPage + 1); } catch (e) { el('errInquiries').textContent = e?.message || String(e); }
+    });
+
     async function refreshAll() {
       el('errOverview').textContent = '';
       el('errUsers').textContent = '';
@@ -1035,6 +1192,7 @@
       el('errUrlInputs').textContent = '';
       el('errModelUsage').textContent = '';
       el('errNlq').textContent = '';
+      el('errInquiries').textContent = '';
       const results = await Promise.allSettled([
         syncNlqSchema(),
         loadOverview(),
@@ -1046,9 +1204,10 @@
         loadUrlInputs(1),
         loadModelUsage(),
         loadModelReplies(1),
+        loadInquiries(1),
       ]);
-      const labels = ['NLQ结构同步', '总览', '用户列表', '趋势', '对话用量', '分享裂变', '分享列表', '链接网站维度', '模型使用统计', '模型上下文列表'];
-      const errIds = ['errNlq', 'errOverview', 'errUsers', 'errTrends', 'errConv', 'errShare', 'errShareList', 'errUrlInputs', 'errModelUsage', 'errModelUsage'];
+      const labels = ['NLQ结构同步', '总览', '用户列表', '趋势', '对话用量', '分享裂变', '分享列表', '链接网站维度', '模型使用统计', '模型上下文列表', '询盘列表'];
+      const errIds = ['errNlq', 'errOverview', 'errUsers', 'errTrends', 'errConv', 'errShare', 'errShareList', 'errUrlInputs', 'errModelUsage', 'errModelUsage', 'errInquiries'];
       results.forEach((r, i) => {
         if (r.status === 'rejected') {
           el(errIds[i]).textContent = `${labels[i]} 拉取失败：${r.reason?.message || r.reason}`;

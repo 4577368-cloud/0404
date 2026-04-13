@@ -31,7 +31,7 @@ function TrendMetricPill({ label, value }) {
   );
 }
 
-function ListRow({ p, uiLang, expanded, onToggle, onPublish, onRemove, onAskAi, guestFeatureLocked, onRequireLogin }) {
+function ListRow({ p, uiLang, expanded, onToggle, onInquiry, onRemove, onAskAi, guestFeatureLocked, onRequireLogin }) {
   const listUsd = listPriceUsdForCard(p);
   const imgSrc = p.image?.startsWith('http') ? p.image : 'https://via.placeholder.com/80?text=No+Image';
   const isTrend = isTrendOrBestsellerCard(p);
@@ -76,10 +76,10 @@ function ListRow({ p, uiLang, expanded, onToggle, onPublish, onRemove, onAskAi, 
               <span className="icon-activity mr-0.5" />AI
             </button>
           )}
-          <button type="button" onClick={(e) => { e.stopPropagation(); onPublish(); }}
+          <button type="button" onClick={(e) => { e.stopPropagation(); guestFeatureLocked ? onRequireLogin?.() : onInquiry?.(p); }}
             className="text-[10px] px-3 py-1.5 rounded-lg font-semibold"
-            style={{ background: 'var(--theme-surface)', color: 'var(--theme-text)', border: '1px solid var(--theme-border)' }}>
-            Publish
+            style={{ background: 'var(--brand-primary-fixed)', color: '#fff' }}>
+            <span className="icon-mail mr-0.5" />{uiLang === 'zh' ? '询盘' : 'Inquiry'}
           </button>
           <button type="button" onClick={(e) => { e.stopPropagation(); onRemove(); }}
             className="text-[10px] px-2 py-1.5 rounded-lg font-semibold"
@@ -113,20 +113,9 @@ function ListRow({ p, uiLang, expanded, onToggle, onPublish, onRemove, onAskAi, 
   );
 }
 
-export default function MyLists({ uiLang, items, onRemove, onProductDiagnosis, guestFeatureLocked, onRequireLogin }) {
+export default function MyLists({ uiLang, items, onRemove, onProductDiagnosis, onOpenInquiry, guestFeatureLocked, onRequireLogin }) {
   const [view, setView] = React.useState('card');
-  const [publishHint, setPublishHint] = React.useState('');
   const [expandedKeys, setExpandedKeys] = React.useState(new Set());
-
-  React.useEffect(() => {
-    if (!publishHint) return undefined;
-    const t = window.setTimeout(() => setPublishHint(''), 1800);
-    return () => window.clearTimeout(t);
-  }, [publishHint]);
-
-  const handlePublish = () => {
-    setPublishHint(uiLang === 'zh' ? 'Publish 功能待接通' : 'Publish coming soon');
-  };
 
   const toggleExpand = (key) => {
     setExpandedKeys((prev) => {
@@ -174,16 +163,6 @@ export default function MyLists({ uiLang, items, onRemove, onProductDiagnosis, g
         </div>
       </div>
 
-      {publishHint && (
-        <div style={{ position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 200, pointerEvents: 'none' }}>
-          <div className="text-[12px] font-semibold px-4 py-2 rounded-full shadow-lg"
-            style={{ background: 'var(--theme-text)', color: 'var(--theme-chat-bg, #fff)', whiteSpace: 'nowrap' }}
-            role="status" aria-live="polite">
-            {publishHint}
-          </div>
-        </div>
-      )}
-
       <div style={{ flex: '1 1 0', minHeight: 0, overflowY: 'auto', padding: '16px 24px' }}>
         {items.length === 0 ? (
           <div className="flex items-center justify-center py-20">
@@ -197,9 +176,11 @@ export default function MyLists({ uiLang, items, onRemove, onProductDiagnosis, g
                 product={p}
                 uiLang={uiLang}
                 retailVariant={isTrendOrBestsellerCard(p) ? 'trend' : 'hot'}
-                trendFooter="view_publish"
-                onPublishPlaceholder={handlePublish}
+                trendFooter="view_inquiry"
+                onOpenInquiry={(prod) => onOpenInquiry?.(prod)}
                 onRemoveFromList={() => onRemove?.(p._listKey || p.id)}
+                guestFeatureLocked={guestFeatureLocked}
+                onRequireLogin={onRequireLogin}
               />
             ))}
           </div>
@@ -214,7 +195,7 @@ export default function MyLists({ uiLang, items, onRemove, onProductDiagnosis, g
                   uiLang={uiLang}
                   expanded={expandedKeys.has(key)}
                   onToggle={() => toggleExpand(key)}
-                  onPublish={handlePublish}
+                  onInquiry={(prod) => onOpenInquiry?.(prod)}
                   onRemove={() => onRemove?.(key)}
                   onAskAi={onProductDiagnosis}
                   guestFeatureLocked={guestFeatureLocked}

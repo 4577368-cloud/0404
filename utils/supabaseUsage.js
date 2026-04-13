@@ -25,21 +25,39 @@ export function remainingFromStats(row, isAnonymous = false) {
 /**
  * @param {import('@supabase/supabase-js').SupabaseClient} client
  * @param {{ conversationId: string, content: string, extractedUrls?: string[], snapshotSources?: Record<string, string> }} p
+ * @param {{ timeoutMs?: number }} opts
  */
-export async function consumeChatTurn(client, { conversationId, content, extractedUrls = [], snapshotSources = {} }) {
+export async function consumeChatTurn(client, { conversationId, content, extractedUrls = [], snapshotSources = {} }, opts = {}) {
   const urls = Array.isArray(extractedUrls) ? extractedUrls : [];
   const sources = snapshotSources && typeof snapshotSources === 'object' ? snapshotSources : {};
-  const { data, error } = await client.rpc('consume_chat_turn', {
+  const timeoutMs = opts?.timeoutMs ?? 8000; // default 8s timeout
+
+  const rpcPromise = client.rpc('consume_chat_turn', {
     p_conversation_id: conversationId ?? '',
     p_content: content ?? '',
     p_extracted_urls: urls,
     p_snapshot_sources: sources,
   });
-  if (error) {
-    console.warn('[consume_chat_turn]', error.message);
-    return { allowed: false, reason: 'rpc_error', error };
+
+  const timeoutPromise = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('quota_check_timeout')), timeoutMs)
+  );
+
+  try {
+    const { data, error } = await Promise.race([rpcPromise, timeoutPromise]);
+    if (error) {
+      console.warn('[consume_chat_turn]', error.message);
+      return { allowed: false, reason: 'rpc_error', error };
+    }
+    return data && typeof data === 'object' ? data : {};
+  } catch (e) {
+    if (e?.message === 'quota_check_timeout') {
+      console.warn('[consume_chat_turn] timeout after', timeoutMs, 'ms');
+      // On timeout, allow the request to proceed (optimistic) - user experience priority
+      return { allowed: true, reason: 'timeout_fallback', timeout: true };
+    }
+    throw e;
   }
-  return data && typeof data === 'object' ? data : {};
 }
 
 /**

@@ -28,6 +28,7 @@ import {
 import { ModuleAIChat } from '../modules/AIChatVite.jsx';
 import ProductInquiryModal from '../components/ProductInquiryModal.jsx';
 import InquiryMessagesPanel from '../components/InquiryMessagesPanel.jsx';
+import { fetchMyInquiryUnreadCount, markMyInquiryRepliesSeen } from '../utils/productInquiries.js';
 
 /** 是否本次文档已是刷新结果（避免 chunk 404 时无限 reload） */
 function isDocumentLoadAfterReload() {
@@ -239,6 +240,7 @@ export default function App() {
   const [hotProductsViewNonce, setHotProductsViewNonce] = React.useState(0);
   const [inquiryProduct, setInquiryProduct] = React.useState(null);
   const [inquiryListRefresh, setInquiryListRefresh] = React.useState(0);
+  const [inquiryUnreadCount, setInquiryUnreadCount] = React.useState(0);
 
   const MY_LISTS_KEY = 'tb_my_lists';
   const [myListItems, setMyListItems] = React.useState(() => {
@@ -675,12 +677,40 @@ export default function App() {
       requireOAuthToastAndModal('nav_inquiries');
       return;
     }
+    if (supabase && authUser && !isAnonymousUser(authUser)) {
+      void markMyInquiryRepliesSeen(supabase).finally(() => {
+        setInquiryUnreadCount(0);
+        setInquiryListRefresh((k) => k + 1);
+      });
+    }
     setActiveView('inquiries');
     if (sidebarCollapsed && sidebarAutoCollapsedRef.current) {
       setSidebarCollapsed(false);
       sidebarAutoCollapsedRef.current = false;
     }
-  }, [guestFeatureLocked, requireOAuthToastAndModal]);
+  }, [guestFeatureLocked, requireOAuthToastAndModal, authUser, sidebarCollapsed]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    let timer = null;
+
+    const loadUnread = async () => {
+      if (!supabase || !authUser || isAnonymousUser(authUser)) {
+        if (!cancelled) setInquiryUnreadCount(0);
+        return;
+      }
+      const res = await fetchMyInquiryUnreadCount(supabase);
+      if (cancelled) return;
+      if (!res.error) setInquiryUnreadCount(Math.max(0, Number(res.count) || 0));
+    };
+
+    void loadUnread();
+    timer = window.setInterval(loadUnread, 20000);
+    return () => {
+      cancelled = true;
+      if (timer) window.clearInterval(timer);
+    };
+  }, [authUser?.id, inquiryListRefresh]);
 
   const handleReportCreated = React.useCallback((newReport) => {
     setReports((prev) => [newReport, ...prev.filter((r) => r.id !== newReport.id)]);
@@ -818,6 +848,7 @@ export default function App() {
         }}
         onAIReports={handleAIReports}
         onInquiryMessages={handleInquiryMessages}
+        inquiryUnreadCount={inquiryUnreadCount}
         onMyLists={() => {
           setActiveView('myLists');
           if (sidebarCollapsed && sidebarAutoCollapsedRef.current) {
@@ -893,8 +924,9 @@ export default function App() {
                 setHotProductDiagnosisRequest({ product, t: Date.now() });
                 setActiveView('chat');
               }}
+              onOpenInquiry={setInquiryProduct}
               guestFeatureLocked={guestFeatureLocked}
-              onRequireLogin={() => requireOAuthToastAndModal('mylist_ai_diagnose')}
+              onRequireLogin={() => requireOAuthToastAndModal('mylist_inquiry')}
             />
           ) : activeView === 'sourcing' ? (
             <div style={{ flex: '1 1 0', minHeight: 0, overflowY: 'auto', overflowX: 'hidden', WebkitOverflowScrolling: 'touch' }}>

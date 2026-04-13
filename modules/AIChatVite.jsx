@@ -1968,7 +1968,7 @@ export function ModuleAIChat({
     const isContinueRequest = continueIntent.isContinueRequest;
     const userRequestedCount = continueIntent.requestedCount;
     const originalCategory = continueIntent.originalCategory;
-    
+
     if (!isContinueRequest) {
       // Clear shown product IDs when user sends a new message (not a continue request)
       // This ensures fresh results for new queries while preventing duplicates within a session
@@ -1979,20 +1979,29 @@ export function ModuleAIChat({
       console.log('[DEBUG] Continue recommendation detected, preserving shownIdsRef with', shownIdsRef.current.size, 'products, requesting', userRequestedCount, 'more');
     }
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // 乐观 UI：立即显示用户消息（在配额检查和快照获取之前）
+    // 避免用户因等待 Supabase 而看不到已发送的内容，防止重复发送
+    // ═══════════════════════════════════════════════════════════════════════════
+    const optimisticUserMessage = { role: 'user', type: 'text', content: txt };
+    stickToBottomRef.current = true;
+    setMessages((p) => [...p, optimisticUserMessage]);
+    setIsLoading(true);
+
     const urls = extractUrlsFromText(txt);
-    
-    // 提取 URL 并获取快照（在配额检查之前，确保能记录快照来源）
+
+    // 提取 URL 并获取快照（在后台并行执行，不阻塞 UI）
     const url0 = extractFirstUrl(txt);
     console.log('[URL Debug] Extracted URL:', url0, 'from input:', txt);
     const isImageUrl = !!(url0 && /\.(png|jpe?g|gif|webp|bmp|svg)(\?|#|$)/i.test(url0));
-    
+
     let snapshot = null;
     let snapshotSources = {}; // 记录每个 URL 的抓取来源 {url: 'jina'|'trickle'}
     if (url0 && !isImageUrl) {
       try { setKnownSite(new URL(url0).origin); } catch (_) {}
       console.log('[URL Debug] Attempting to fetch snapshot for:', url0);
-      try { 
-        const snapshotResult = await getUrlSnapshot(url0); 
+      try {
+        const snapshotResult = await getUrlSnapshot(url0);
         if (snapshotResult) {
           snapshot = snapshotResult.content;
           snapshotSources[url0] = snapshotResult.source;
@@ -2000,11 +2009,14 @@ export function ModuleAIChat({
         } else {
           console.log('[URL Debug] Snapshot result: failed');
         }
-      } catch (e) { 
+      } catch (e) {
         console.error('[URL Debug] Snapshot error:', e);
       }
     }
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // 配额检查带 8 秒超时，避免 Supabase 抖动导致长时间空白
+    // ═══════════════════════════════════════════════════════════════════════════
     const useServerQuota = supabase && authUser && !isAnonymousUser(authUser);
     if (useServerQuota) {
       const res = await consumeChatTurn(supabase, {
@@ -2012,30 +2024,46 @@ export function ModuleAIChat({
         content: txt,
         extractedUrls: urls,
         snapshotSources,
-      });
+      }, { timeoutMs: 8000 }); // 8s timeout
+
       if (!res?.allowed) {
+        setIsLoading(false);
         if (res?.reason === 'quota_exhausted') {
           setShowVipModal(true);
           setVipKeyInput('');
           setVipKeyError('');
         }
+        // 配额不足时追加一条 AI 错误提示，保留用户已显示的消息
+        setMessages((p) => [...p, {
+          role: 'ai',
+          type: 'text',
+          content: uiLang === 'zh'
+            ? '⚠️ 发送失败：配额已用完，请升级 VIP 或稍后再试。'
+            : '⚠️ Failed to send: quota exhausted. Please upgrade to VIP or try again later.'
+        }]);
         return false;
       }
       onQuotaChange?.();
     } else {
       if (!isVip && getRemainingQuota(MAX_GUEST_QUOTA) <= 0) {
+        setIsLoading(false);
         setShowVipModal(true);
         setVipKeyInput('');
         setVipKeyError('');
+        setMessages((p) => [...p, {
+          role: 'ai',
+          type: 'text',
+          content: uiLang === 'zh'
+            ? '⚠️ 发送失败：访客配额已用完，请登录后继续使用。'
+            : '⚠️ Failed to send: guest quota exhausted. Please sign in to continue.'
+        }]);
         return false;
       }
       incrementQuota();
       onQuotaChange?.();
     }
 
-    stickToBottomRef.current = true;
-    setMessages((p) => [...p, { role: 'user', type: 'text', content: txt }]);
-    setIsLoading(true);
+    // 继续后续处理（AI 回复等）
 
     try {
       await ensureKnowledgeBasesLoaded();

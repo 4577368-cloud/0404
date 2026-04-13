@@ -62,6 +62,7 @@ const MAX_STAGE = 4;
  *   view_only   = 仅 View（聊天横排 Picks：有链接直达，无则按标题/类目搜索）
  *   view_chat_tray = 找同款 + AI诊断 + 询盘（对话横滑商品卡）
  *   view_publish = View + Publish（My Lists 页）
+ *   view_inquiry = View + Inquiry + Remove（My Lists 页，替代 publish）
  */
 export function CompactRetailProductCard({
   product: p,
@@ -70,6 +71,7 @@ export function CompactRetailProductCard({
   trendFooter = 'view_ai',
   onAskAi,
   onSendInquiry,
+  onOpenInquiry,
   guestFeatureLocked,
   onRequireLogin,
   onAddToList,
@@ -299,6 +301,29 @@ export function CompactRetailProductCard({
               >
                 <span className="icon-upload text-[10px]" />
                 Publish
+              </button>
+              {onRemoveFromList && (
+                <button
+                  type="button"
+                  className="text-[10px] px-2 py-1.5 rounded-lg transition-opacity duration-150 font-semibold hover:opacity-90 flex items-center justify-center"
+                  style={{ background: 'transparent', color: 'var(--theme-text-muted)', border: '1px solid var(--theme-border)' }}
+                  onClick={() => onRemoveFromList?.()}
+                  title={uiLang === 'zh' ? '移除' : 'Remove'}
+                >
+                  <span className="icon-trash-2 text-[10px]" />
+                </button>
+              )}
+            </div>
+          ) : trendFooter === 'view_inquiry' ? (
+            <div className="flex gap-1 flex-1">
+              <button
+                type="button"
+                className="flex-1 text-[10px] text-center py-1.5 rounded-lg transition-opacity duration-150 font-semibold hover:opacity-90 flex items-center justify-center gap-1"
+                style={{ background: 'var(--brand-primary-fixed)', color: '#fff' }}
+                onClick={() => (guestFeatureLocked ? onRequireLogin?.() : onOpenInquiry?.(p))}
+              >
+                <span className="icon-mail text-[10px]" />
+                {uiLang === 'zh' ? '询盘' : 'Inquiry'}
               </button>
               {onRemoveFromList && (
                 <button

@@ -1695,6 +1695,125 @@ app.post('/supabase/query', async (req, res) => {
   return res.json({ ok: true, data });
 });
 
+// ────────────────────────────────────────────
+// 询盘管理 API（Admin）
+// ────────────────────────────────────────────
+
+/** 列出所有询盘（分页，支持按 status 筛选） */
+app.get('/admin/api/inquiries', async (req, res) => {
+  try {
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize) || 20));
+    const statusFilter = String(req.query.status || '').trim();
+    const keyword = String(req.query.keyword || '').trim();
+
+    let q = supabase
+      .from('product_inquiries')
+      .select('id, user_id, user_email, product_snapshot, whatsapp, demand, status, reply_content, reply_at, replied_by, reply_messages, reply_count, user_seen_reply_count, created_at, updated_at', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range((page - 1) * pageSize, page * pageSize - 1);
+
+    if (statusFilter === 'submitted' || statusFilter === 'replied') {
+      q = q.eq('status', statusFilter);
+    }
+    if (keyword) {
+      q = q.or(`user_email.ilike.%${keyword}%,whatsapp.ilike.%${keyword}%,demand.ilike.%${keyword}%`);
+    }
+
+    let { data, error, count } = await q;
+    if (error && /reply_messages|reply_count|user_seen_reply_count/i.test(String(error.message || ''))) {
+      let fallback = supabase
+        .from('product_inquiries')
+        .select('id, user_id, user_email, product_snapshot, whatsapp, demand, status, reply_content, reply_at, replied_by, created_at, updated_at', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range((page - 1) * pageSize, page * pageSize - 1);
+      if (statusFilter === 'submitted' || statusFilter === 'replied') fallback = fallback.eq('status', statusFilter);
+      if (keyword) fallback = fallback.or(`user_email.ilike.%${keyword}%,whatsapp.ilike.%${keyword}%,demand.ilike.%${keyword}%`);
+      const rs = await fallback;
+      data = (rs.data || []).map((r) => ({
+        ...r,
+        reply_messages: r.reply_content ? [{ content: r.reply_content, at: r.reply_at, by: r.replied_by }] : [],
+        reply_count: r.reply_content ? 1 : 0,
+        user_seen_reply_count: 0,
+      }));
+      error = rs.error;
+      count = rs.count;
+    }
+    if (error) return res.status(500).json({ ok: false, error: error.message });
+    return res.json({ ok: true, data: { rows: data || [], total: count || 0, page, pageSize } });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e?.message || String(e) });
+  }
+});
+
+/** 管理员回复询盘 */
+app.post('/admin/api/inquiries/:id/reply', async (req, res) => {
+  try {
+    const inquiryId = String(req.params.id || '').trim();
+    const replyContent = String(req.body?.reply_content || '').trim();
+    if (!inquiryId) return res.status(400).json({ ok: false, error: 'inquiry id is required' });
+    if (!replyContent) return res.status(400).json({ ok: false, error: 'reply_content is required' });
+
+    const nowIso = new Date().toISOString();
+    const replier = 'TangbuyDropshipping';
+    let { data: oldRow, error: oldErr } = await supabase
+      .from('product_inquiries')
+      .select('reply_messages, reply_count')
+      .eq('id', inquiryId)
+      .maybeSingle();
+    if (oldErr && /reply_messages|reply_count/i.test(String(oldErr.message || ''))) {
+      const legacy = await supabase
+        .from('product_inquiries')
+        .select('id')
+        .eq('id', inquiryId)
+        .maybeSingle();
+      oldRow = legacy.data ? { reply_messages: [], reply_count: 0 } : null;
+      oldErr = legacy.error;
+    }
+    if (oldErr) return res.status(500).json({ ok: false, error: oldErr.message });
+    if (!oldRow) return res.status(404).json({ ok: false, error: 'inquiry not found' });
+
+    const history = Array.isArray(oldRow.reply_messages) ? oldRow.reply_messages : [];
+    const nextHistory = [...history, { content: replyContent, at: nowIso, by: replier }];
+    const nextCount = Math.max(Number(oldRow.reply_count) || 0, history.length) + 1;
+
+    let { data, error } = await supabase
+      .from('product_inquiries')
+      .update({
+        status: 'replied',
+        reply_content: replyContent,
+        reply_at: nowIso,
+        replied_by: replier,
+        reply_messages: nextHistory,
+        reply_count: nextCount,
+      })
+      .eq('id', inquiryId)
+      .select('id, status, reply_content, reply_at, replied_by, reply_messages, reply_count')
+      .maybeSingle();
+    if (error && /reply_messages|reply_count/i.test(String(error.message || ''))) {
+      const legacy = await supabase
+        .from('product_inquiries')
+        .update({
+          status: 'replied',
+          reply_content: replyContent,
+          reply_at: nowIso,
+          replied_by: replier,
+        })
+        .eq('id', inquiryId)
+        .select('id, status, reply_content, reply_at, replied_by')
+        .maybeSingle();
+      data = legacy.data ? { ...legacy.data, reply_messages: [{ content: replyContent, at: nowIso, by: replier }], reply_count: 1 } : null;
+      error = legacy.error;
+    }
+
+    if (error) return res.status(500).json({ ok: false, error: error.message });
+    if (!data) return res.status(404).json({ ok: false, error: 'inquiry not found' });
+    return res.json({ ok: true, data });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e?.message || String(e) });
+  }
+});
+
 /**
  * Supabase upsert proxy (local-only)
  * body: { table: string, rows: object|object[], onConflict?: string }
