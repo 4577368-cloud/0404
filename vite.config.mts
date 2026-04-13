@@ -206,6 +206,100 @@ function apiChatMiddleware() {
   };
 }
 
+function apiJinaMiddleware() {
+  return {
+    name: 'api-jina-middleware',
+    configureServer(server) {
+      server.middlewares.use('/api/jina', async (req, res) => {
+        if (req.method !== 'POST') {
+          res.statusCode = 405;
+          res.end(JSON.stringify({ error: 'Method not allowed' }));
+          return;
+        }
+
+        const chunks: Buffer[] = [];
+        for await (const chunk of req) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+        const rawBody = Buffer.concat(chunks).toString('utf8');
+
+        try {
+          const body = rawBody ? JSON.parse(rawBody) : {};
+          const targetUrl = body.url;
+          if (!targetUrl || typeof targetUrl !== 'string') {
+            res.statusCode = 400;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: 'Missing url parameter' }));
+            return;
+          }
+
+          const jinaKey = process.env.JINA_API_KEY;
+          if (!jinaKey) {
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: 'JINA_API_KEY not configured' }));
+            return;
+          }
+
+          const cleanUrl = targetUrl.replace(/^https?:\/\//, '');
+          const jinaUrl = `https://r.jina.ai/http://${cleanUrl}`;
+          const headers: Record<string, string> = {
+            'Authorization': `Bearer ${jinaKey}`,
+            'Accept': 'text/plain',
+            'X-Engine': 'browser',
+            'X-Return-Format': 'markdown',
+            'X-Remove-Selector': 'header, footer, nav, .announcement-bar, .site-header, .site-footer, .footer, .header, #shopify-section-header, #shopify-section-footer, .cookie-banner, .popup-modal',
+            'X-Retain-Images': 'none',
+            'X-Token-Budget': '8000',
+            'X-With-Images-Summary': 'true',
+          };
+
+          const transport = https;
+          const target = new URL(jinaUrl);
+          const upstreamReq = transport.request(
+            {
+              hostname: target.hostname,
+              port: 443,
+              path: target.pathname + target.search,
+              method: 'GET',
+              headers,
+              timeout: 30000,
+            },
+            (upstreamRes) => {
+              const ct = upstreamRes.headers['content-type'] ?? 'text/plain';
+              res.writeHead(upstreamRes.statusCode ?? 500, { 'Content-Type': String(ct) });
+              upstreamRes.pipe(res);
+            }
+          );
+
+          upstreamReq.on('timeout', () => {
+            console.error('[api/jina] upstream timed out');
+            upstreamReq.destroy();
+            if (!res.headersSent) {
+              res.writeHead(504, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: 'Jina request timed out' }));
+            }
+          });
+
+          upstreamReq.on('error', (e) => {
+            console.error('[api/jina] upstream error:', e.message);
+            if (!res.headersSent) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: e.message }));
+            }
+          });
+
+          upstreamReq.end();
+        } catch (e: any) {
+          console.error('[api/jina] parse error:', e);
+          if (!res.headersSent) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: e?.message ?? 'Jina proxy error' }));
+          }
+        }
+      });
+    },
+  };
+}
+
 function apiOssUploadMiddleware() {
   return {
     name: 'api-oss-upload-middleware',
@@ -360,6 +454,7 @@ export default defineConfig(({ mode }) => {
       viteDevHtml(),
       randomShareOgImage(),
       apiChatMiddleware(),
+      apiJinaMiddleware(),
       apiOssUploadMiddleware(),
       react({ include: ['**/*.{js,jsx,ts,tsx}'] }),
       stripDuplicateMainScript(),

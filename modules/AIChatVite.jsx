@@ -223,9 +223,8 @@ const TANGBUY_DISPLAY_MULT = 1.7;
 const ANALYSIS_YEAR = Math.max(2026, new Date().getFullYear());
 const HTML_SPLIT_DELIM = '===HTML===';
 const PROXY_URL = 'https://proxy-api.trickle-app.host/';
-/** Jina AI Reader API - 优先使用，失败时回退到 PROXY_URL */
-const JINA_BASE_URL = 'https://r.jina.ai/http://';
-const JINA_API_KEY = 'jina_70abb115f16f4b30a02b941b2bc24a9504xVkjbIwf4ZRJ_BMTcCN6hphdoe';
+/** Jina AI Reader：通过后端代理 /api/jina，Key 不暴露在前端 */
+const JINA_PROXY_URL = '/api/jina';
 
 function base64EncodeUtf8(str) {
   try { return btoa(unescape(encodeURIComponent(String(str)))); }
@@ -545,21 +544,13 @@ async function getUrlSnapshot(url, retryCount = 0, useFallback = false) {
   const maxRetries = 2;
   const retryDelay = 1000; // 1 second
   
-  // 优先使用 Jina AI Reader（browser 引擎 + 去除导航/页脚噪声）
+  // 优先使用 Jina AI Reader（通过后端代理，Key 不暴露在前端）
   if (!useFallback) {
     try {
-      const cleanUrl = url.replace(/^https?:\/\//, '');
-      const jinaRes = await fetch(`${JINA_BASE_URL}${cleanUrl}`, {
-        headers: {
-          'Authorization': `Bearer ${JINA_API_KEY}`,
-          'Accept': 'text/plain',
-          'X-Engine': 'browser',
-          'X-Return-Format': 'markdown',
-          'X-Remove-Selector': 'header, footer, nav, .announcement-bar, .site-header, .site-footer, .footer, .header, #shopify-section-header, #shopify-section-footer, .cookie-banner, .popup-modal',
-          'X-Retain-Images': 'none',
-          'X-Token-Budget': '8000',
-          'X-With-Images-Summary': 'true',
-        },
+      const jinaRes = await fetch(JINA_PROXY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
       });
       
       if (jinaRes.ok) {
