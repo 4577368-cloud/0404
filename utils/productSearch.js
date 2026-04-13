@@ -995,23 +995,41 @@ export function shouldAttachTangbuyHotFromModelTrendAnalysis(userText, aiText) {
 }
 
 /**
+ * 用户是否带有「要看列表 / 货源 / 推荐具体货」类语境（非单纯行业闲聊）。
+ * 须与 `queryHasConcreteProductIntent` 联用：仅有这些词而无具体类目时不会出竖列卡。
+ */
+function userWantsProductListOrSourcingCue(text) {
+  const t = String(text || '');
+  if (
+    /有什么[^。！？\n]{0,40}(?:商品|产品|货|选品|款式|推荐|好卖|牌子|类型|类目|链接|现货)|有哪些[^。！？\n]{0,28}(?:款|个|牌|产品|商品|货|类目)|有没有[^。！？\n]{0,28}(?:现货|货源|款|链接|好卖)/i.test(
+      t
+    )
+  ) {
+    return true;
+  }
+  return /(推荐|选品|找货|帮我找|给我找|想看看|给我看|买点|卖点|爆款|热销|好卖|采购|进货|货源|拿货|链接|多少钱|价格|\bsku\b|亚马逊|跨境|独立站|shopify|dropship|tiktok|sourcing|\brecommend\b|show me|\bfind\b.*product|\blist\b.*product|product ideas|give me products|\bideas?\b|winning|best seller|hot product|trending|点货|些货|几个货|几款货)/i.test(
+    t
+  );
+}
+
+/**
  * 是否在本次用户话术后附加 **竖向趋势宽卡**（products_trend）。
  * 命中后从 `Product.json` + `Best-selling.json` 合并库检索，见 `loadTrendCatalogOnly`。
+ *
+ * 策略：**识别到具体商品或类目**（`queryHasConcreteProductIntent`）且用户话里带有列表/货源/推荐语境；
+ * **仅凭「推荐」等泛词、没有可检索的品类/商品锚点** → 不触发。例外：显式趋势话术、对上轮 AI 的短确认。
  */
 export function shouldRecommendProducts(text, prevMessages, _aiResponse = '') {
   const t = String(text || '').trim();
 
-  // 仅当用户明确要「看商品 / 选品 / 趋势款」等时才在回复后附带商品卡片；普通诊断、SEO、闲聊不应触发
-  // 1) Explicit product / trend request
-  if (/(推荐商品|推荐产品|给我推荐|帮我选品|帮我找货|帮我找商品|推荐一些|有什么.*商品|有什么.*产品|给我看.*商品|帮我挑|想看点.*货|想找.*爆款|show me products|recommend products|find products|suggest products|give me products|show trending|list products|product ideas|winning products)/i.test(t)) return true;
-  /** 口语寻货：想找(一些)美妆商品、给我找点货、想看看有什么产品… */
-  if (/(想找|想要|给我找|帮我找|想看看)[^。！？\n]{0,32}(?:商品|产品|货|选品|款式|东西)|(?:有|给)什么(?:好)?的?(?:商品|产品|货)推荐/i.test(t)) return true;
-  if (/(趋势商品|趋势选品|找趋势|热销商品|爆款推荐|热卖推荐|trending products|best sellers|hot products)/i.test(t)) return true;
-
-  // 2) User confirms after AI asked a follow-up about products
   if (isProductConfirmation(t, prevMessages)) return true;
 
-  return false;
+  if (/(趋势商品|趋势选品|找趋势|热销商品|爆款推荐|热卖推荐|trending products|best sellers|hot products)/i.test(t)) {
+    return true;
+  }
+
+  if (!queryHasConcreteProductIntent(t)) return false;
+  return userWantsProductListOrSourcingCue(t);
 }
 
 export function isProductConfirmation(text, prevMessages) {

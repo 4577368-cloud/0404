@@ -1992,7 +1992,7 @@ export function ModuleAIChat({
       /**
        * 竖向宽卡（products_trend）
        * - 数据源：**仅** `loadTrendCatalogOnly()` = `Product.json`（趋势）与 `Best-selling.json`（月销千榜）合并后的列表，**不是** tangbuy-product 热销 JSON。
-       * - 触发：`shouldRecommendProducts` 为真（用户明确「推荐商品/选品/趋势款…」或短句确认跟在上一条 AI 问是否要看商品之后）。
+       * - 触发：`shouldRecommendProducts`：须能识别**具体品类/商品**（`queryHasConcreteProductIntent`）且话术中带有列表/货源/推荐等语境；或显式「趋势商品/爆款推荐…」；或短句确认接在上一条 AI 问是否要看商品之后。**仅凭泛词「推荐」而无类目锚点**不触发。
        * - 流程：`smartSearch` 在 **用户话 + 助手回复前 1200 字**（`trendQuery`）上从上述合并库打分；模型在正文里写的具体词（如「美容仪」「睫毛夹」「化妆包」）会进入该字符串，与 `detectCategories` / 分词后的词一起参与匹配与 `filterTrendMatchesForPreciseDisplay`（商品标题/类目 `searchLower` 需命中品类关键词或这些词之一）。
        * - 展示：最多 `TREND_WIDE_CARD_REPLY_CAP` 条，**不是**两个 JSON 的全量行。
        */
