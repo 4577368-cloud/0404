@@ -107,6 +107,9 @@ export const ZH_EN_DICT = [
   ['手表', 'watch'], ['项链', 'necklace'], ['耳环', 'earring'], ['戒指', 'ring'], ['手链', 'bracelet'],
   ['饰品', 'jewelry accessory'], ['帽子', 'hat cap'], ['围巾', 'scarf'], ['太阳镜', 'sunglasses'],
   ['墨镜', 'sunglasses'], ['腰带', 'belt'], ['领带', 'tie'], ['发饰', 'hair accessory'],
+  ['头饰', 'hair accessory headband'], ['头发配饰', 'hair accessory clip headband'], ['发卡', 'hair clip barrette'],
+  ['发夹', 'hair clip'], ['抓夹', 'claw clip'], ['发箍', 'headband'], ['发圈', 'scrunchie hair tie'],
+  ['发绳', 'hair tie'], ['发带', 'hair band ribbon'], ['头花', 'hair accessory'], ['鲨鱼夹', 'claw clip'],
   // Electronics
   ['手机壳', 'phone case'], ['手机', 'phone'], ['耳机', 'headphone earphone earbud'], ['充电器', 'charger'],
   ['数据线', 'cable cord'], ['音箱', 'speaker'], ['数码', 'electronic digital'], ['平板', 'tablet'],
@@ -176,18 +179,84 @@ export const CATEGORY_MAP = [
   { keywords: ['dress', 'skirt', 'gown', '裙', '连衣裙', '半身裙', '长裙', '短裙'], label: 'dress' },
   { keywords: ['shirt', 'blouse', 'top', 'tee', 't-shirt', 'tank', 'camisole', 'polo', '衬衫', '上衣', 'T恤', '背心', '短袖', '衬衣'], label: 'tops' },
   { keywords: ['pants', 'trousers', 'jeans', 'leggings', 'shorts', 'jogger', 'sweatpants', 'cargo', 'slacks', 'denim', '裤子', '裤', '牛仔', '长裤', '短裤', '打底裤', '阔腿裤', '运动裤', '西裤', '工装裤', '休闲裤'], label: 'bottoms' },
-  { keywords: ['shoe', 'sneaker', 'boot', 'sandal', 'slipper', 'heel', 'loafer', 'flat', 'canvas', '鞋', '靴', '凉鞋', '拖鞋', '高跟鞋', '运动鞋', '帆布鞋', '皮鞋', '平底鞋', '板鞋'], label: 'shoes' },
+  { keywords: ['shoe', 'sneaker', 'boot', 'sandal', 'slipper', 'heel', 'loafer', 'flat', 'canvas', '鞋', '靴', '凉鞋', '拖鞋', '凉拖', '高跟鞋', '运动鞋', '帆布鞋', '皮鞋', '平底鞋', '板鞋', '人字拖', '夹脚拖', '洞洞鞋', '勃肯鞋', '沙滩鞋', '罗马凉鞋', '运动凉鞋', '厚底凉鞋', '一字拖'], label: 'shoes' },
   { keywords: ['bag', 'handbag', 'backpack', 'purse', 'wallet', 'clutch', 'tote', 'crossbody', 'shoulder bag', 'luggage', '包', '钱包', '背包', '手提包', '斜挎包', '单肩包', '行李箱'], label: 'bags' },
-  { keywords: ['watch', 'bracelet', 'necklace', 'earring', 'ring', 'jewelry', 'accessori', 'hat', 'cap', 'scarf', 'sunglasses', 'belt', '手表', '项链', '耳环', '戒指', '饰品', '手链', '帽子', '围巾', '太阳镜', '墨镜', '腰带', '发饰'], label: 'accessories' },
+  {
+    keywords: [
+      'watch',
+      'bracelet',
+      'necklace',
+      'earring',
+      'ring',
+      'jewelry',
+      'accessori',
+      'hat',
+      'cap',
+      'scarf',
+      'sunglasses',
+      'belt',
+      'hair clip',
+      'headband',
+      'scrunchie',
+      'barrette',
+      'hair pin',
+      'hairpin',
+      'claw clip',
+      'hair accessory',
+      'hair band',
+      '手表',
+      '项链',
+      '耳环',
+      '戒指',
+      '饰品',
+      '手链',
+      '帽子',
+      '围巾',
+      '太阳镜',
+      '墨镜',
+      '太阳镜',
+      '遮阳帽',
+      '太阳帽',
+      '渔夫帽',
+      '草帽',
+      '沙滩帽',
+      '棒球帽',
+      '鸭舌帽',
+      '空顶帽',
+      '防晒帽',
+      '偏光镜',
+      '蛤蟆镜',
+      '腰带',
+      '发饰',
+      '头饰',
+      '头发配饰',
+      '发卡',
+      '发夹',
+      '抓夹',
+      '发箍',
+      '发圈',
+      '发绳',
+      '发带',
+      '头花',
+      '发簪',
+      '鲨鱼夹',
+      '刘海夹',
+    ],
+    label: 'accessories',
+  },
   { keywords: ['phone', 'case', 'charger', 'cable', 'headphone', 'earphone', 'earbud', 'speaker', 'electronic', 'keyboard', 'mouse', 'tablet', 'laptop', '手机', '耳机', '充电', '数码', '键盘', '鼠标', '电脑', '平板', '音箱'], label: 'electronics' },
   { keywords: ['home', 'kitchen', 'lamp', 'pillow', 'blanket', 'towel', 'storage', 'organiz', 'decor', 'curtain', 'rug', 'carpet', 'vase', 'cup', 'mug', '家居', '厨房', '灯', '收纳', '装饰', '窗帘', '地毯', '杯子', '餐具', '枕头', '毯子', '毛巾', '花瓶'], label: 'home' },
-  { keywords: ['beauty', 'makeup', 'skincare', 'cream', 'serum', 'lipstick', 'mascara', 'brush', 'perfume', 'foundation', 'eyeshadow', 'cleanser', 'sunscreen', '美妆', '护肤', '口红', '化妆', '面膜', '粉底', '眼影', '香水', '防晒', '洗面奶', '精华', '假睫毛', '睫毛', 'eyelash', 'eyelashes', 'lash', 'lashes'], label: 'beauty' },
+  { keywords: ['beauty', 'makeup', 'skincare', 'cream', 'serum', 'lipstick', 'mascara', 'brush', 'perfume', 'foundation', 'eyeshadow', 'cleanser', 'sunscreen', '美妆', '护肤', '口红', '化妆', '面膜', '粉底', '眼影', '香水', '防晒', '洗面奶', '精华', '假睫毛', '睫毛', 'eyelash', 'eyelashes', 'lash', 'lashes', '防晒霜', '防晒喷雾', '防晒乳', '防晒衣', '冰袖', '防紫外线'], label: 'beauty' },
   { keywords: ['health', 'food', 'supplement', 'vitamin', 'nutrition', 'protein', 'organic', 'natural', 'dietary', '保健', '保健食品', '营养', '维生素', '补充剂', '蛋白', '有机', '天然', '膳食', '健康食品', '养生', '滋补'], label: 'health_food' },
   { keywords: ['toy', 'game', 'puzzle', 'doll', 'figure', 'plush', 'lego', 'block', 'model', '玩具', '游戏', '公仔', '积木', '模型', '毛绒'], label: 'toys' },
   { keywords: ['pet', 'dog', 'cat', 'collar', 'leash', '宠物', '猫', '狗'], label: 'pet' },
   { keywords: ['sport', 'fitness', 'yoga', 'gym', 'bicycle', 'outdoor', 'camping', 'hiking', 'running', 'workout', 'athletic', '运动', '健身', '瑜伽', '户外', '自行车', '跑步'], label: 'sports' },
   { keywords: ['baby', 'kid', 'children', 'infant', 'toddler', '婴儿', '儿童', '宝宝', '童装'], label: 'kids' },
-  { keywords: ['swimsuit', 'bikini', 'swim', 'swimwear', '泳衣', '泳装', '比基尼'], label: 'swimwear' },
+  { keywords: ['swimsuit', 'bikini', 'swim', 'swimwear', '泳衣', '泳装', '比基尼', '连体泳衣', '分体泳衣', '泳裤', '泳帽', '泳镜', '游泳衣', '沙滩装', '沙滩裙', '罩衫'], label: 'swimwear' },
+  { keywords: ['summer', 'cooling', 'fan', '凉席', '冰垫', '空调被', '夏凉被', '降温', '消暑', '清凉', '小风扇', '手持风扇', '挂脖风扇', '竹席', '藤席', '冰丝席', '冰丝', '凉感', '便携风扇'], label: 'summer_essentials' },
+  { keywords: ['umbrella', 'rain', '雨衣', '雨披', '雨鞋', '雨靴', '雨伞', '晴雨伞', '折叠伞', '自动伞', '防水包', '防水袋', '梅雨', '雨季'], label: 'rain_gear' },
+  { keywords: ['mosquito', 'repellent', '驱蚊', '防蚊', '灭蚊', '驱蚊液', '驱蚊水', '驱蚊贴', '驱蚊手环', '驱蚊器', '电蚊拍', '蚊香', '灭蚊灯'], label: 'mosquito_repellent' },
+  { keywords: ['travel', 'luggage', 'suitcase', '行李箱', '拉杆箱', '登机箱', '收纳包', '洗漱包', '化妆包', '护照夹', '证件包', 'u型枕', '颈枕', '眼罩', '耳塞', '旅行用品', '出行'], label: 'travel_gear' },
   { keywords: ['lingerie', 'underwear', 'bra', 'panties', 'boxers', 'briefs', '内衣', '内裤', '文胸'], label: 'underwear' },
   {
     keywords: [
@@ -268,6 +337,8 @@ export function getNonDemographicSearchTerms(combined) {
     const x = String(t).toLowerCase();
     if (x.length < 2) return false;
     if (DEMO_AUDIENCE_EN.has(x)) return false;
+    const withoutPoss = x.replace(/['']s$/i, '');
+    if (withoutPoss !== x && DEMO_AUDIENCE_EN.has(withoutPoss)) return false;
     if (DEMO_AUDIENCE_ZH.has(t) || DEMO_AUDIENCE_ZH.has(x)) return false;
     return true;
   });
@@ -276,6 +347,62 @@ export function getNonDemographicSearchTerms(combined) {
 const NICHE_INTENT_RE =
   /(产后|产妇|月子|哺乳|母乳|妊娠纹|收腹带|收腹|盆底|开奶|催奶|吸奶器|护理垫|产褥|会阴|孕妇|孕期|母婴|一次性内裤|产褥垫|卫生裤|postpartum|postnatal|maternity|breast pump|breastfeeding|nipple|perineal|belly band|lochia|nursing pads?)/i;
 
+/** 头/发部饰品（与「洗发护发」等区分；用于意图与类目命中） */
+const HEAD_ACCESSORY_INTENT_RE =
+  /(头饰|头发配饰|头部配饰|发卡|发夹|抓夹|发箍|发圈|发绳|皮筋|发带|头花|发簪|刘海夹|鲨鱼夹|bb夹|鸭嘴夹|一字夹|边夹|盘发|编发用|碎发夹|hair\s*clip|headband|scrunchie|barrette|hair\s*pin|hairpin|claw\s*clip|hair\s*accessories?)/i;
+
+// ════════════════════════════════════════════════════
+// 夏季高频类目意图识别（12个核心品类）
+// ════════════════════════════════════════════════════
+
+/** 1. 防晒用品（防晒霜、防晒喷雾、防晒衣、冰袖、遮阳伞） */
+const SUNSCREEN_INTENT_RE =
+  /(防晒|防晒霜|防晒喷雾|防晒乳|防晒衣|防晒衫|冰袖|防晒袖|遮阳伞|太阳伞|防紫外线|UV防护|spf|pa\+|sunscreen|sun\s*protection|sun\s*block|uv\s*protection)/i;
+
+/** 2. 泳装/泳衣（比基尼、连体泳装、泳裤、沙滩装） */
+const SWIMWEAR_INTENT_RE =
+  /(泳衣|泳装|比基尼|连体泳衣|分体泳衣|泳裤|泳帽|泳镜|游泳衣|沙滩装|沙滩裙|罩衫|swimsuit|swimwear|bikini|one-piece|tankini|swim\s*trunks)/i;
+
+/** 3. 凉鞋/拖鞋（人字拖、洞洞鞋、勃肯鞋、沙滩鞋） */
+const SANDALS_INTENT_RE =
+  /(凉鞋|拖鞋|凉拖|人字拖|夹脚拖|洞洞鞋|勃肯鞋|沙滩鞋|罗马凉鞋|运动凉鞋|厚底凉鞋|一字拖|sandal|slipper|flip\s*flop|crocs|birkenstock|slide)/i;
+
+/** 4. 夏季服装（短裤、短裙、吊带、背心、露肩装、透视装） */
+const SUMMER_CLOTHING_INTENT_RE =
+  /(夏装|夏季服装|短裤|热裤|牛仔短裤|运动短裤|短裙|迷你裙|吊带|吊带裙|背心|无袖|露肩|一字肩|露背装|透视装|雪纺|亚麻|棉麻|透气|清凉|summer\s*clothes|shorts|mini\s*skirt|tank\s*top|camisole|off\s*shoulder|backless)/i;
+
+/** 5. 遮阳帽/墨镜（渔夫帽、草帽、棒球帽、偏光镜） */
+const SUN_HAT_GLASSES_INTENT_RE =
+  /(遮阳帽|太阳帽|渔夫帽|草帽|沙滩帽|棒球帽|鸭舌帽|空顶帽|防晒帽|草帽|墨镜|太阳镜|偏光镜|蛤蟆镜|sun\s*hat|straw\s*hat|bucket\s*hat|baseball\s*cap|visor|sunglasses|polarized)/i;
+
+/** 6. 降温/空调周边（小风扇、冰垫、凉席、空调被） */
+const COOLING_INTENT_RE =
+  /(降温|消暑|清凉|小风扇|手持风扇|挂脖风扇|冰垫|凉席|竹席|藤席|冰丝席|空调被|夏凉被|冰丝|凉感|cooling|mini\s*fan|portable\s*fan|neck\s*fan|cooling\s*pillow|cooling\s*mat)/i;
+
+/** 7. 户外露营用品（天幕、帐篷、野餐垫、露营椅） */
+const CAMPING_INTENT_RE =
+  /(露营|野营|户外|天幕|帐篷|野餐垫|野餐布|露营椅|折叠椅|月亮椅|蛋卷桌|卡式炉|户外用品|camping|outdoor|tent|canopy|picnic\s*mat|camping\s*chair|folding\s*chair|moon\s*chair)/i;
+
+/** 8. 冰饮杯/保温杯（随行杯、吸管杯、保冷杯、冰霸杯） */
+const DRINKWARE_INTENT_RE =
+  /(冰饮杯|吸管杯|随行杯|保温杯|保冷杯|冰霸杯|吨吨桶|大容量水杯|运动水壶|摇摇杯|咖啡杯|马克杯|tumbler|travel\s*mug|insulated\s*cup|water\s*bottle|shaker|stanley|yeti)/i;
+
+/** 9. 雨具（晴雨伞、雨衣、雨鞋、防水包） */
+const RAIN_GEAR_INTENT_RE =
+  /(雨伞|晴雨伞|折叠伞|自动伞|雨衣|雨披|雨鞋|雨靴|防水包|防水袋|梅雨|雨季|rains?|umbrella|folding\s*umbrella|rain\s*coat|poncho|rain\s*boot|waterproof\s*bag)/i;
+
+/** 10. 驱蚊用品（驱蚊液、驱蚊贴、驱蚊手环、电蚊拍） */
+const MOSQUITO_INTENT_RE =
+  /(驱蚊|防蚊|灭蚊|驱蚊液|驱蚊水|驱蚊贴|驱蚊手环|驱蚊器|电蚊拍|蚊香|灭蚊灯| mosquito|repellent|insect\s*repellent|bug\s*repellent|mosquito\s*coil)/i;
+
+/** 11. 夏季运动健身（瑜伽、跑步、速干衣、暴汗服） */
+const SUMMER_SPORT_INTENT_RE =
+  /(夏季运动|夏日健身|瑜伽|瑜伽服|跑步|跑步装备|速干|速干衣|暴汗服|运动套装|健身服|运动内衣|骑行|游泳健身|yoga|running|quick\s*dry|sweat\s*suit|gym\s*wear|activewear|cycling)/i;
+
+/** 12. 旅行用品（行李箱、收纳包、护照夹、 neck pillow） */
+const TRAVEL_GEAR_INTENT_RE =
+  /(旅行|旅游|出行|行李箱|拉杆箱|登机箱|收纳包|洗漱包|化妆包|护照夹|证件包|u型枕|颈枕|眼罩|耳塞|旅行用品|luggage|suitcase|carry-on|toiletry\s*bag|travel\s*kit|passport\s*holder|neck\s*pillow|sleep\s*mask)/i;
+
 /**
  * 用户是否表达了**可落地的品类/场景**（而非仅“女性/男性”等宽泛人群词）。
  */
@@ -283,7 +410,21 @@ export function queryHasConcreteProductIntent(text) {
   const s = String(text || '').trim();
   if (!s) return false;
   if (detectCategories(s).length > 0) return true;
+  if (HEAD_ACCESSORY_INTENT_RE.test(s)) return true;
   if (NICHE_INTENT_RE.test(s)) return true;
+  // 夏季高频类目意图检测
+  if (SUNSCREEN_INTENT_RE.test(s)) return true;
+  if (SWIMWEAR_INTENT_RE.test(s)) return true;
+  if (SANDALS_INTENT_RE.test(s)) return true;
+  if (SUMMER_CLOTHING_INTENT_RE.test(s)) return true;
+  if (SUN_HAT_GLASSES_INTENT_RE.test(s)) return true;
+  if (COOLING_INTENT_RE.test(s)) return true;
+  if (CAMPING_INTENT_RE.test(s)) return true;
+  if (DRINKWARE_INTENT_RE.test(s)) return true;
+  if (RAIN_GEAR_INTENT_RE.test(s)) return true;
+  if (MOSQUITO_INTENT_RE.test(s)) return true;
+  if (SUMMER_SPORT_INTENT_RE.test(s)) return true;
+  if (TRAVEL_GEAR_INTENT_RE.test(s)) return true;
   const lower = s.toLowerCase();
   if (
     /\b(skincare|skin care|hair care|body care|oral care|moisturizer|cleanser|serum|shampoo|toothbrush|massager)\b/i.test(
@@ -352,22 +493,39 @@ export function recommendationFallbackKind(userText) {
 
 /**
  * 趋势/榜单长列表：仅保留「类目或非标人群词」与商品标题/类目文本同时对齐的条目，避免只命中 women/女性。
+ * @param {object} [opts]
+ * @param {boolean} [opts.userAnchorOnly] 为 true 时只用 `userText` 做锚点（不把模型长文里的 yoga、sport、women's 等混进匹配），避免竖列卡串类。
+ * @param {string} [opts.userText] 用户原话；与 userAnchorOnly 联用。
  */
-export function filterTrendMatchesForPreciseDisplay(query, matched) {
+export function filterTrendMatchesForPreciseDisplay(query, matched, opts = {}) {
   const arr = Array.isArray(matched) ? matched : [];
-  const q = String(query || '');
+  const q = opts.userAnchorOnly ? String(opts.userText ?? '').trim() : String(query || '');
   if (!queryHasConcreteProductIntent(q)) return [];
   const cats = detectCategories(q);
   const nonDemo = getNonDemographicSearchTerms(q);
   const nicheInQuery = NICHE_INTENT_RE.test(q);
+  const headAccessoryQuery = HEAD_ACCESSORY_INTENT_RE.test(q);
+  // 夏季高频类目意图检测
+  const summerQuery = SUNSCREEN_INTENT_RE.test(q) || SWIMWEAR_INTENT_RE.test(q) || SANDALS_INTENT_RE.test(q) ||
+                      SUMMER_CLOTHING_INTENT_RE.test(q) || SUN_HAT_GLASSES_INTENT_RE.test(q) || COOLING_INTENT_RE.test(q) ||
+                      CAMPING_INTENT_RE.test(q) || DRINKWARE_INTENT_RE.test(q) || RAIN_GEAR_INTENT_RE.test(q) ||
+                      MOSQUITO_INTENT_RE.test(q) || SUMMER_SPORT_INTENT_RE.test(q) || TRAVEL_GEAR_INTENT_RE.test(q);
 
   return arr.filter((p) => {
     const low = String(p.searchLower || p.nameLower || '').toLowerCase();
     if (!low) return false;
     const catHit = cats.some((c) => c.keywords.some((kw) => low.includes(String(kw).toLowerCase())));
     const termHit = nonDemo.some((t) => low.includes(String(t).toLowerCase()));
+    const headHit = headAccessoryQuery && HEAD_ACCESSORY_INTENT_RE.test(low);
     const nicheHit = !nicheInQuery || NICHE_INTENT_RE.test(low);
-    return nicheHit && (catHit || termHit);
+    // 夏季类目匹配
+    const summerHit = summerQuery && (SUNSCREEN_INTENT_RE.test(low) || SWIMWEAR_INTENT_RE.test(low) ||
+                      SANDALS_INTENT_RE.test(low) || SUMMER_CLOTHING_INTENT_RE.test(low) ||
+                      SUN_HAT_GLASSES_INTENT_RE.test(low) || COOLING_INTENT_RE.test(low) ||
+                      CAMPING_INTENT_RE.test(low) || DRINKWARE_INTENT_RE.test(low) ||
+                      RAIN_GEAR_INTENT_RE.test(low) || MOSQUITO_INTENT_RE.test(low) ||
+                      SUMMER_SPORT_INTENT_RE.test(low) || TRAVEL_GEAR_INTENT_RE.test(low));
+    return nicheHit && (catHit || termHit || headHit || summerHit);
   });
 }
 
@@ -1057,4 +1215,104 @@ export function isProductConfirmation(text, prevMessages) {
   ];
   const askRe = new RegExp(`(?:${askPatterns.join('|')})`, 'i');
   return askRe.test(aiText);
+}
+
+/**
+ * 检测用户是否想要"继续推荐更多商品"（追问场景）。
+ * 例如："再给我推荐10个", "再来5个", "还有吗", "再推荐一些"
+ * 
+ * 返回对象包含：
+ * - isContinueRequest: 是否是继续推荐请求
+ * - requestedCount: 用户要求的数量（默认10，解析不到数字时）
+ * - originalCategory: 从对话历史中推断的原始类目（如果有）
+ */
+export function detectContinueRecommendationIntent(text, prevMessages) {
+  const t = String(text || '').trim();
+  
+  // 继续推荐的模式："再...", "再来", "再推荐", "再给我", "还要", "还有吗", "多来", "more"
+  const continuePatterns = [
+    /再[来推荐给拿]?\s*(\d+)?\s*[个款个件只种]*(?:商品|产品|货|东西|推荐)?/i,
+    /再[来推荐给拿]?\s*(\d+)?\s*(?:个|款|件|只|种|piece|items?)?/i,
+    /[还再][要来给拿]?\s*(\d+)?\s*[个款个件只种]*(?:商品|产品|货|东西|推荐)?/i,
+    /多[来推荐给拿]?\s*(\d+)?\s*[个款个件只种]*(?:商品|产品|货|东西|推荐)?/i,
+    /(?:more|additional|another)\s+(\d+)?\s*(?:product|item|recommendation)?/i,
+    /还有[吗嘛]*\s*(\d+)?/i,
+    /再[多来]?\s*一些/i,
+    /再[来]?\s*几个/i,
+    /(?:给|再).*(?:几个|一些|更多)/i,
+  ];
+  
+  let isContinueRequest = false;
+  let requestedCount = 10; // 默认数量
+  
+  for (const pattern of continuePatterns) {
+    const match = t.match(pattern);
+    if (match) {
+      isContinueRequest = true;
+      // 尝试提取数字
+      if (match[1]) {
+        const num = parseInt(match[1], 10);
+        if (!isNaN(num) && num > 0 && num <= 50) {
+          requestedCount = num;
+        }
+      }
+      break;
+    }
+  }
+  
+  // 如果不是继续推荐模式，检查是否是简短追问但上一轮有产品推荐
+  if (!isContinueRequest && prevMessages && prevMessages.length > 0) {
+    // 检查上一轮AI是否展示了产品
+    const lastAiProductMsg = [...prevMessages].reverse().find(
+      (m) => m.role === 'ai' && (m.type === 'products_trend' || m.type === 'products') && m.data?.length > 0
+    );
+    
+    // 如果是简短追问如"还有吗","再来点","多几个"
+    if (lastAiProductMsg && /^(还有[吗嘛]?|再来[点些]?|多[一些点]|再来|继续|more|and\?|others\?)$/i.test(t)) {
+      isContinueRequest = true;
+      requestedCount = 10;
+    }
+  }
+  
+  // 从历史消息中提取原始类目
+  let originalCategory = null;
+  if (isContinueRequest && prevMessages && prevMessages.length > 0) {
+    // 查找最近的用户查询中提到的具体类目
+    const recentUserQueries = [...prevMessages]
+      .reverse()
+      .filter((m) => m.role === 'user' && m.type === 'text')
+      .slice(0, 5)
+      .map((m) => String(m.content || ''));
+    
+    for (const query of recentUserQueries) {
+      const cats = detectCategories(query);
+      if (cats.length > 0) {
+        originalCategory = cats[0].label;
+        break;
+      }
+      // 如果没有匹配到类目，尝试提取关键词
+      if (queryHasConcreteProductIntent(query)) {
+        originalCategory = query;
+        break;
+      }
+    }
+  }
+  
+  return {
+    isContinueRequest,
+    requestedCount,
+    originalCategory,
+  };
+}
+
+/**
+ * 构建"无更多商品"时的引导消息
+ */
+export function buildNoMoreProductsMessage(uiLang, searchKeywords) {
+  if (uiLang === 'zh') {
+    const keywordPart = searchKeywords ? `「${searchKeywords}」` : '这类商品';
+    return `我已展示了所有符合条件的${keywordPart}。如需查看更多货源，可以在 Tangbuy 搜索平台尝试查找**同款或相似款**：`;
+  }
+  const keywordPart = searchKeywords || 'products';
+  return `I've shown all available ${keywordPart} that match your criteria. You can search for more **similar items** on Tangbuy:`;
 }

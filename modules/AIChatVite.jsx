@@ -56,6 +56,8 @@ import {
   filterTrendMatchesForPreciseDisplay,
   recommendationFallbackKind,
   prioritizeDirectTangbuyUrl,
+  detectContinueRecommendationIntent,
+  buildNoMoreProductsMessage,
 } from '../utils/productSearch.js';
 import { decodeHtmlEntities, buildAggregatedSupplyChainBackbone } from '../utils/reportFormatter.js';
 import { PROMPTS } from '../utils/systemPrompts.js';
@@ -1851,11 +1853,22 @@ export function ModuleAIChat({
   const send = React.useCallback(async (txt, opts = {}) => {
     if (!txt || isLoading) return false;
 
-    // Clear shown product IDs when user sends a new message
-    // This ensures fresh results for new queries while preventing duplicates within a session
-    const beforeSize = shownIdsRef.current.size;
-    shownIdsRef.current.clear();
-    console.log('[DEBUG] shownIdsRef cleared on new message, was tracking', beforeSize, 'products');
+    // Detect if this is a "continue recommendation" follow-up request (e.g., "再推荐10个")
+    // If so, preserve shownIdsRef to avoid showing duplicates
+    const continueIntent = detectContinueRecommendationIntent(txt, messages);
+    const isContinueRequest = continueIntent.isContinueRequest;
+    const userRequestedCount = continueIntent.requestedCount;
+    const originalCategory = continueIntent.originalCategory;
+    
+    if (!isContinueRequest) {
+      // Clear shown product IDs when user sends a new message (not a continue request)
+      // This ensures fresh results for new queries while preventing duplicates within a session
+      const beforeSize = shownIdsRef.current.size;
+      shownIdsRef.current.clear();
+      console.log('[DEBUG] shownIdsRef cleared on new message, was tracking', beforeSize, 'products');
+    } else {
+      console.log('[DEBUG] Continue recommendation detected, preserving shownIdsRef with', shownIdsRef.current.size, 'products, requesting', userRequestedCount, 'more');
+    }
 
     const urls = extractUrlsFromText(txt);
 
@@ -1993,22 +2006,110 @@ export function ModuleAIChat({
        * 竖向宽卡（products_trend）
        * - 数据源：**仅** `loadTrendCatalogOnly()` = `Product.json`（趋势）与 `Best-selling.json`（月销千榜）合并后的列表，**不是** tangbuy-product 热销 JSON。
        * - 触发：`shouldRecommendProducts`：须能识别**具体品类/商品**（`queryHasConcreteProductIntent`）且话术中带有列表/货源/推荐等语境；或显式「趋势商品/爆款推荐…」；或短句确认接在上一条 AI 问是否要看商品之后。**仅凭泛词「推荐」而无类目锚点**不触发。
-       * - 流程：`smartSearch` 在 **用户话 + 助手回复前 1200 字**（`trendQuery`）上从上述合并库打分；模型在正文里写的具体词（如「美容仪」「睫毛夹」「化妆包」）会进入该字符串，与 `detectCategories` / 分词后的词一起参与匹配与 `filterTrendMatchesForPreciseDisplay`（商品标题/类目 `searchLower` 需命中品类关键词或这些词之一）。
+       * - 流程：`smartSearch` 用 **用户话 + 助手回复前 1200 字**（`trendQuery`）打分，便于模型补充具体品名词；**竖列展示前**用 `filterTrendMatchesForPreciseDisplay(..., { userAnchorOnly: true, userText })` 仅以用户话为锚点过滤，避免模型正文里的 yoga、sport、women's 等与用户问的「头饰」串类。不过滤则宁可不展示，不回退到未过滤的整表命中。
        * - 展示：最多 `TREND_WIDE_CARD_REPLY_CAP` 条，**不是**两个 JSON 的全量行。
+       * - 继续推荐场景：不清空 shownIdsRef，根据用户要求的数量返回，不足时输出剩余全部并引导到搜索。
        */
-      if (userWantsProductRecommendations) {
+      const shouldShowProducts = userWantsProductRecommendations || isContinueRequest;
+      if (shouldShowProducts) {
         const trendCatalog = await loadTrendCatalogOnly();
         if (trendCatalog.length) {
-          const trendQuery = `${txt} ${(streamResult?.finalText || '').slice(0, 1200)}`;
+          // For continue requests, use original category query to maintain consistency
+          const searchText = isContinueRequest && originalCategory 
+            ? `${originalCategory} ${(streamResult?.finalText || '').slice(0, 600)}`
+            : `${txt} ${(streamResult?.finalText || '').slice(0, 1200)}`;
+          const trendQuery = searchText;
+          
+          // Use user requested count for continue requests, default cap for new requests
+          const resultCap = isContinueRequest 
+            ? Math.min(userRequestedCount, 20) // Allow up to 20 for continue requests
+            : TREND_WIDE_CARD_REPLY_CAP;
+          
           const { matched: trendMatched } = smartSearch(trendQuery, snapshot || '', trendCatalog, {
-            trendResultCap: TREND_WIDE_CARD_REPLY_CAP,
+            trendResultCap: resultCap,
           });
-          const preciseTrend = filterTrendMatchesForPreciseDisplay(trendQuery, trendMatched);
-          const ranked = prioritizeDirectTangbuyUrl(preciseTrend.length > 0 ? preciseTrend : trendMatched);
-          const slice = ranked.slice(0, TREND_WIDE_CARD_REPLY_CAP);
+          
+          // For continue requests, we want to show only new products (not already shown)
+          // smartSearch already filters by shownIdsRef
+          const preciseTrend = filterTrendMatchesForPreciseDisplay(trendQuery, trendMatched, {
+            userAnchorOnly: true,
+            userText: isContinueRequest && originalCategory ? originalCategory : txt,
+          });
+          
+          const ranked = prioritizeDirectTangbuyUrl(preciseTrend);
+          
+          // Slice to requested count
+          const slice = ranked.slice(0, resultCap);
+          
           if (slice.length > 0) {
-            setMessages((p) => [...p, { role: 'ai', type: 'products_trend', content: '', data: slice }]);
+            // Build message content based on scenario
+            let messageContent = '';
+            
+            if (isContinueRequest) {
+              const actuallyShown = slice.length;
+              const requested = userRequestedCount;
+              
+              if (actuallyShown < requested) {
+                // User wanted more than we have
+                messageContent = uiLang === 'zh' 
+                  ? `这是剩余的 ${actuallyShown} 个符合条件的商品（共请求 ${requested} 个）：`
+                  : `Here are the remaining ${actuallyShown} matching products (requested ${requested}):`;
+              }
+            }
+            
+            setMessages((p) => [...p, { 
+              role: 'ai', 
+              type: 'products_trend', 
+              content: messageContent, 
+              data: slice 
+            }]);
             trendListAppended = true;
+            
+            // If this was a continue request and we couldn't fulfill the full request,
+            // show guidance message after the products
+            if (isContinueRequest && slice.length < userRequestedCount && slice.length > 0) {
+              const searchKeywords = originalCategory || extractedKws.join(' ');
+              const noMoreMessage = buildNoMoreProductsMessage(uiLang, searchKeywords);
+              
+              // Add search picks if available
+              const picksData = buildTangbuySearchPicksFromKeywords(extractedKws, uiLang, 5);
+              
+              if (picksData.length > 0) {
+                setMessages((p) => [...p, {
+                  role: 'ai',
+                  type: 'search_picks',
+                  content: noMoreMessage,
+                  data: picksData,
+                }]);
+              } else {
+                setMessages((p) => [...p, {
+                  role: 'ai',
+                  type: 'text',
+                  content: noMoreMessage,
+                }]);
+              }
+            }
+          } else if (isContinueRequest) {
+            // No more products available at all
+            const searchKeywords = originalCategory || extractedKws.join(' ');
+            const noMoreMessage = buildNoMoreProductsMessage(uiLang, searchKeywords);
+            
+            const picksData = buildTangbuySearchPicksFromKeywords(extractedKws, uiLang, 5);
+            
+            if (picksData.length > 0) {
+              setMessages((p) => [...p, {
+                role: 'ai',
+                type: 'search_picks',
+                content: noMoreMessage,
+                data: picksData,
+              }]);
+            } else {
+              setMessages((p) => [...p, {
+                role: 'ai',
+                type: 'text',
+                content: noMoreMessage,
+              }]);
+            }
           }
         }
       }
