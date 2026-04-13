@@ -1,5 +1,6 @@
 import { pipeline } from 'stream/promises';
 import { Readable } from 'stream';
+import { buildSystemMessage } from './_buildSystemMessage.js';
 
 /**
  * Vercel Serverless：请求 `${VLLM_BASE_URL}/chat/completions`（OpenAI 兼容；BASE_URL 通常含 `/v1`）。
@@ -137,6 +138,24 @@ export default async function handler(req, res) {
   }
 
   const body = await readJsonBody(req);
+
+  // Phase 3: 如果前端传了 promptParams，在服务端构建 system message
+  // 否则保持向后兼容，直接使用前端传来的 messages
+  if (body.promptParams && typeof body.promptParams === 'object') {
+    try {
+      const serverSystemMsg = buildSystemMessage(body.promptParams);
+      const clientMessages = Array.isArray(body.messages) ? body.messages : [];
+      // 移除前端可能传来的任何 system message，用服务端版本替换
+      const nonSystemMessages = clientMessages.filter(m => m.role !== 'system');
+      body.messages = [serverSystemMsg, ...nonSystemMessages];
+      // 清理 promptParams，不转发给 LLM
+      delete body.promptParams;
+    } catch (e) {
+      console.error('[api/chat] buildSystemMessage error:', e);
+      // 构建失败时回退到前端传的 messages
+    }
+  }
+
   const hasImageInRequest = requestHasImage(body);
   // New priority: prefer current secondary model; MiniMax(primary) is timeout fallback only.
   const preferredCfg = buildModelConfig('secondary') || buildModelConfig('primary');

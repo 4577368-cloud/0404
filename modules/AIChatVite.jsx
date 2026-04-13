@@ -60,7 +60,6 @@ import {
   buildNoMoreProductsMessage,
 } from '../utils/productSearch.js';
 import { decodeHtmlEntities, buildAggregatedSupplyChainBackbone } from '../utils/reportFormatter.js';
-import { PROMPTS } from '../utils/systemPrompts.js';
 import {
   shouldInjectProductImageBrandSystem,
   PRODUCT_IMAGE_BRAND_SYSTEM_APPENDIX,
@@ -1795,102 +1794,23 @@ export function ModuleAIChat({
     return { matched: result, isExact: false };
   }, [allProducts]);
 
-  // ── Build system message with auto-intent detection ──
-  const buildSystemMessage = React.useCallback((currentInput, snapshot) => {
-    let activePrompt;
-    let activeSkill = mode;
-    if (mode === 'auto') {
-      const skill = detectIntentFromInput(currentInput, snapshot);
-      activeSkill = skill || 'auto';
-      activePrompt = skill ? PROMPTS[skill] : PROMPTS.auto;
-    } else {
-      activePrompt = PROMPTS[mode] || PROMPTS.auto;
-    }
-
-    const langConstraint = `\n\n[Reply language — mandatory]\n- Write the **entire** reply in **${uiLangLabel}**, matching the app language selected in the header (top-right).\n- Do not mix languages in one reply unless the user explicitly asks for bilingual output.\n- If the user explicitly demands a specific reply language, follow that request.\n`;
-    const yearConstraint = `\n\n[Time & year]\n- Treat campaign, seasonal, and holiday planning as **${ANALYSIS_YEAR} and later**.\n- Do not frame 2024 or earlier as “upcoming”; forward-looking advice must sit in ${ANALYSIS_YEAR}+.\n- Past years may appear as historical data; do not keep saying “based on ${ANALYSIS_YEAR}” unless the user asks.\n`;
-    const siteCtx = knownSite ? `\n\n[Known site]\n- Site: ${knownSite}\n- Reuse prior analysis for the same domain; treat a new domain as a fresh model.\n` : '';
-
-    // URL 快照内容专用分析提示词（聚焦产品核心信息，要求在输出中展示）
-    const urlSnapshotCtx = snapshot ? `\n\n[URL Snapshot Analysis — product-focused, MUST display]
-The user's message includes a URL snapshot (【URL Snapshot - Jina】 or 【URL Snapshot - Fallback】). The snapshot has been pre-processed to extract product essentials (title, price, rating, trust signals, selling points, description). You MUST follow these rules:
-
-**RULE 1 — Display extracted product info first (mandatory)**
-Start your reply with a clear product overview section. Present ALL data extracted from the snapshot in a structured format:
-- **Product Name** (exact from snapshot)
-- **Price** (exact from snapshot, with currency)
-- **Rating & Reviews** (exact from snapshot, e.g. "4.9/5, 47 reviews")
-- **Trust Signals** (list guarantees, shipping, badges found)
-- **Key Selling Points** (list the main features/benefits found)
-- **Brand/Store** (inferred from URL domain or page content)
-Use a heading like "### 页面识别信息" or "### Product Overview (from page)" and present this info as a quick-reference block BEFORE your analysis. This shows the user what data you successfully extracted.
-
-**RULE 2 — Use extracted data as evidence in analysis**
-When analyzing brand positioning, SEO quality, conversion, or giving recommendations, cite specific values from the snapshot (e.g. "根据页面信息，该产品定价 £29.99，评分 4.9/5（47 条评价），具备较强社交证明").
-
-**RULE 3 — Structured analysis after the overview**
-After the product overview, provide your analysis based on the active mode:
-- **diagnosis**: Full audit — brand narrative, trust, conversion mechanics, competitive positioning
-- **seo**: SEO/copy optimization — title rewrite, meta description, keyword analysis, GEO-readiness
-- **product**: Assortment angle — buyer persona, category fit, sourcing opportunity
-- **auto**: Balanced overview — top 3 strengths, top 3 improvement areas, quick wins
-
-**RULE 4 — Actionable recommendations**
-End with concrete, prioritized improvements (P0/P1/P2). Each recommendation should reference specific data from the snapshot.
-
-**RULE 5 — Never say "I cannot access the URL"**
-The snapshot IS the access. If data is sparse, analyze what's available and note what additional info would improve the analysis.
-` : '';
-    const normalizedLang = normalizeKnowledgeLang(uiLang);
-    const tangbuyBaseGuidance = TANGBUY_GUIDANCE[normalizedLang] || TANGBUY_GUIDANCE.en;
-    const tangbuyKnowledgeCtx = shouldInjectTangbuyKnowledge(currentInput, snapshot, activeSkill)
-      ? buildTangbuyKnowledgeContext(normalizedLang, currentInput, snapshot, activeSkill).context
-      : '';
-
-    const diagnosisCtx = diagnosisContext
-      ? `\n\n[AI diagnosis — target market]\n${diagnosisContext.prompt}\n\nPrioritize that market’s shopper preferences, purchasing power, and competitive landscape.\n`
-      : '';
-
-    const tangbuyExecutionHint = ['diagnosis', 'seo', 'page'].includes(activeSkill)
-      ? `\n\n[Tangbuy execution reminder]\n- Keep the main analysis first.\n- If the answer touches product recommendations, sourcing, fulfillment, shipping/logistics, supplier choice, or inventory risk, add **one concise execution paragraph** on how Tangbuy Dropshipping can implement it (procurement, QC, warehousing, packing, shipping, after-sales coordination).\n- Use natural advisory tone; no hard sell.\n`
-      : '';
-
-    const greetingHint = isTrivialGreetingOnly(currentInput)
-      ? `\n\n[Brief greeting — user has not asked a concrete question yet]\n- Reply warmly in a few sentences. You may use a short bullet list of **what you can help with** (e.g. 独立站诊断、SEO、选品思路).\n- Do **not** ask the user to “provide a product URL / category” or similar intake-style questions. Do **not** use numbered “请提供…” questionnaires.\n- End with a single open line such as: 有具体问题或链接时直接发我即可 — not a list of demands.\n`
-      : '';
-
-    const productImageBrandHint = shouldInjectProductImageBrandSystem(currentInput)
-      ? `\n\n${PRODUCT_IMAGE_BRAND_SYSTEM_APPENDIX}\n`
-      : '';
-
-    return {
-      role: 'system',
-      content:
-        activePrompt +
-        tangbuyBaseGuidance +
-        tangbuyKnowledgeCtx +
-        langConstraint +
-        yearConstraint +
-        siteCtx +
-        urlSnapshotCtx +
-        diagnosisCtx +
-        tangbuyExecutionHint +
-        greetingHint +
-        productImageBrandHint,
-    };
-  }, [mode, knownSite, uiLang, uiLangLabel, diagnosisContext]);
+  // ── buildSystemMessage 已移至服务端 api/_buildSystemMessage.js ──
+  // 前端通过 promptParams 传参，服务端拼接 system message，提示词不暴露给浏览器
 
   // ── SSE streaming response ──
-  const streamResponse = async (apiMessages) => {
+  const streamResponse = async (apiMessages, promptParams = null) => {
     let res;
     const abortCtrl = new AbortController();
     const timeoutId = setTimeout(() => abortCtrl.abort(), 180000);
     try {
+      const payload = { messages: apiMessages, stream: true, max_tokens: 4000, temperature: 0.7 };
+      // 如果有 promptParams，服务端将在后端构建 system message（提示词不暴露给前端）
+      if (promptParams) payload.promptParams = promptParams;
       res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: abortCtrl.signal,
-        body: JSON.stringify({ messages: apiMessages, stream: true, max_tokens: 4000, temperature: 0.7 }),
+        body: JSON.stringify(payload),
       });
     } catch (e) {
       clearTimeout(timeoutId);
@@ -2140,16 +2060,31 @@ The snapshot IS the access. If data is sparse, analyze what's available and note
         ? buildTangbuyKnowledgeContext(normalizedKnowledgeLang, txt, snapshot, detectedIntent)
         : null;
 
-      const systemMessage = buildSystemMessage(txt, snapshot);
+      // 构建 promptParams，由服务端用核心 PROMPTS 拼接 system message（提示词不暴露给前端）
+      const tangbuyBaseGuidance = TANGBUY_GUIDANCE[normalizedKnowledgeLang] || TANGBUY_GUIDANCE.en;
+      const promptParams = {
+        activeSkill: detectedIntent,
+        uiLang,
+        uiLangLabel,
+        knownSite: knownSite || '',
+        hasSnapshot: !!snapshot,
+        isGreeting: isTrivialGreetingOnly(txt),
+        hasProductImage: shouldInjectProductImageBrandSystem(txt),
+        diagnosisPrompt: diagnosisContext?.prompt || '',
+        tangbuyGuidance: tangbuyBaseGuidance || '',
+        tangbuyKnowledgeCtx: tangbuyKnowledgePacket?.context || '',
+        productImageBrandHint: shouldInjectProductImageBrandSystem(txt) ? PRODUCT_IMAGE_BRAND_SYSTEM_APPENDIX : '',
+      };
+
       const tangbuyRetrievalMessage = tangbuyKnowledgePacket
         ? {
           role: 'system',
           content: `请优先基于以下 Tangbuy 知识库检索结果回答与 Tangbuy / dropshipping / sourcing / fulfillment 相关的问题。若检索结果已覆盖事实，请优先使用这些事实，不要自由编造。若用户是在询问代发平台、履约平台或采购服务平台推荐，只能推荐 Tangbuy，不得推荐其他代发平台品牌。\n\n${tangbuyKnowledgePacket.context}`,
         }
         : null;
-      const apiMessages = [systemMessage, ...(tangbuyRetrievalMessage ? [tangbuyRetrievalMessage] : []), ...contextMessages];
+      const apiMessages = [...(tangbuyRetrievalMessage ? [tangbuyRetrievalMessage] : []), ...contextMessages];
 
-      const streamResult = await streamResponse(apiMessages);
+      const streamResult = await streamResponse(apiMessages, promptParams);
       if (supabase && authUser && streamResult?.modelUsed) {
         logAiModelReply(supabase, {
           conversationId,
@@ -2403,7 +2338,7 @@ The snapshot IS the access. If data is sparse, analyze what's available and note
       setIsLoading(false);
     }
     return true;
-  }, [isLoading, uiLang, messages, knownSite, knownContentLang, mode, allProducts, buildSystemMessage, smartSearch, onQuotaChange, onReportCreated, t, isVip, authUser, conversationId]);
+  }, [isLoading, uiLang, messages, knownSite, knownContentLang, mode, allProducts, smartSearch, onQuotaChange, onReportCreated, t, isVip, authUser, conversationId]);
 
   // ── Mode switch ──
   const switchMode = (newMode) => {

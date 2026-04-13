@@ -5,6 +5,7 @@ import https from 'https';
 import fs from 'fs';
 import path from 'path';
 import { FACEBOOK_SHARE_OG_IMAGES } from './utils/shareOgImages.js';
+import { buildSystemMessage } from './api/_buildSystemMessage.js';
 
 /** 每次生成/请求 index.html 时随机选一张 OG 图（生产构建时固定为该次构建的随机结果） */
 function randomShareOgImage() {
@@ -56,6 +57,20 @@ function apiChatMiddleware() {
 
         try {
           const body = rawBody ? JSON.parse(rawBody) : {};
+
+          // Phase 3: 服务端构建 system message（向后兼容）
+          if (body.promptParams && typeof body.promptParams === 'object') {
+            try {
+              const serverSystemMsg = buildSystemMessage(body.promptParams);
+              const clientMessages = Array.isArray(body.messages) ? body.messages : [];
+              const nonSystemMessages = clientMessages.filter((m: any) => m.role !== 'system');
+              body.messages = [serverSystemMsg, ...nonSystemMessages];
+              delete body.promptParams;
+            } catch (e: any) {
+              console.error('[api/chat] buildSystemMessage error:', e?.message);
+            }
+          }
+
           const messages = Array.isArray(body?.messages) ? body.messages : [];
           const hasImageTextRef = (text: string) => {
             const s = String(text || '');
