@@ -1,6 +1,6 @@
 # Admin NLQ Schema (auto-generated)
 
-Updated at: 2026-04-13T02:41:48.713Z
+Updated at: 2026-04-13T09:53:53.406Z
 
 Use this schema to answer admin natural-language questions by generating SELECT SQL only.
 
@@ -58,6 +58,7 @@ Use this schema to answer admin natural-language questions by generating SELECT 
   - `content_preview` text
   - `extracted_urls` jsonb
   - `created_at` timestamp with time zone
+  - `snapshot_sources` jsonb
 
 - `public.share_links`
   - `id` uuid

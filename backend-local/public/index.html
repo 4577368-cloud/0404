@@ -185,6 +185,7 @@
             <th>出现次数</th>
             <th>首次出现</th>
             <th>最近出现</th>
+            <th>快照来源</th>
           </tr>
         </thead>
         <tbody id="urlInputsTbody"></tbody>
@@ -759,12 +760,20 @@
           const idt = r.user_identity ? String(r.user_identity) : String(r.user_id || '');
           const first = fmtCst(r.first_seen_at);
           const last = fmtCst(r.last_seen_at);
+          // 快照来源: jina / trickle / null
+          const source = r.snapshot_source ? String(r.snapshot_source).toLowerCase() : '';
+          const sourceBadge = source === 'jina' 
+            ? '<span style="color:#10b981;font-weight:600;">Jina</span>'
+            : source === 'trickle' 
+              ? '<span style="color:#f59e0b;font-weight:600;">Trickle</span>'
+              : '<span style="color:#6b7280;">-</span>';
           return `<tr>
             <td style="max-width:360px;word-break:break-all;"><a class="url-link" href="${escapeHtml(url)}" target="_blank" rel="noreferrer">${escapeHtml(url)}</a></td>
             <td title="${escapeHtml(String(r.user_id || ''))}">${escapeHtml(idt)}</td>
             <td>${fmt(r.mentioned_times)}</td>
             <td>${escapeHtml(first)}</td>
             <td>${escapeHtml(last)}</td>
+            <td>${sourceBadge}</td>
           </tr>`;
         })
         .join('');

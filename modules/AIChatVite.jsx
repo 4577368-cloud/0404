@@ -223,6 +223,9 @@ const TANGBUY_DISPLAY_MULT = 1.7;
 const ANALYSIS_YEAR = Math.max(2026, new Date().getFullYear());
 const HTML_SPLIT_DELIM = '===HTML===';
 const PROXY_URL = 'https://proxy-api.trickle-app.host/';
+/** Jina AI Reader API - 优先使用，失败时回退到 PROXY_URL */
+const JINA_BASE_URL = 'https://r.jina.ai/http://';
+const JINA_API_KEY = 'jina_70abb115f16f4b30a02b941b2bc24a9504xVkjbIwf4ZRJ_BMTcCN6hphdoe';
 
 function base64EncodeUtf8(str) {
   try { return btoa(unescape(encodeURIComponent(String(str)))); }
@@ -423,12 +426,172 @@ function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// ── URL snapshot via proxy ──
-async function getUrlSnapshot(url, retryCount = 0) {
+// ── 从 Jina Markdown 中提取产品核心信息 ──
+function extractProductEssentials(raw) {
+  const lines = raw.split('\n');
+  // --- 1. Title ---
+  let title = '';
+  const titleLine = raw.match(/^Title:\s*(.+)/m);
+  if (titleLine) title = titleLine[1].trim();
+  if (!title) {
+    const h1 = raw.match(/^#\s+(.+)/m);
+    if (h1) title = h1[1].replace(/\s*–.*$/, '').trim();
+  }
+
+  // --- 2. Price ---
+  let price = '';
+  const priceMatch = raw.match(/(?:Regular price|Sale price|Price)[:\s]*([£$€¥]\s*[\d,.]+(?:\s*[A-Z]{3})?)/i)
+    || raw.match(/([£$€¥]\s*[\d,.]+)/);
+  if (priceMatch) price = priceMatch[1].trim();
+
+  // --- 3. Rating & reviews ---
+  let rating = '';
+  const ratingMatch = raw.match(/([\d.]+)\s+(?:out of\s+[\d.]+\s+stars?\s+based on\s+(\d+)\s+reviews?|stars?)/i);
+  if (ratingMatch) rating = ratingMatch[0].trim();
+
+  // --- 4. Trust signals (guarantees, shipping, badges) ---
+  const trustSignals = [];
+  const trustPatterns = [
+    /(?:money.?back|satisfaction)\s*guarantee/i,
+    /free\s+(?:\w+\s+)?(?:delivery|shipping)/i,
+    /\d+-day\s+(?:return|money|refund)/i,
+    /verified/i,
+  ];
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.length < 5) continue;
+    for (const pat of trustPatterns) {
+      if (pat.test(trimmed)) {
+        const clean = trimmed.replace(/^[-*#\s]+/, '').trim();
+        if (clean && !trustSignals.includes(clean)) trustSignals.push(clean);
+        break;
+      }
+    }
+  }
+
+  // --- 5. Product description (first substantial paragraph after title/price area) ---
+  let description = '';
+  let capturing = false;
+  const descLines = [];
+  for (const line of lines) {
+    const t = line.trim();
+    // 开始区域：跳过标题/价格/购物车等噪声
+    if (!capturing) {
+      if (/^#{1,3}\s/.test(t) && descLines.length === 0 && !/add to cart|payment|quantity|checkout/i.test(t)) continue;
+      if (t.length > 80 && !/add to cart|quantity|checkout|payment|decrease|increase|subscribe|privacy|refund|terms|copyright|©/i.test(t)) {
+        capturing = true;
+      }
+    }
+    if (capturing) {
+      // 停止条件：遇到页脚/导航/无关区域
+      if (/^#{1,3}\s+(you may also|subscribe|quick links|payment methods|mindful living|footer)/i.test(t)) break;
+      if (/^(links\/buttons|images):/i.test(t)) break;
+      if (/^【\d+†/i.test(t) && /privacy|refund|terms|contact|search|instagram/i.test(t)) break;
+      if (/© \d{4}/i.test(t)) break;
+      // 过滤购物车/支付/计时器噪声行
+      if (/^(add to cart|decrease quantity|increase quantity|more payment|choosing a selection|opens in a new)/i.test(t)) continue;
+      if (/^\d{1,2}\s*:\s*\d{2}\s*:\s*\d{2}/.test(t)) continue; // countdown timer
+      if (/^(purchased|processing|delivered)\s/i.test(t)) continue; // shipping timeline rows
+      if (/^(quantity|taxes included|couldn.t load pickup|refresh|this item is a deferred)/i.test(t)) continue;
+      if (t.length < 3) continue;
+      descLines.push(t);
+    }
+  }
+  description = descLines.join('\n').trim();
+
+  // --- 6. Key features / selling points (bullet list with **bold** or * prefix) ---
+  const features = [];
+  const featureRegion = raw.match(/(?:key features|features|benefits|selling points|highlights)[^\n]*\n([\s\S]*?)(?=\n#{1,3}\s|\nlinks\/buttons|\nimages:|$)/i);
+  if (featureRegion) {
+    const fLines = featureRegion[1].split('\n');
+    for (const fl of fLines) {
+      const ft = fl.trim();
+      if (/^\*\s+\*\*/.test(ft) || /^[-•]\s+\*\*/.test(ft) || /^\d+\.\s+\*\*/.test(ft)) {
+        features.push(ft.replace(/^[-*•\d.]+\s*/, '').trim());
+      } else if (ft.length > 30 && /^\*\s/.test(ft)) {
+        features.push(ft.replace(/^\*\s*/, '').trim());
+      }
+    }
+  }
+
+  // --- Build structured output ---
+  const parts = [];
+  if (title) parts.push(`## Product: ${title}`);
+  if (price) parts.push(`**Price:** ${price}`);
+  if (rating) parts.push(`**Rating:** ${rating}`);
+  if (trustSignals.length) parts.push(`**Trust Signals:** ${trustSignals.join(' | ')}`);
+  if (features.length) {
+    parts.push(`\n### Key Selling Points`);
+    features.forEach(f => parts.push(`- ${f}`));
+  }
+  if (description) {
+    parts.push(`\n### Product Description`);
+    // 限制描述长度，避免占用太多 token
+    const descTrimmed = description.length > 2000 ? description.slice(0, 2000) + '\n...' : description;
+    parts.push(descTrimmed);
+  }
+
+  const structured = parts.join('\n');
+  // 如果提取到的结构化内容太短（< 100 字符），说明解析不出核心信息，返回 null 让调用方 fallback 到原始截断
+  if (structured.length < 100) return null;
+  console.log('[URL Debug] Extracted product essentials:', structured.length, 'chars');
+  return structured;
+}
+
+// ── URL snapshot via Jina AI Reader (primary) with proxy fallback ──
+// 返回 { content, source } 对象，source 为 'jina' 或 'trickle'
+async function getUrlSnapshot(url, retryCount = 0, useFallback = false) {
   if (!url) return null;
   const maxRetries = 2;
   const retryDelay = 1000; // 1 second
   
+  // 优先使用 Jina AI Reader（browser 引擎 + 去除导航/页脚噪声）
+  if (!useFallback) {
+    try {
+      const cleanUrl = url.replace(/^https?:\/\//, '');
+      const jinaRes = await fetch(`${JINA_BASE_URL}${cleanUrl}`, {
+        headers: {
+          'Authorization': `Bearer ${JINA_API_KEY}`,
+          'Accept': 'text/plain',
+          'X-Engine': 'browser',
+          'X-Return-Format': 'markdown',
+          'X-Remove-Selector': 'header, footer, nav, .announcement-bar, .site-header, .site-footer, .footer, .header, #shopify-section-header, #shopify-section-footer, .cookie-banner, .popup-modal',
+          'X-Retain-Images': 'none',
+          'X-Token-Budget': '8000',
+          'X-With-Images-Summary': 'true',
+        },
+      });
+      
+      if (jinaRes.ok) {
+        const jinaText = await jinaRes.text();
+        if (jinaText && jinaText.length > 50 && !jinaText.includes('Please enable JavaScript')) {
+          console.log('[URL Debug] Jina AI Reader (browser engine) succeeded for:', url);
+          console.log('[URL Debug] Raw content length:', jinaText.length);
+          // 尝试结构化提取产品核心信息
+          const essentials = extractProductEssentials(jinaText);
+          if (essentials) {
+            return {
+              content: `【URL Snapshot - Jina】\n- URL: ${url}\n\n${essentials}`,
+              source: 'jina'
+            };
+          }
+          // 结构化提取失败，fallback 到原始截断
+          const trimmed = jinaText.slice(0, 4000);
+          return {
+            content: `【URL Snapshot - Jina】\n- URL: ${url}\n- Content:\n${trimmed}${jinaText.length > 4000 ? '\n... (content truncated)' : ''}`,
+            source: 'jina'
+          };
+        }
+        console.log('[URL Debug] Jina returned empty or blocked content, will fallback');
+      } else {
+        console.log('[URL Debug] Jina failed with status:', jinaRes.status, ', will fallback');
+      }
+    } catch (jinaError) {
+      console.error('[URL Debug] Jina fetch error:', jinaError.message, ', will fallback');
+    }
+  }
+  
+  // Fallback to existing proxy
   try {
     const res = await fetch(`${PROXY_URL}?url=${encodeURIComponent(url)}`);
     
@@ -436,7 +599,7 @@ async function getUrlSnapshot(url, retryCount = 0) {
     if (res.status === 429 && retryCount < maxRetries) {
       console.log(`[URL Debug] Rate limited, retrying in ${retryDelay}ms... (${retryCount + 1}/${maxRetries})`);
       await new Promise(resolve => setTimeout(resolve, retryDelay));
-      return await getUrlSnapshot(url, retryCount + 1);
+      return await getUrlSnapshot(url, retryCount + 1, true);
     }
     
     if (!res.ok) {
@@ -457,7 +620,10 @@ async function getUrlSnapshot(url, retryCount = 0) {
       bodyText && `- Text Excerpt: ${bodyText}`,
     ].filter(Boolean);
     if (!parts.length) return null;
-    return `【URL Snapshot】\n- URL: ${url}\n${parts.join('\n')}`;
+    return {
+      content: `【URL Snapshot - Fallback】\n- URL: ${url}\n${parts.join('\n')}`,
+      source: 'trickle'
+    };
   } catch (error) {
     console.error('[URL Debug] Fetch error:', error);
     return null;
@@ -1653,6 +1819,37 @@ export function ModuleAIChat({
     const langConstraint = `\n\n[Reply language — mandatory]\n- Write the **entire** reply in **${uiLangLabel}**, matching the app language selected in the header (top-right).\n- Do not mix languages in one reply unless the user explicitly asks for bilingual output.\n- If the user explicitly demands a specific reply language, follow that request.\n`;
     const yearConstraint = `\n\n[Time & year]\n- Treat campaign, seasonal, and holiday planning as **${ANALYSIS_YEAR} and later**.\n- Do not frame 2024 or earlier as “upcoming”; forward-looking advice must sit in ${ANALYSIS_YEAR}+.\n- Past years may appear as historical data; do not keep saying “based on ${ANALYSIS_YEAR}” unless the user asks.\n`;
     const siteCtx = knownSite ? `\n\n[Known site]\n- Site: ${knownSite}\n- Reuse prior analysis for the same domain; treat a new domain as a fresh model.\n` : '';
+
+    // URL 快照内容专用分析提示词（聚焦产品核心信息，要求在输出中展示）
+    const urlSnapshotCtx = snapshot ? `\n\n[URL Snapshot Analysis — product-focused, MUST display]
+The user's message includes a URL snapshot (【URL Snapshot - Jina】 or 【URL Snapshot - Fallback】). The snapshot has been pre-processed to extract product essentials (title, price, rating, trust signals, selling points, description). You MUST follow these rules:
+
+**RULE 1 — Display extracted product info first (mandatory)**
+Start your reply with a clear product overview section. Present ALL data extracted from the snapshot in a structured format:
+- **Product Name** (exact from snapshot)
+- **Price** (exact from snapshot, with currency)
+- **Rating & Reviews** (exact from snapshot, e.g. "4.9/5, 47 reviews")
+- **Trust Signals** (list guarantees, shipping, badges found)
+- **Key Selling Points** (list the main features/benefits found)
+- **Brand/Store** (inferred from URL domain or page content)
+Use a heading like "### 页面识别信息" or "### Product Overview (from page)" and present this info as a quick-reference block BEFORE your analysis. This shows the user what data you successfully extracted.
+
+**RULE 2 — Use extracted data as evidence in analysis**
+When analyzing brand positioning, SEO quality, conversion, or giving recommendations, cite specific values from the snapshot (e.g. "根据页面信息，该产品定价 £29.99，评分 4.9/5（47 条评价），具备较强社交证明").
+
+**RULE 3 — Structured analysis after the overview**
+After the product overview, provide your analysis based on the active mode:
+- **diagnosis**: Full audit — brand narrative, trust, conversion mechanics, competitive positioning
+- **seo**: SEO/copy optimization — title rewrite, meta description, keyword analysis, GEO-readiness
+- **product**: Assortment angle — buyer persona, category fit, sourcing opportunity
+- **auto**: Balanced overview — top 3 strengths, top 3 improvement areas, quick wins
+
+**RULE 4 — Actionable recommendations**
+End with concrete, prioritized improvements (P0/P1/P2). Each recommendation should reference specific data from the snapshot.
+
+**RULE 5 — Never say "I cannot access the URL"**
+The snapshot IS the access. If data is sparse, analyze what's available and note what additional info would improve the analysis.
+` : '';
     const normalizedLang = normalizeKnowledgeLang(uiLang);
     const tangbuyBaseGuidance = TANGBUY_GUIDANCE[normalizedLang] || TANGBUY_GUIDANCE.en;
     const tangbuyKnowledgeCtx = shouldInjectTangbuyKnowledge(currentInput, snapshot, activeSkill)
@@ -1684,6 +1881,7 @@ export function ModuleAIChat({
         langConstraint +
         yearConstraint +
         siteCtx +
+        urlSnapshotCtx +
         diagnosisCtx +
         tangbuyExecutionHint +
         greetingHint +
@@ -1871,6 +2069,30 @@ export function ModuleAIChat({
     }
 
     const urls = extractUrlsFromText(txt);
+    
+    // 提取 URL 并获取快照（在配额检查之前，确保能记录快照来源）
+    const url0 = extractFirstUrl(txt);
+    console.log('[URL Debug] Extracted URL:', url0, 'from input:', txt);
+    const isImageUrl = !!(url0 && /\.(png|jpe?g|gif|webp|bmp|svg)(\?|#|$)/i.test(url0));
+    
+    let snapshot = null;
+    let snapshotSources = {}; // 记录每个 URL 的抓取来源 {url: 'jina'|'trickle'}
+    if (url0 && !isImageUrl) {
+      try { setKnownSite(new URL(url0).origin); } catch (_) {}
+      console.log('[URL Debug] Attempting to fetch snapshot for:', url0);
+      try { 
+        const snapshotResult = await getUrlSnapshot(url0); 
+        if (snapshotResult) {
+          snapshot = snapshotResult.content;
+          snapshotSources[url0] = snapshotResult.source;
+          console.log('[URL Debug] Snapshot result:', snapshotResult.source, '- success');
+        } else {
+          console.log('[URL Debug] Snapshot result: failed');
+        }
+      } catch (e) { 
+        console.error('[URL Debug] Snapshot error:', e);
+      }
+    }
 
     const useServerQuota = supabase && authUser && !isAnonymousUser(authUser);
     if (useServerQuota) {
@@ -1878,6 +2100,7 @@ export function ModuleAIChat({
         conversationId,
         content: txt,
         extractedUrls: urls,
+        snapshotSources,
       });
       if (!res?.allowed) {
         if (res?.reason === 'quota_exhausted') {
@@ -1906,12 +2129,6 @@ export function ModuleAIChat({
     try {
       await ensureKnowledgeBasesLoaded();
 
-      const url0 = extractFirstUrl(txt);
-      console.log('[URL Debug] Extracted URL:', url0, 'from input:', txt);
-      const isImageUrl = !!(url0 && /\.(png|jpe?g|gif|webp|bmp|svg)(\?|#|$)/i.test(url0));
-      if (url0 && !isImageUrl) {
-        try { setKnownSite(new URL(url0).origin); } catch (_) {}
-      }
       const detectedLang = detectLanguageFromText(txt);
       if (detectedLang?.confidence === 'high') setKnownContentLang(detectedLang);
 
@@ -1923,16 +2140,6 @@ export function ModuleAIChat({
         }));
       contextMessages.push({ role: 'user', content: toMultimodalUserContent(txt) });
 
-      let snapshot = null;
-      if (url0 && !isImageUrl) {
-        console.log('[URL Debug] Attempting to fetch snapshot for:', url0);
-        try { 
-          snapshot = await getUrlSnapshot(url0); 
-          console.log('[URL Debug] Snapshot result:', snapshot ? 'success' : 'failed');
-        } catch (e) { 
-          console.error('[URL Debug] Snapshot error:', e);
-        }
-      }
       if (snapshot) contextMessages.push({ role: 'user', content: snapshot });
 
       const outLangForKnowledge = detectedLang?.confidence === 'high' ? detectedLang : (knownContentLang || { lang: uiLang });

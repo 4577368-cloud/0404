@@ -155,8 +155,8 @@ as $$
       date_trunc('day', v.created_at)::date as day,
       count(*)::int as visits,
       count(distinct v.visitor_user_id)::int as unique_visitors,
-      count(*) filter (where coalesce(v.visitor_is_anonymous, false) = true or v.visitor_user_id is null)::int as anonymous_visits,
-      count(*) filter (where coalesce(v.visitor_is_anonymous, false) = false and v.visitor_user_id is not null)::int as authorized_visits
+      0::int as anonymous_visits,
+      count(*)::int as authorized_visits
     from public.share_link_visits v
     cross join ndays
     where v.created_at >= (current_date - (select n - 1 from ndays))
@@ -177,7 +177,7 @@ as $$
           'new_share_links', coalesce(l.new_share_links, 0),
           'visits', coalesce(v.visits, 0),
           'unique_visitors', coalesce(v.unique_visitors, 0),
-          'anonymous_visits', coalesce(v.anonymous_visits, 0),
+          'anonymous_visits', 0,
           'authorized_visits', coalesce(v.authorized_visits, 0),
           'oauth_signups', coalesce(o.oauth_signups, 0)
         )

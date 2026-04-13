@@ -24,14 +24,16 @@ export function remainingFromStats(row, isAnonymous = false) {
 
 /**
  * @param {import('@supabase/supabase-js').SupabaseClient} client
- * @param {{ conversationId: string, content: string, extractedUrls?: string[] }} p
+ * @param {{ conversationId: string, content: string, extractedUrls?: string[], snapshotSources?: Record<string, string> }} p
  */
-export async function consumeChatTurn(client, { conversationId, content, extractedUrls = [] }) {
+export async function consumeChatTurn(client, { conversationId, content, extractedUrls = [], snapshotSources = {} }) {
   const urls = Array.isArray(extractedUrls) ? extractedUrls : [];
+  const sources = snapshotSources && typeof snapshotSources === 'object' ? snapshotSources : {};
   const { data, error } = await client.rpc('consume_chat_turn', {
     p_conversation_id: conversationId ?? '',
     p_content: content ?? '',
     p_extracted_urls: urls,
+    p_snapshot_sources: sources,
   });
   if (error) {
     console.warn('[consume_chat_turn]', error.message);
