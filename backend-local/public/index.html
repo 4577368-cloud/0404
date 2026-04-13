@@ -53,6 +53,27 @@
     .nlq-msg-ai ul, .nlq-msg-ai ol { margin: 2px 0 4px 16px; padding: 0; }
     .nlq-msg-ai li { margin: 0 0 2px; }
     .nlq-msg-ai br + br { display: none; }
+    .model-reply-details { border: 1px solid #243253; border-radius: 8px; margin: 0 0 8px; background: #0f172a; }
+    .model-reply-details > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 10px 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 14px;
+      align-items: baseline;
+      font-size: 13px;
+    }
+    .model-reply-details > summary::-webkit-details-marker { display: none; }
+    .model-reply-sum-time { font-weight: 600; color: #e2e8f0; flex-shrink: 0; }
+    .model-reply-sum-model { color: #94a3b8; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .model-reply-sum-conv code { font-size: 11px; color: #7fe7ff; }
+    .model-reply-sum-user { color: #c4b5fd; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0; font-size: 12px; }
+    .model-reply-sum-peek { flex: 1; min-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #98a6c6; font-size: 12px; }
+    .model-reply-body { padding: 0 12px 12px; border-top: 1px solid #1f2a44; }
+    .model-reply-block { margin-top: 10px; }
+    .model-reply-block .lbl { font-size: 11px; color: #9fb0d4; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+    .model-reply-block .body { white-space: pre-wrap; word-break: break-word; line-height: 1.45; font-size: 13px; color: #e6eaf2; max-height: 320px; overflow: auto; padding: 8px; background: #0b1020; border-radius: 6px; border: 1px solid #1f2a44; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -217,9 +238,10 @@
         <button type="button" id="queryModelRepliesBtn">查询</button>
       </div>
       <div class="muted" id="modelRepliesMeta" style="margin:6px 0;"></div>
+      <p class="muted" style="margin:0 0 8px;">每条记录默认折叠，摘要含<strong style="color:#c4b5fd;">提问用户</strong>（邮箱或匿名标识），点击展开完整「用户提问 / 模型回答」。</p>
       <table>
         <thead>
-          <tr><th>时间</th><th>模型</th><th>会话</th><th>用户问了什么</th><th>模型怎么回答</th></tr>
+          <tr><th colspan="5">模型回复记录（摘要 · 点击展开）</th></tr>
         </thead>
         <tbody id="modelRepliesTbody"></tbody>
       </table>
@@ -284,6 +306,21 @@
         hour12: false,
       }).format(d);
     }
+    function truncateOneLine(s, max) {
+      const t = String(s || '').replace(/\s+/g, ' ').trim();
+      if (t.length <= max) return t;
+      return `${t.slice(0, max)}…`;
+    }
+
+    function formatModelReplyUser(r) {
+      const em = String(r.user_email || '').trim();
+      if (em) return em;
+      const uid = String(r.user_id || '');
+      const tail = uid.length > 10 ? `${uid.slice(0, 8)}…` : uid || '—';
+      if (r.user_is_anonymous) return `匿名访客 · ${tail}`;
+      return uid ? `用户 · ${tail}` : '—';
+    }
+
     function escapeHtml(s) {
       if (s == null) return '';
       return String(s)
@@ -818,15 +855,43 @@
       const total = Number(d.total) || 0;
       const ps = Number(d.page_size) || modelRepliesPageSize;
       const maxPage = Math.max(1, Math.ceil(total / ps) || 1);
-      el('modelRepliesTbody').innerHTML = rows.map((r) => `
-        <tr>
-          <td>${escapeHtml(fmtCst(r.created_at))}</td>
-          <td title="${escapeHtml(r.model_id || '')}">${escapeHtml(r.model_id || '')}<br /><span class="muted">${escapeHtml(r.model_route || '')}${r.has_image ? ' · image' : ''}</span></td>
-          <td><code>${escapeHtml(r.conversation_id || '')}</code></td>
-          <td class="context-cell">${escapeHtml(r.user_prompt_preview || '')}</td>
-          <td class="context-cell">${escapeHtml(r.assistant_reply_preview || '')}</td>
-        </tr>
-      `).join('');
+      el('modelRepliesTbody').innerHTML = rows
+        .map((r) => {
+          const userQ = r.user_prompt_preview || '';
+          const asst = r.assistant_reply_preview || '';
+          const peek = truncateOneLine(userQ, 72) || truncateOneLine(asst, 72) || '（无预览）';
+          const modelLine = `${r.model_id || ''}${r.model_route ? ` · ${r.model_route}` : ''}${r.has_image ? ' · image' : ''}`;
+          const who = formatModelReplyUser(r);
+          const whoTitle = [who, r.user_id ? `id:${r.user_id}` : ''].filter(Boolean).join(' · ');
+          return `<tr>
+        <td colspan="5" style="padding:4px 0;border-bottom:none;vertical-align:top;">
+          <details class="model-reply-details">
+            <summary>
+              <span class="model-reply-sum-time">${escapeHtml(fmtCst(r.created_at))}</span>
+              <span class="model-reply-sum-user" title="${escapeHtml(whoTitle)}">${escapeHtml(who)}</span>
+              <span class="model-reply-sum-model" title="${escapeHtml(r.model_id || '')}">${escapeHtml(modelLine)}</span>
+              <span class="model-reply-sum-conv"><code>${escapeHtml(r.conversation_id || '')}</code></span>
+              <span class="model-reply-sum-peek" title="${escapeHtml(userQ || asst)}">${escapeHtml(peek)}</span>
+            </summary>
+            <div class="model-reply-body">
+              <div class="model-reply-block">
+                <div class="lbl">提问用户</div>
+                <div class="body">${escapeHtml(who)}${r.user_id ? `<span class="muted" style="display:block;margin-top:6px;font-size:11px;word-break:break-all;">user_id: ${escapeHtml(r.user_id)}</span>` : ''}</div>
+              </div>
+              <div class="model-reply-block">
+                <div class="lbl">用户问了什么</div>
+                <div class="body">${escapeHtml(userQ) || '<span class="muted">—</span>'}</div>
+              </div>
+              <div class="model-reply-block">
+                <div class="lbl">模型怎么回答</div>
+                <div class="body">${escapeHtml(asst) || '<span class="muted">—</span>'}</div>
+              </div>
+            </div>
+          </details>
+        </td>
+      </tr>`;
+        })
+        .join('');
       el('modelRepliesMeta').textContent = `共 ${total} 条模型回复记录 · 第 ${modelRepliesPage} / ${maxPage} 页`;
     }
 

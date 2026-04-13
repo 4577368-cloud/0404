@@ -688,6 +688,199 @@ function matchPresetQuestion(question) {
   return '';
 }
 
+/**
+ * Paginated fetch of all Auth users (local admin only). Used when SQL RPCs are missing.
+ */
+async function fetchAllAuthUsersForAdmin() {
+  const allUsers = [];
+  let p = 1;
+  const perFetch = 200;
+  while (p <= 200) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page: p, perPage: perFetch });
+    if (error) throw new Error(error.message);
+    const batch = data?.users || [];
+    if (batch.length === 0) break;
+    allUsers.push(...batch);
+    if (batch.length < perFetch) break;
+    p += 1;
+  }
+  return allUsers;
+}
+
+async function loadVipUserIdSet() {
+  const vip = new Set();
+  const { data: statsRows, error } = await supabase.from('user_stats').select('user_id, is_vip');
+  if (error) {
+    console.warn('[admin] user_stats read (vip set):', error.message);
+    return vip;
+  }
+  for (const row of statsRows || []) {
+    if (row?.user_id && row.is_vip) vip.add(String(row.user_id));
+  }
+  return vip;
+}
+
+/** Resolve user_id → email / anonymous for admin model-reply rows (batched getUserById). */
+async function mapUserIdsToAuthInfo(userIds) {
+  const unique = [...new Set((userIds || []).map((id) => String(id || '').trim()).filter(Boolean))];
+  const map = new Map();
+  await Promise.all(
+    unique.map(async (uid) => {
+      try {
+        const { data, error } = await supabase.auth.admin.getUserById(uid);
+        if (error || !data?.user) {
+          map.set(uid, { email: '', is_anonymous: false });
+          return;
+        }
+        const u = data.user;
+        map.set(uid, {
+          email: String(u.email || '').trim(),
+          is_anonymous: !!u.is_anonymous,
+        });
+      } catch (_) {
+        map.set(uid, { email: '', is_anonymous: false });
+      }
+    }),
+  );
+  return map;
+}
+
+async function buildOverviewFallback() {
+  const users = await fetchAllAuthUsersForAdmin();
+  const vipSet = await loadVipUserIdSet();
+  const now = Date.now();
+  const d7 = now - 7 * 86400000;
+  const d30 = now - 30 * 86400000;
+  const merged = users.filter((u) => !u.is_anonymous);
+  const total_users = merged.length;
+  const vip_users = merged.filter((u) => vipSet.has(String(u.id))).length;
+  const vip_ratio = total_users === 0 ? 0 : Math.round((vip_users / total_users) * 10000) / 100;
+  const new_users_7d = merged.filter((u) => new Date(u.created_at || 0).getTime() >= d7).length;
+  const new_users_30d = merged.filter((u) => new Date(u.created_at || 0).getTime() >= d30).length;
+  return {
+    total_users,
+    vip_users,
+    vip_ratio,
+    new_users_7d,
+    new_users_30d,
+    _source: 'auth_admin_fallback',
+  };
+}
+
+async function fetchAllPromptLogsSince(sinceIso) {
+  const all = [];
+  const pageSize = 1000;
+  let offset = 0;
+  for (;;) {
+    const { data, error } = await supabase
+      .from('user_prompt_logs')
+      .select('user_id, conversation_id, created_at')
+      .gte('created_at', sinceIso)
+      .order('created_at', { ascending: true })
+      .range(offset, offset + pageSize - 1);
+    if (error) throw error;
+    const batch = data || [];
+    all.push(...batch);
+    if (batch.length < pageSize) break;
+    offset += pageSize;
+    if (offset > 200000) break;
+  }
+  return all;
+}
+
+async function buildConversationUsageFallback(days) {
+  const n = Math.max(1, Math.min(365, days));
+  const users = await fetchAllAuthUsersForAdmin();
+  const anonById = new Map();
+  for (const u of users) {
+    anonById.set(String(u.id), !!u.is_anonymous);
+  }
+  const vipById = new Map();
+  const { data: statsRows, error: statsErr } = await supabase.from('user_stats').select('user_id, is_vip');
+  if (statsErr) {
+    console.warn('[admin] user_stats read (conversation fallback):', statsErr.message);
+  }
+  for (const row of statsRows || []) {
+    if (row?.user_id) vipById.set(String(row.user_id), !!row.is_vip);
+  }
+
+  const end = new Date();
+  const endUtc = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
+  const startUtc = new Date(endUtc);
+  startUtc.setUTCDate(startUtc.getUTCDate() - (n - 1));
+  const sinceIso = startUtc.toISOString();
+
+  let logs = [];
+  try {
+    logs = await fetchAllPromptLogsSince(sinceIso);
+  } catch (e) {
+    console.warn('[admin] user_prompt_logs read (conversation fallback):', e?.message || e);
+  }
+
+  const dayKeys = [];
+  for (let i = 0; i < n; i++) {
+    const d = new Date(startUtc);
+    d.setUTCDate(d.getUTCDate() + i);
+    dayKeys.push(d.toISOString().slice(0, 10));
+  }
+
+  const bucket = new Map();
+  for (const key of dayKeys) {
+    bucket.set(key, {
+      total_prompts: 0,
+      active_users: new Set(),
+      anonymous_active_users: new Set(),
+      authorized_active_users: new Set(),
+      distinct_conversations: new Set(),
+      vip_prompts: 0,
+      free_prompts: 0,
+      anonymous_prompts: 0,
+      authorized_prompts: 0,
+    });
+  }
+
+  for (const row of logs) {
+    const t = row?.created_at ? new Date(row.created_at) : null;
+    if (!t || Number.isNaN(t.getTime())) continue;
+    const dayKey = t.toISOString().slice(0, 10);
+    const b = bucket.get(dayKey);
+    if (!b) continue;
+    const uid = String(row.user_id || '');
+    const isAnon = anonById.get(uid) === true;
+    const isVip = vipById.get(uid) === true;
+    b.total_prompts += 1;
+    b.active_users.add(uid);
+    if (isAnon) {
+      b.anonymous_active_users.add(uid);
+      b.anonymous_prompts += 1;
+    } else {
+      b.authorized_active_users.add(uid);
+      b.authorized_prompts += 1;
+    }
+    if (isVip) b.vip_prompts += 1;
+    else b.free_prompts += 1;
+    const cid = row.conversation_id;
+    if (cid != null && String(cid).trim() !== '') b.distinct_conversations.add(String(cid));
+  }
+
+  const series = dayKeys.map((date) => {
+    const b = bucket.get(date);
+    return {
+      date,
+      total_prompts: b.total_prompts,
+      active_users: b.active_users.size,
+      anonymous_active_users: b.anonymous_active_users.size,
+      authorized_active_users: b.authorized_active_users.size,
+      distinct_conversations: b.distinct_conversations.size,
+      vip_prompts: b.vip_prompts,
+      free_prompts: b.free_prompts,
+      anonymous_prompts: b.anonymous_prompts,
+      authorized_prompts: b.authorized_prompts,
+    };
+  });
+  return { series, _source: 'table_scan_fallback' };
+}
+
 app.get('/health', (_req, res) => {
   res.json({ ok: true, service: 'backend-local' });
 });
@@ -695,11 +888,12 @@ app.get('/health', (_req, res) => {
 app.get('/admin/api/overview', async (_req, res) => {
   try {
     const { data, error } = await supabase.rpc('admin_overview');
-    if (error) {
-      console.error('[admin] admin_overview:', error.message, error);
-      return res.status(500).json({ ok: false, error: error.message, code: error.code });
+    if (!error) {
+      return res.json({ ok: true, data });
     }
-    return res.json({ ok: true, data });
+    console.warn('[admin] admin_overview RPC failed, using Auth + user_stats fallback:', error.message);
+    const fallback = await buildOverviewFallback();
+    return res.json({ ok: true, data: fallback });
   } catch (e) {
     console.error('[admin] /admin/api/overview:', e);
     return res.status(500).json({ ok: false, error: e?.message || String(e) });
@@ -725,11 +919,12 @@ app.get('/admin/api/conversation-usage', async (req, res) => {
   try {
     const days = Math.max(1, Math.min(365, Number(req.query.days) || 30));
     const { data, error } = await supabase.rpc('admin_conversation_usage', { p_days: days });
-    if (error) {
-      console.error('[admin] admin_conversation_usage:', error.message, error);
-      return res.status(500).json({ ok: false, error: error.message, code: error.code });
+    if (!error) {
+      return res.json({ ok: true, data: normalizeTrendsPayload(data) });
     }
-    return res.json({ ok: true, data: normalizeTrendsPayload(data) });
+    console.warn('[admin] admin_conversation_usage RPC failed, using table scan fallback:', error.message);
+    const { series } = await buildConversationUsageFallback(days);
+    return res.json({ ok: true, data: series });
   } catch (e) {
     console.error('[admin] /admin/api/conversation-usage:', e);
     return res.status(500).json({ ok: false, error: e?.message || String(e) });
@@ -945,7 +1140,17 @@ app.get('/admin/api/model-replies', async (req, res) => {
     }
 
     const total = Number(count) || 0;
-    const rows = Array.isArray(data) ? data : [];
+    const rowsRaw = Array.isArray(data) ? data : [];
+    const authMap = await mapUserIdsToAuthInfo(rowsRaw.map((r) => r.user_id));
+    const rows = rowsRaw.map((r) => {
+      const uid = String(r.user_id || '');
+      const info = authMap.get(uid) || { email: '', is_anonymous: false };
+      return {
+        ...r,
+        user_email: info.email,
+        user_is_anonymous: info.is_anonymous,
+      };
+    });
     return res.json({ ok: true, data: { page, page_size: pageSize, total, rows } });
   } catch (e) {
     console.error('[admin] /admin/api/model-replies:', e);
@@ -1375,18 +1580,7 @@ async function listUsersFallback({ page, pageSize, keyword, vipOnly }) {
     if (row?.user_id) vipMap.set(String(row.user_id), !!row.is_vip);
   }
 
-  const allUsers = [];
-  let p = 1;
-  const perFetch = 200;
-  while (p <= 200) {
-    const { data, error } = await supabase.auth.admin.listUsers({ page: p, perPage: perFetch });
-    if (error) throw new Error(error.message);
-    const batch = data?.users || [];
-    if (batch.length === 0) break;
-    allUsers.push(...batch);
-    if (batch.length < perFetch) break;
-    p += 1;
-  }
+  const allUsers = await fetchAllAuthUsersForAdmin();
 
   const kw = keyword.toLowerCase();
   let rows = allUsers

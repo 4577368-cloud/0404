@@ -632,7 +632,8 @@ const ChatInput = React.memo(function ChatInput({
   const handleSend = React.useCallback(() => {
     if (composingRef.current) return;
     const v = input.trim();
-    if (!v || isLoading) return;
+    const hasAttachment = !!(attachedImageUrl || attachedProductRef?.url);
+    if ((!v && !hasAttachment) || isLoading) return;
 
     let payload = v;
     if (attachedProductRef?.url) {
@@ -975,7 +976,7 @@ const ChatInput = React.memo(function ChatInput({
 
                 <button
                   onClick={handleSend}
-                  disabled={!input.trim() || isLoading}
+                  disabled={(!input.trim() && !attachedImageUrl && !attachedProductRef?.url) || isLoading}
                   className="w-8 h-8 rounded-full flex items-center justify-center text-white disabled:opacity-50 disabled:bg-[var(--theme-surface)] disabled:text-[var(--theme-text-muted)] transition-all hover:brightness-105 active:scale-95"
                   style={{
                     background: 'linear-gradient(180deg, var(--tb-brand-light) 0%, var(--brand-primary-fixed) 100%)',
