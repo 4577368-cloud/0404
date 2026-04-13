@@ -1,6 +1,6 @@
 import React from 'react';
 import { supabase } from '../utils/supabaseClient.js';
-import { fetchMyProductInquiries, markMyInquiryRepliesSeen, resolveInquiryPrimaryLink } from '../utils/productInquiries.js';
+import { fetchMyProductInquiries, markMyInquiryRepliesSeen } from '../utils/productInquiries.js';
 import { isAnonymousUser } from '../utils/supabaseAuth.js';
 
 export default function InquiryMessagesPanel({ uiLang, authUser, refreshKey = 0 }) {
@@ -155,7 +155,6 @@ export default function InquiryMessagesPanel({ uiLang, authUser, refreshKey = 0 
               const snap = row.product_snapshot || {};
               const name = snap.name || '—';
               const img = snap.image && String(snap.image).startsWith('http') ? snap.image : null;
-              const productLink = resolveInquiryPrimaryLink(snap);
               const date = row.created_at ? new Date(row.created_at).toLocaleString() : '';
               const replies = Array.isArray(row.reply_messages) && row.reply_messages.length
                 ? row.reply_messages
@@ -198,18 +197,6 @@ export default function InquiryMessagesPanel({ uiLang, authUser, refreshKey = 0 
                         {name}
                       </div>
                       <div style={{ fontSize: 11, color: 'var(--theme-text-muted)', marginTop: 4 }}>{date}</div>
-                      {productLink ? (
-                        <div style={{ fontSize: 11, marginTop: 6 }}>
-                          <a
-                            href={productLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{ color: 'var(--secondary)', textDecoration: 'underline', textUnderlineOffset: 2 }}
-                          >
-                            {uiLang === 'zh' ? '查看商品链接' : 'Open product link'}
-                          </a>
-                        </div>
-                      ) : null}
                       <div style={{ fontSize: 12, color: 'var(--theme-text-secondary)', marginTop: 10, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
                         <strong style={{ color: 'var(--theme-text)' }}>{uiLang === 'zh' ? '需求：' : 'Request: '}</strong>
                         {row.demand || '—'}

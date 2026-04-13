@@ -24,11 +24,13 @@ export default function ProductInquiryModal({
   const [demand, setDemand] = React.useState('');
   const [sending, setSending] = React.useState(false);
   const [err, setErr] = React.useState('');
+  const [submitDone, setSubmitDone] = React.useState(false);
 
   React.useEffect(() => {
     if (!show) return;
     setErr('');
     setSending(false);
+    setSubmitDone(false);
   }, [show, product?.id]);
 
   const snap = product ? productToInquirySnapshot(product) : null;
@@ -86,7 +88,8 @@ export default function ProductInquiryModal({
         whatsapp: wa.trim(),
         demand: demand.trim(),
       });
-      onClose?.();
+      setSubmitDone(true);
+      window.setTimeout(() => onClose?.(), 900);
     } catch (ex) {
       setErr(String(ex?.message || ex));
     } finally {
@@ -156,6 +159,31 @@ export default function ProductInquiryModal({
         </div>
       </div>
 
+      {submitDone ? (
+        <div style={{ padding: '12px 2px 4px' }}>
+          <div
+            style={{
+              borderRadius: 12,
+              padding: '14px 14px',
+              border: '1px solid color-mix(in srgb, var(--brand-primary-fixed) 24%, transparent)',
+              background: 'color-mix(in srgb, var(--brand-primary-fixed) 8%, transparent)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span className="icon-send" style={{ color: 'var(--brand-primary-fixed)', fontSize: 16, animation: 'tbInquiryPulse 0.9s ease-out 1' }} />
+              <div style={{ fontSize: 13, color: 'var(--theme-text)', fontWeight: 700 }}>
+                {uiLang === 'zh' ? '询盘已发送到 Messages' : 'Inquiry sent to Messages'}
+              </div>
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--theme-text-secondary)', lineHeight: 1.55, marginTop: 8 }}>
+              {uiLang === 'zh'
+                ? '官方客服回复后，可在左侧「Messages / 询盘消息」里查看。'
+                : 'After official reply, you can view it in Messages.'}
+            </div>
+          </div>
+          <style>{`@keyframes tbInquiryPulse {0%{transform:translateX(-8px) scale(.9);opacity:.2;} 50%{transform:translateX(2px) scale(1.06);opacity:1;} 100%{transform:translateX(0) scale(1);opacity:1;}}`}</style>
+        </div>
+      ) : (
       <form onSubmit={handleSubmit}>
         <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--theme-text-secondary)', marginBottom: 6 }}>
           WhatsApp {uiLang === 'zh' ? '（发起人）' : '(yours)'}
@@ -248,6 +276,7 @@ export default function ProductInquiryModal({
           </button>
         </div>
       </form>
+      )}
     </OverlayModal>
   );
 }

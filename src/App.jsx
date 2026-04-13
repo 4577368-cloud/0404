@@ -1005,13 +1005,15 @@ export default function App() {
           const inquiryId = String(payload?.inquiryId || '').trim();
           const note = lang === 'zh'
             ? [
-                '已记录询盘请求。',
+                '已记录询盘请求，并已进入 Messages。',
+                '官方回复后，可在左侧「询盘消息 / Messages」中查看。',
                 productName ? `商品：${productName}` : '',
                 demand ? `需求：${demand}` : '',
                 inquiryId ? `编号：${inquiryId}` : '',
               ].filter(Boolean).join('\n')
             : [
-                'Inquiry saved successfully.',
+                'Inquiry saved and sent to Messages.',
+                'After official reply, check it in Messages.',
                 productName ? `Product: ${productName}` : '',
                 demand ? `Request: ${demand}` : '',
                 inquiryId ? `ID: ${inquiryId}` : '',
