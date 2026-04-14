@@ -46,10 +46,13 @@ function normalizeTrendsPayload(data) {
   return [];
 }
 
-const nlqSchemaPath = path.join(__dirname, 'admin_nlq_schema.md');
+/** 随仓库打包的只读 schema；Vercel 上不可写盘，刷新时写入 /tmp（仅当次实例有效） */
+const nlqSchemaBundledPath = path.join(__dirname, 'admin_nlq_schema.md');
+const nlqSchemaPersistPath =
+  process.env.VERCEL === '1' ? path.join('/tmp', 'admin_nlq_schema.md') : nlqSchemaBundledPath;
 let nlqSchemaText = (() => {
   try {
-    return fs.readFileSync(nlqSchemaPath, 'utf8');
+    return fs.readFileSync(nlqSchemaBundledPath, 'utf8');
   } catch {
     return '';
   }
@@ -57,7 +60,7 @@ let nlqSchemaText = (() => {
 
 function tryReloadNlqSchemaFromFile() {
   try {
-    const text = fs.readFileSync(nlqSchemaPath, 'utf8');
+    const text = fs.readFileSync(nlqSchemaBundledPath, 'utf8');
     if (String(text || '').trim()) nlqSchemaText = text;
   } catch (_) {}
 }
@@ -1605,12 +1608,12 @@ app.post('/admin/api/nlq/schema/refresh', async (_req, res) => {
       return res.status(400).json({ ok: false, error: 'No schema rows returned' });
     }
     const md = buildSchemaMarkdownFromRows(rows);
-    fs.writeFileSync(nlqSchemaPath, md, 'utf8');
+    fs.writeFileSync(nlqSchemaPersistPath, md, 'utf8');
     nlqSchemaText = md;
     return res.json({
       ok: true,
       data: {
-        path: nlqSchemaPath,
+        path: nlqSchemaPersistPath,
         table_columns: rows.length,
       },
     });
@@ -1658,6 +1661,238 @@ async function listUsersFallback({ page, pageSize, keyword, vipOnly }) {
 
   return { page, page_size: pageSize, total, rows, _source: 'auth_admin_fallback' };
 }
+
+const ADMIN_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isAdminUuidQuery(s) {
+  return ADMIN_UUID_RE.test(String(s || '').trim());
+}
+
+function normalizeAuthUserForAdmin360(u) {
+  if (!u) return null;
+  const app = u.app_metadata || {};
+  const meta = u.user_metadata || {};
+  const isAnonymous =
+    !!u.is_anonymous ||
+    app.provider === 'anonymous' ||
+    meta.provider === 'anonymous' ||
+    String(app.provider || '').toLowerCase() === 'anonymous';
+  return {
+    id: u.id,
+    email: u.email || null,
+    created_at: u.created_at,
+    last_sign_in_at: u.last_sign_in_at,
+    is_anonymous: !!isAnonymous,
+    provider: app.provider || meta.provider || null,
+  };
+}
+
+function groupPromptLogsByConversation(logs) {
+  const arr = Array.isArray(logs) ? logs : [];
+  const map = new Map();
+  for (const row of arr) {
+    const cid = row.conversation_id ? String(row.conversation_id) : '(无 conversation_id)';
+    if (!map.has(cid)) {
+      map.set(cid, {
+        conversation_id: cid,
+        turns: [],
+        first_at: row.created_at,
+        last_at: row.created_at,
+      });
+    }
+    const g = map.get(cid);
+    g.turns.push(row);
+    const t = new Date(row.created_at).getTime();
+    if (t < new Date(g.first_at).getTime()) g.first_at = row.created_at;
+    if (t > new Date(g.last_at).getTime()) g.last_at = row.created_at;
+  }
+  for (const g of map.values()) {
+    g.turns.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    g.turn_count = g.turns.length;
+  }
+  return [...map.values()].sort((a, b) => new Date(b.last_at) - new Date(a.last_at));
+}
+
+async function resolveAdminUser360Query(q) {
+  const raw = String(q || '').trim();
+  if (!raw) return { status: 'empty' };
+  if (isAdminUuidQuery(raw)) {
+    const { data, error } = await supabase.auth.admin.getUserById(raw);
+    if (error || !data?.user) return { status: 'not_found' };
+    return { status: 'ok', user: data.user };
+  }
+  const all = await fetchAllAuthUsersForAdmin();
+  const lower = raw.toLowerCase();
+  const exact = all.find((u) => String(u.email || '').toLowerCase() === lower);
+  if (exact) return { status: 'ok', user: exact };
+  const partial = all.filter((u) => {
+    const em = String(u.email || '').toLowerCase();
+    return em.includes(lower) || String(u.id).toLowerCase() === lower;
+  });
+  if (partial.length === 1) return { status: 'ok', user: partial[0] };
+  if (partial.length > 1) {
+    return {
+      status: 'ambiguous',
+      candidates: partial.slice(0, 40).map((u) => ({
+        id: u.id,
+        email: u.email,
+        created_at: u.created_at,
+      })),
+    };
+  }
+  return { status: 'not_found' };
+}
+
+async function buildUser360Payload(authUser) {
+  const uid = String(authUser.id);
+  const profile = normalizeAuthUserForAdmin360(authUser);
+
+  const { data: statsRow } = await supabase.from('user_stats').select('*').eq('user_id', uid).maybeSingle();
+
+  const { data: inquiries } = await supabase
+    .from('product_inquiries')
+    .select(
+      'id, user_id, user_email, product_snapshot, whatsapp, demand, status, reply_content, reply_at, created_at, updated_at',
+    )
+    .eq('user_id', uid)
+    .order('created_at', { ascending: false })
+    .limit(100);
+
+  const { data: promptLogsRaw } = await supabase
+    .from('user_prompt_logs')
+    .select('id, conversation_id, content_preview, extracted_urls, created_at')
+    .eq('user_id', uid)
+    .order('created_at', { ascending: false })
+    .limit(800);
+
+  const prompt_logs = Array.isArray(promptLogsRaw) ? promptLogsRaw : [];
+  const conversations = groupPromptLogsByConversation(prompt_logs);
+
+  const { data: shareLinks } = await supabase
+    .from('share_links')
+    .select('id, short_code, created_at, owner_email')
+    .eq('owner_user_id', uid);
+
+  const links = Array.isArray(shareLinks) ? shareLinks : [];
+  const linkIds = links.map((l) => l.id).filter(Boolean);
+
+  const visitStats = {
+    total_visits: 0,
+    distinct_visitors: 0,
+    anonymous_visit_rows: 0,
+    email_identified_visit_rows: 0,
+    distinct_truncated: false,
+  };
+  let visitsSample = [];
+  let visitsTruncated = false;
+
+  if (linkIds.length) {
+    const { count: vcount } = await supabase
+      .from('share_link_visits')
+      .select('*', { count: 'exact', head: true })
+      .in('share_link_id', linkIds);
+    visitStats.total_visits = Number(vcount) || 0;
+
+    const FETCH_CAP = 4000;
+    const { data: vrows, error: vErr } = await supabase
+      .from('share_link_visits')
+      .select('visitor_user_id, visitor_email, visitor_is_anonymous, created_at, share_link_id')
+      .in('share_link_id', linkIds)
+      .order('created_at', { ascending: false })
+      .limit(FETCH_CAP);
+
+    if (!vErr && Array.isArray(vrows)) {
+      if (vrows.length >= FETCH_CAP) {
+        visitsTruncated = true;
+        visitStats.distinct_truncated = true;
+      }
+      visitsSample = vrows.slice(0, 60);
+      const seen = new Set();
+      for (const r of vrows) {
+        if (r?.visitor_user_id) seen.add(String(r.visitor_user_id));
+      }
+      visitStats.distinct_visitors = seen.size;
+      for (const r of vrows) {
+        if (r?.visitor_is_anonymous) visitStats.anonymous_visit_rows += 1;
+        const em = String(r?.visitor_email || '').trim();
+        if (em && !r?.visitor_is_anonymous) visitStats.email_identified_visit_rows += 1;
+      }
+    }
+  }
+
+  let oauthAsSharer = [];
+  let oauthAsAttributed = [];
+  try {
+    const { data: o1 } = await supabase
+      .from('share_link_oauth_attributions')
+      .select(
+        'id, share_link_id, short_code, sharer_user_id, sharer_email, attributed_user_id, visitor_email, oauth_provider, created_at',
+      )
+      .eq('sharer_user_id', uid)
+      .order('created_at', { ascending: false })
+      .limit(100);
+    oauthAsSharer = Array.isArray(o1) ? o1 : [];
+  } catch (e) {
+    console.warn('[admin] user-360 oauth sharer:', e?.message);
+  }
+  try {
+    const { data: o2 } = await supabase
+      .from('share_link_oauth_attributions')
+      .select(
+        'id, share_link_id, short_code, sharer_user_id, sharer_email, attributed_user_id, visitor_email, oauth_provider, created_at',
+      )
+      .eq('attributed_user_id', uid)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    oauthAsAttributed = Array.isArray(o2) ? o2 : [];
+  } catch (e) {
+    console.warn('[admin] user-360 oauth attributed:', e?.message);
+  }
+
+  return {
+    profile,
+    stats: statsRow || null,
+    inquiries: Array.isArray(inquiries) ? inquiries : [],
+    prompt_logs,
+    prompt_log_count: prompt_logs.length,
+    conversations,
+    conversation_count: conversations.length,
+    share: {
+      has_share_link: links.length > 0,
+      links,
+      visit_stats: visitStats,
+      visits_sample: visitsSample,
+      visits_truncated: visitsTruncated,
+      oauth_as_sharer: oauthAsSharer,
+      oauth_as_attributed: oauthAsAttributed,
+    },
+  };
+}
+
+app.get('/admin/api/user-360', async (req, res) => {
+  try {
+    const q = String(req.query.q || '').trim();
+    const resolved = await resolveAdminUser360Query(q);
+    if (resolved.status === 'empty') {
+      return res.status(400).json({ ok: false, error: '请填写邮箱或用户 ID（UUID）' });
+    }
+    if (resolved.status === 'not_found') {
+      return res.status(404).json({ ok: false, error: '未找到用户' });
+    }
+    if (resolved.status === 'ambiguous') {
+      return res.status(409).json({
+        ok: false,
+        error: '多条匹配，请使用完整邮箱或 UUID',
+        candidates: resolved.candidates,
+      });
+    }
+    const payload = await buildUser360Payload(resolved.user);
+    return res.json({ ok: true, data: payload });
+  } catch (e) {
+    console.error('[admin] /admin/api/user-360:', e);
+    return res.status(500).json({ ok: false, error: e?.message || String(e) });
+  }
+});
 
 app.get('/admin/api/users', async (req, res) => {
   try {
@@ -1887,6 +2122,10 @@ app.post('/supabase/upsert', async (req, res) => {
   return res.json({ ok: true, data });
 });
 
-app.listen(port, () => {
-  console.log(`[backend-local] running at http://localhost:${port}`);
-});
+export { app };
+
+if (process.env.VERCEL !== '1') {
+  app.listen(port, () => {
+    console.log(`[backend-local] running at http://localhost:${port}`);
+  });
+}

@@ -43,7 +43,7 @@ function isDocumentLoadAfterReload() {
 }
 
 const DYNAMIC_IMPORT_FAIL_RE =
-  /dynamically imported module|importing a module script failed|error loading dynamically imported module|failed to fetch module script/i;
+  /Failed to fetch dynamically|dynamically imported module|importing a module script failed|error loading dynamically imported module|failed to fetch module script/i;
 
 /**
  * 动态 import 重试；失败且像「旧 index 引用已删 chunk」时整页刷新一次（与 AIReportsView 等路由共用）。
@@ -139,6 +139,87 @@ function ViewLoadingFallback({ uiLang }) {
       {text}
     </div>
   );
+}
+
+/** 视图加载错误时的友好提示 */
+function ViewErrorFallback({ error, uiLang, onRetry }) {
+  const isDynamicImportError = DYNAMIC_IMPORT_FAIL_RE.test(String(error?.message || ''));
+  const title = uiLang === 'zh' ? '加载失败' : 'Failed to load';
+  const desc = isDynamicImportError
+    ? (uiLang === 'zh' ? '资源加载中断，请重试' : 'Resource loading interrupted, please retry')
+    : (uiLang === 'zh' ? '页面加载出错，请刷新重试' : 'Error loading page, please refresh');
+  const btnText = uiLang === 'zh' ? '刷新页面' : 'Refresh';
+
+  return (
+    <div
+      role="alert"
+      style={{
+        flex: '1 1 0',
+        minHeight: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 12,
+        color: 'var(--theme-text)',
+        padding: 24,
+      }}
+    >
+      <div style={{ fontSize: 16, fontWeight: 500 }}>{title}</div>
+      <div style={{ fontSize: 14, opacity: 0.7, textAlign: 'center' }}>{desc}</div>
+      <button
+        onClick={onRetry || (() => window.location.reload())}
+        style={{
+          marginTop: 8,
+          padding: '8px 16px',
+          borderRadius: 6,
+          border: '1px solid var(--primary)',
+          background: 'var(--primary)',
+          color: '#fff',
+          cursor: 'pointer',
+          fontSize: 14,
+        }}
+      >
+        {btnText}
+      </button>
+    </div>
+  );
+}
+
+/** 视图级 Error Boundary，用于包裹 Suspense 的懒加载组件 */
+class ViewErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('[ViewErrorBoundary] 捕获错误:', error, errorInfo);
+  }
+
+  handleRetry = () => {
+    this.setState({ hasError: false, error: null });
+    if (this.props.onRetry) {
+      this.props.onRetry();
+    }
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <ViewErrorFallback
+          error={this.state.error}
+          uiLang={this.props.uiLang}
+          onRetry={this.handleRetry}
+        />
+      );
+    }
+    return this.props.children;
+  }
 }
 
 const CONV_STORAGE_KEY = 'tb_conversations';
@@ -905,6 +986,7 @@ export default function App() {
         {/* Main content */}
         <div style={{ flex: '1 1 0', minHeight: 0, display: 'flex', flexDirection: activeView === 'aiReports' ? 'row' : 'column', overflow: 'hidden' }}>
           <React.Suspense fallback={<ViewLoadingFallback uiLang={lang} />}>
+          <ViewErrorBoundary uiLang={lang}>
           {activeView === 'hotProducts' ? (
             <HotProducts
               viewNonce={hotProductsViewNonce}
@@ -990,6 +1072,7 @@ export default function App() {
               onOpenProductInquiry={setInquiryProduct}
             />
           )}
+          </ViewErrorBoundary>
           </React.Suspense>
         </div>
       </div>
