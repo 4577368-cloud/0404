@@ -4,6 +4,7 @@
  */
 
 let sdkLoadPromise = null;
+const FB_SDK_TIMEOUT = 10000; // 10秒超时
 
 /**
  * @param {string} appId Meta 开发者控制台「应用编号」
@@ -24,6 +25,25 @@ export function ensureFacebookSdk(appId) {
     return sdkLoadPromise;
   }
   sdkLoadPromise = new Promise((resolve, reject) => {
+    let timeoutId = null;
+    let scriptEl = null;
+
+    const cleanup = () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+    };
+
+    // 超时保护
+    timeoutId = setTimeout(() => {
+      cleanup();
+      if (scriptEl?.parentNode) {
+        scriptEl.parentNode.removeChild(scriptEl);
+      }
+      reject(new Error('fb_sdk_load_timeout'));
+    }, FB_SDK_TIMEOUT);
+
     window.fbAsyncInit = function onFbAsyncInit() {
       try {
         window.FB.init({
@@ -32,18 +52,37 @@ export function ensureFacebookSdk(appId) {
           xfbml: true,
           version: 'v21.0',
         });
+        cleanup();
         resolve(window.FB);
       } catch (e) {
+        cleanup();
         reject(e);
       }
     };
-    const script = document.createElement('script');
-    script.src = 'https://connect.facebook.net/en_US/sdk.js';
-    script.async = true;
-    script.defer = true;
-    script.crossOrigin = 'anonymous';
-    script.onerror = () => reject(new Error('fb_sdk_script_failed'));
-    document.body.appendChild(script);
+
+    // 安全注入脚本
+    try {
+      scriptEl = document.createElement('script');
+      scriptEl.src = 'https://connect.facebook.net/en_US/sdk.js';
+      scriptEl.async = true;
+      scriptEl.defer = true;
+      scriptEl.crossOrigin = 'anonymous';
+      scriptEl.onerror = () => {
+        cleanup();
+        reject(new Error('fb_sdk_script_failed'));
+      };
+
+      const target = document.body || document.head || document.documentElement;
+      if (!target) {
+        cleanup();
+        reject(new Error('no_dom_target'));
+        return;
+      }
+      target.appendChild(scriptEl);
+    } catch (err) {
+      cleanup();
+      reject(new Error(`fb_sdk_inject_failed: ${err?.message || 'unknown'}`));
+    }
   });
   return sdkLoadPromise;
 }
