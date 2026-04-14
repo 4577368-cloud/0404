@@ -32,15 +32,24 @@ SET
 FROM auth.users u
 WHERE u.id = sl.owner_user_id;
 
+-- 3) 历史数据回填（从 auth.users）
+-- 匿名用户识别逻辑：检查 raw_app_meta_data、raw_user_meta_data 中的 'anonymous' 标记
 UPDATE public.share_link_visits v
 SET
   visitor_email = u.email,
-  visitor_is_anonymous = COALESCE(
-    (u.raw_app_meta_data->>'provider') = 'anonymous'
-    OR COALESCE((u.raw_app_meta_data->>'is_anonymous')::boolean, false),
-    false
-  ),
-  visitor_provider = COALESCE(u.raw_app_meta_data->>'provider', 'unknown')
+  visitor_is_anonymous = CASE
+    WHEN u.raw_app_meta_data->>'provider' = 'anonymous' THEN true
+    WHEN u.raw_user_meta_data->>'provider' = 'anonymous' THEN true
+    WHEN COALESCE((u.raw_app_meta_data->>'is_anonymous')::boolean, false) THEN true
+    WHEN COALESCE((u.raw_user_meta_data->>'is_anonymous')::boolean, false) THEN true
+    WHEN u.email IS NULL THEN true
+    ELSE false
+  END,
+  visitor_provider = COALESCE(
+    u.raw_app_meta_data->>'provider',
+    u.raw_user_meta_data->>'provider',
+    'unknown'
+  )
 FROM auth.users u
 WHERE u.id = v.visitor_user_id;
 

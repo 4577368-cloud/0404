@@ -127,6 +127,28 @@ function isOffTopicOrMetaUserQuery(text) {
   );
 }
 
+/** 从用户消息提取核心主题，去除礼貌用语、助词等 */
+function cleanUserMessageForTitle(text, uiLang = 'zh') {
+  let t = String(text || '').trim();
+  if (!t || t.length < 2) return null;
+
+  // 去除 URL
+  t = t.replace(/https?:\/\/[^\s]+/gi, '').trim();
+
+  if (uiLang === 'zh') {
+    // 中文：去除常见礼貌用语和助词
+    t = t.replace(/^(帮我|请|麻烦|想|想要|需要|想请|能否|能不能|可以|可不可以|请帮|请帮我|帮我一下|帮忙|咨询一下|问一下|请教一下|想了解一下|了解|分析一下|看看|推荐|给我|为我|向你|向你咨询|向你请教|向你了解|向你询问|向你提问|向你请教一下|向你咨询一下|向你了解一下|向你询问一下|向你提问一下)/i, '');
+    t = t.replace(/(一下|好吗|行吗|可以吗|谢谢|感谢|拜托|麻烦|请问|问一下|咨询一下|了解一下|请教一下|分析一下|看看|推荐|给我|介绍一下|描述一下|说明一下|解释一下|解答一下|解决一下|搞定一下|弄一下|做一下|查一下|找一下|搜一下|搜索一下|分析一下|研究一下|讨论一下|聊一下|谈一下|说一下|讲一下|介绍一下|推荐一下|建议一下|提示一下|提醒一下|通知一下|告诉一下|告知一下|报告一下|汇报一下|反馈一下|回复一下|回答一下|应答一下|响应一下|对应一下|配合一下|协助一下|帮助一下|帮忙一下|支持一下|支援一下|援助一下|救助一下|救援一下|求救一下|求助一下|求教一下|请教一下|请问一下|询问一下|提问一下|讯问一下|审问一下|责问一下|质问一下|诘问一下|盘问一下|查问一下|探问一下|探询一下|征询一下|咨询一下|协商一下|商议一下|商量一下|商讨一下|商榷一下)$/i, '');
+    t = t.replace(/[呢吗吧呀啊呐嘛]/g, '');
+  } else {
+    // 英文：去除常见礼貌用语
+    t = t.replace(/^(please\s+|can\s+you\s+|could\s+you\s+|would\s+you\s+|will\s+you\s+|help\s+me\s+|i\s+want\s+|i\s+need\s+|i\s+would\s+like\s+|analyze\s+|check\s+|look\s+at\s+)/i, '');
+    t = t.replace(/\s*(please|thanks|thank\s+you|if\s+possible|if\s+you\s+can)$/i, '');
+  }
+
+  return t.trim();
+}
+
 /** 不适合作为标题的 AI 片段（即使看起来像第一句） */
 function isInvalidTitleCandidate(s) {
   const t = String(s || '').trim();
@@ -185,8 +207,8 @@ function titleFromAiContent(aiContent, uiLang = 'zh') {
 }
 
 /**
- * 从新到旧：优先 AI 首句/首行有意义长标题 → 固定 AI_TITLE_RULES → 用户意图 → 用户原文。
- * 仅寒暄/天气/问能力等且无可用 AI 标题时，用默认「新对话」。
+ * 优先用户第一句实质性提问 → 其次 AI 首句有意义长标题。
+ * 避免多轮对话后被最后的「Tangbuy 产品搜索」覆盖标题。
  * @param {string} uiLang 'zh' | 其他 → 默认标题语言
  */
 function generateSmartName(messages, uiLang = 'zh') {
@@ -201,42 +223,53 @@ function generateSmartName(messages, uiLang = 'zh') {
     return !isTrivialUserMessage(t) && !isOffTopicOrMetaUserQuery(t);
   });
 
-  // 1) 优先：AI 首句/行长标题（有意义）→ 其次固定规则 / 商品卡
-  for (let i = ais.length - 1; i >= 0; i--) {
-    const m = ais[i];
-    const aiContent = m.content || m.text || '';
-    if (isGenericAiGreeting(aiContent)) continue;
-    if (m.type === 'products_hot' || m.type === 'products_trend' || m.type === 'search_picks') {
-      return uiLang === 'zh' ? '🛒 Tangbuy 搜索推荐' : '🛒 Tangbuy search picks';
-    }
-    const fromAi = titleFromAiContent(aiContent, uiLang);
-    if (fromAi) return fromAi;
-  }
-
-  // 无实质用户问题且 AI 也未产出可用标题 → 不单独起名（避免「你好」也变成关键词）
+  // 无实质用户问题 → 用默认「新对话」
   if (!hasSubstantiveUser) {
     return defaultLabel;
   }
 
-  for (let i = users.length - 1; i >= 0; i--) {
+  // 1) 优先：用户第一条实质性消息 → 提取核心主题作为标题
+  // 这样多轮对话后标题不会变成最后的「Tangbuy 产品搜索」
+  for (let i = 0; i < users.length; i++) {
     const txt = getUserText(users[i]);
     if (isTrivialUserMessage(txt)) continue;
     if (isOffTopicOrMetaUserQuery(txt)) continue;
+
+    // 先尝试用固定规则匹配用户意图
     for (const rule of INTENT_RULES) {
       if (typeof rule.skipIf === 'function' && rule.skipIf(txt)) continue;
       if (rule.re.test(txt)) {
         return typeof rule.fn === 'function' ? rule.fn(txt) : rule.label;
       }
     }
+
+    // 去除礼貌用语后直接提取核心主题
+    const cleaned = cleanUserMessageForTitle(txt, uiLang);
+    if (cleaned && cleaned.length >= 2 && cleaned.length <= 36) {
+      return cleaned.length <= 20 ? cleaned : `${cleaned.slice(0, 18)}…`;
+    }
   }
 
-  for (let i = users.length - 1; i >= 0; i--) {
-    const txt = getUserText(users[i]);
-    if (isTrivialUserMessage(txt)) continue;
-    if (isOffTopicOrMetaUserQuery(txt)) continue;
-    const cleaned = txt.replace(/https?:\/\/[^\s]+/g, '').replace(/[^\w\u4e00-\u9fff\s]/g, ' ').trim();
-    if (cleaned.length >= 2 && cleaned.length <= 36) {
-      return cleaned.length <= 20 ? cleaned : `${cleaned.slice(0, 18)}…`;
+  // 2) 其次：AI 首句有意义长标题（但跳过产品推荐的通用标签）
+  for (let i = ais.length - 1; i >= 0; i--) {
+    const m = ais[i];
+    const aiContent = m.content || m.text || '';
+    if (isGenericAiGreeting(aiContent)) continue;
+
+    // 避免「Tangbuy 产品搜索」这类通用标签覆盖用户主题
+    if (m.type === 'products_hot' || m.type === 'products_trend' || m.type === 'search_picks') {
+      continue;
+    }
+
+    const fromAi = titleFromAiContent(aiContent, uiLang);
+    if (fromAi) return fromAi;
+  }
+
+  // 3) 兜底：如果是产品相关对话，用通用标签
+  for (let i = ais.length - 1; i >= 0; i--) {
+    const m = ais[i];
+    if (m.type === 'products_hot' || m.type === 'products_trend' || m.type === 'search_picks') {
+      return uiLang === 'zh' ? '🛒 Tangbuy 搜索推荐' : '🛒 Tangbuy search picks';
     }
   }
 

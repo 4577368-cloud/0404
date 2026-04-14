@@ -9,6 +9,7 @@
 
 // Step 0: 任务调度助手 - 数据解析与框架建立
 export { step_0_scheduler, step_0_name, step_0_name_en } from './step0_scheduler.js';
+export { step_0_scheduler_enhanced } from './step0_scheduler_enhanced.js';
 
 // Step 1: 市场趋势分析师 - 趋势匹配度评估
 export { step_1_trend_screening, step_1_name, step_1_name_en } from './step1_trendScreening.js';
@@ -38,7 +39,8 @@ export { step_8_execution_plan, step_8_name, step_8_name_en } from './step8_exec
 export { step_9_final_report, step_9_name, step_9_name_en } from './step9_finalReport.js';
 
 // 导入所有提示词用于聚合
-import { step_0_scheduler } from './step0_scheduler.js';
+// 使用增强版调度器（含SEO/GEO Skill Library整合）
+import { step_0_scheduler_enhanced as step_0_scheduler } from './step0_scheduler_enhanced.js';
 import { step_1_trend_screening } from './step1_trendScreening.js';
 import { step_2_benchmark_table } from './step2_benchmark.js';
 import { step_3_deep_analysis } from './step3_deepAnalysis.js';
@@ -113,6 +115,9 @@ export function getStepName(stepNumber, lang = 'zh') {
   const names = lang === 'zh' ? STEP_NAMES_ZH : STEP_NAMES_EN;
   return names[stepNumber] || null;
 }
+
+// 兼容导出：标准版调度器（如需单独使用可从此处导入）
+export { step_0_scheduler as step_0_scheduler_standard } from './step0_scheduler.js';
 
 // 步骤提示词键名后缀（用于 DIAGNOSIS_PROMPTS 查找）
 export const STEP_NAMES = [
