@@ -1921,7 +1921,14 @@ app.get('/admin/api/users', async (req, res) => {
   }
 });
 
-app.use('/admin', express.static(path.join(__dirname, 'public')));
+// 本地：静态目录；Vercel 上 express.static 不生效，改用 sendFile（官方文档说明）
+if (process.env.VERCEL === '1') {
+  const adminIndex = path.join(__dirname, 'public', 'index.html');
+  app.get('/admin', (_req, res) => res.sendFile(adminIndex));
+  app.get('/admin/', (_req, res) => res.sendFile(adminIndex));
+} else {
+  app.use('/admin', express.static(path.join(__dirname, 'public')));
+}
 
 /**
  * Supabase RPC proxy (local-only)

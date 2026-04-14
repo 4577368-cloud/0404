@@ -30,7 +30,7 @@ Admin page: `http://localhost:8787/admin`
    - `SUPABASE_SERVICE_ROLE_KEY` — **服务端密钥**，勿暴露给浏览器。
    - `LOCAL_BACKEND_ORIGIN` — 填你部署后的 Admin 根地址，例如 `https://your-admin.vercel.app`（用于 CORS；若只从同域名打开后台，与静态页同源，一般也可不设，但建议显式写上）。
    - 若使用自然语言查询（NLQ）：`VLLM_BASE_URL`、`VLLM_API_KEY`、`VLLM_MODEL_ID`。
-3. Vercel 构建使用根目录 `package.json` 的 `npm install`；入口由根目录 `vercel.json` 将全部请求 **rewrite** 到 `api/index`（`api/index.js` + Express + `serverless-http`）。
+3. Vercel 使用官方 **Express** 模式：根目录 `index.mjs` **默认导出** `app`（见 [Express on Vercel](https://vercel.com/docs/frameworks/backend/express)），**不要**再用 `api/` + `serverless-http` + 全站 `rewrites`（易触发 CLI 构建错误）。
 4. 部署完成后访问：`https://<你的域名>/admin`。
 5. **注意**：
    - Serverless 文件系统除 `/tmp` 外只读；NLQ schema 刷新会写入 `/tmp`（见 `server.mjs`），冷启动后仍以仓库内 `admin_nlq_schema.md` 为准。
