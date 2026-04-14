@@ -846,7 +846,7 @@ export function normalizeCatalogItem(item, i, platform) {
 }
 
 /** Amazon / TikTok 热销行合并进 `data/tangbuy-product.json` 后，按 `product_url` 推断平台（供 normalizeCatalogItem 第三参）。 */
-export function inferHotCatalogPlatform(productUrl) {
+export async function inferHotCatalogPlatform(productUrl) {
   const u = String(productUrl || '').toLowerCase();
   if (u.includes('tiktok.com')) return 'TikTok';
   return 'Amazon';
@@ -857,6 +857,7 @@ export async function tryFetchJson(paths) {
   const urls = buildTryFetchUrlOrder(paths);
   for (const p of urls) {
     try {
+      // 方法1: 使用 fetch 加载 JSON（更稳定，避免 Vite 动态导入偶发问题）
       const res = await fetch(fetchUrlWithBust(p), { cache: 'no-store' });
       if (!res.ok) continue;
       const text = await res.text();
@@ -871,14 +872,17 @@ export async function tryFetchJson(paths) {
       }
       const sanitized = trimmed.replace(/\bNaN\b/g, 'null');
       try {
-        return JSON.parse(sanitized);
+        const v = JSON.parse(sanitized);
+        if (Array.isArray(v)) return v;
+        throw new Error('invalid JSON');
       } catch {
         const mergedArrays = parseConcatenatedTopLevelJsonArrays(sanitized);
         if (mergedArrays && mergedArrays.length) return mergedArrays;
         throw new Error('invalid JSON');
       }
     } catch (e) {
-      console.warn('[catalog] fetch/parse failed', p, e?.message || e);
+      // 静默处理，继续尝试下一个 URL
+      console.debug('[catalog] fetch failed for', p, e?.message || e);
     }
   }
   return [];
