@@ -3,6 +3,7 @@ import { supabase } from '../utils/supabaseClient.js';
 import { logTangbuyClick } from '../utils/supabaseUsage.js';
 import { fmtUsd, listPriceUsdForCard, tangbuyUsdForCard } from '../utils/catalogPriceDisplay.js';
 import { tangbuySearchUrlForTrendCategory, pickViewHrefForChatPicks } from '../utils/tangbuyKnowledge.js';
+import { ProductSchema } from './ProductSchema.jsx';
 
 const PLACEHOLDER = 'https://via.placeholder.com/300?text=No+Image';
 
@@ -138,6 +139,8 @@ export function CompactRetailProductCard({
         border: '1px solid color-mix(in srgb, var(--theme-border) 82%, transparent)',
       }}
     >
+      {/* Product Schema for SEO/GEO */}
+      <ProductSchema product={p} url={viewHref} />
       <div className="relative aspect-[4/3] overflow-hidden flex-shrink-0" style={{ background: 'var(--theme-surface)' }}>
         <img
           key={`${p.id}-${stage}`}

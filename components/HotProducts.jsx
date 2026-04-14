@@ -337,8 +337,7 @@ export default function HotProducts({
       base = interleaveArrays([tangbuyRows, bestRows, trendRows], shuffleSeed);
     }
 
-    const showFilterBar = filter === 'trend' || filter === 'monthly';
-    const afterFilters = showFilterBar ? applyFilters(base, filters, usdPrice) : base;
+    const afterFilters = applyFilters(base, filters, usdPrice);
 
     if (filter === 'all') {
       return prioritizeDirectTangbuyUrl(shuffleWithCategoryPriority(afterFilters, shuffleSeed));
@@ -362,8 +361,6 @@ export default function HotProducts({
   const pageSubtitle = uiLang === 'zh'
     ? 'Tangbuy 同款、月销榜单与趋势数据一站浏览'
     : 'Tangbuy picks, monthly bestsellers, and trend data in one place';
-
-  const showFilterBar = filter === 'trend' || filter === 'monthly';
 
   return (
     <div style={{ flex: '1 1 0', minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--theme-chat-bg, #ffffff)' }}>
@@ -404,17 +401,15 @@ export default function HotProducts({
 
       <div style={{ flex: '1 1 0', minHeight: 0, overflowY: 'auto', overflowX: 'hidden', padding: '16px 24px', position: 'relative' }}>
 
-        {showFilterBar && (
-          <FilterBar
-            uiLang={uiLang}
-            filters={filters}
-            onChange={setFilters}
-            showMonthSelect={filter === 'monthly' || filter === 'trend'}
-            months={filter === 'monthly' ? bestMonths : trendMonths}
-            selectedMonth={filter === 'monthly' ? selectedBestMonth : selectedTrendMonth}
-            onMonthChange={filter === 'monthly' ? setSelectedBestMonth : setSelectedTrendMonth}
-          />
-        )}
+        <FilterBar
+          uiLang={uiLang}
+          filters={filters}
+          onChange={setFilters}
+          showMonthSelect={filter === 'monthly' || filter === 'trend'}
+          months={filter === 'monthly' ? bestMonths : trendMonths}
+          selectedMonth={filter === 'monthly' ? selectedBestMonth : selectedTrendMonth}
+          onMonthChange={filter === 'monthly' ? setSelectedBestMonth : setSelectedTrendMonth}
+        />
 
         {loading ? (
           <div className="flex items-center justify-center py-20">

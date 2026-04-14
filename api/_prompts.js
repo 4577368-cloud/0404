@@ -106,19 +106,42 @@ ${TANGBUY_POLICY}
 [Deliver together]
 A) **SEO / search layer**
 ### 1) Brand & query intent snapshot
-### 2) Diagnosis (search intent, GEO-friendly phrasing, redundancy)
-### 3) Title rewrites (3 options, ~60–70 characters each)
-### 4) SEO paste pack (code block: Title / Meta / URL handle)
-### 5) GEO-ready FAQ (about 5 Q&A pairs)
-### 6) Action checklist (P0 / P1 / P2)
+### 2) SERP Landscape Analysis
+- Search intent type (Informational/Commercial/Transactional/Navigational)
+- Current ranking competitors and their content format
+- SERP Features present (Featured Snippet, People Also Ask, Images, Videos, Shopping results)
+- Content gap vs. top 3 ranking pages
+
+### 3) On-Page SEO Audit (80-point checklist)
+- **Title Tag**: Length 50-60 chars, keyword position, brand inclusion, uniqueness
+- **Meta Description**: Length 150-160 chars, CTA presence, keyword inclusion
+- **Headings Structure**: Single H1, logical H2-H6 hierarchy, keyword distribution
+- **Content Quality**: EEAT signals, word count vs. competitors, readability (Flesch 60-70)
+- **Keyword Optimization**: Primary keyword in first 100 words, LSI keywords density, URL slug
+- **Internal Linking**: Orphan page check, anchor text diversity, click depth (max 3)
+- **Images**: Alt text completion, file size (<100KB), lazy loading, WebP format
+- **Mobile**: Responsive design, touch target size, font readability
+
+### 4) Technical SEO Audit
+- **Core Web Vitals**: LCP <2.5s, INP <200ms, CLS <0.1
+- **Indexability**: robots.txt, meta robots, canonical tags, sitemap.xml presence
+- **Structured Data**: Product Schema (JSON-LD), BreadcrumbList, Organization
+- **Security**: HTTPS, mixed content check
+
+### 5) Diagnosis (search intent, GEO-friendly phrasing, redundancy)
+### 6) Title rewrites (3 options, ~60–70 characters each)
+### 7) SEO paste pack (code block: Title / Meta / URL handle)
+### 8) GEO-ready FAQ (about 5 Q&A pairs)
+### 9) Action checklist (P0 / P1 / P2)
 
 B) **PDP / conversion layer** (same reply, after SEO sections—no separate "mode")
 - Deep PDP diagnosis: intent fit, narrative, trust, AOV levers.
 - Semantic PDP HTML refactor plan: meaningful tags, scoped CSS (e.g. .p-detail-*), no JS requirement in the snippet.
+- Schema Markup Recommendations: Product, Offer, AggregateRating, FAQPage JSON-LD
 - Two-part output when a URL or PDP text is provided: **Part 1** — diagnosis + SEO paste pack + checklist; **Part 2** — HTML section separated by a line containing exactly: ===HTML===
 - Part 2 is ready-to-paste HTML for Shopify rich text or custom sections.
 
-When a URL is provided: brand read → audience → price band → multi-axis diagnosis → SEO/GEO → FAQ → PDP diagnosis → HTML (if applicable) → actions.
+When a URL is provided: brand read → audience → price band → SERP analysis → technical audit → on-page audit → SEO/GEO → FAQ → PDP diagnosis → HTML (if applicable) → actions.
 
 [Rules] No internal reasoning tags; avoid random month/version fluff in copy.
 

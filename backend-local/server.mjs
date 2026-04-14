@@ -757,12 +757,64 @@ async function buildOverviewFallback() {
   const vip_ratio = total_users === 0 ? 0 : Math.round((vip_users / total_users) * 10000) / 100;
   const new_users_7d = merged.filter((u) => new Date(u.created_at || 0).getTime() >= d7).length;
   const new_users_30d = merged.filter((u) => new Date(u.created_at || 0).getTime() >= d30).length;
+
+  // Today's new users (Shanghai timezone)
+  const todayShanghai = new Date().toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai' });
+  const todayStart = new Date(todayShanghai + ' 00:00:00');
+  const new_users_today = merged.filter((u) => new Date(u.created_at || 0).getTime() >= todayStart.getTime()).length;
+
+  // Anonymous visitors from share_link_visits
+  let total_anon_visitors = 0;
+  try {
+    const { data: anonData, error: anonErr } = await supabase
+      .from('share_link_visits')
+      .select('id', { count: 'exact', head: true })
+      .eq('visitor_is_anonymous', true);
+    if (!anonErr) total_anon_visitors = anonData?.count || 0;
+  } catch (e) {
+    console.warn('[admin] anon visitors count:', e?.message);
+  }
+
+  // Share attributed emails (from oauth_attributions)
+  let share_attributed_emails = 0;
+  try {
+    const { data: attrData, error: attrErr } = await supabase
+      .from('share_link_oauth_attributions')
+      .select('id', { count: 'exact', head: true });
+    if (!attrErr) share_attributed_emails = attrData?.count || 0;
+  } catch (e) {
+    console.warn('[admin] share attributed emails count:', e?.message);
+  }
+
+  // Inquiry stats
+  let total_inquiries = 0;
+  let replied_inquiries = 0;
+  let inquiries_today = 0;
+  try {
+    const { data: inqData, error: inqErr } = await supabase
+      .from('product_inquiries')
+      .select('id, status, created_at', { count: 'exact' });
+    if (!inqErr && inqData) {
+      total_inquiries = inqData.length;
+      replied_inquiries = inqData.filter((r) => r.status === 'replied').length;
+      inquiries_today = inqData.filter((r) => new Date(r.created_at).getTime() >= todayStart.getTime()).length;
+    }
+  } catch (e) {
+    console.warn('[admin] inquiries count:', e?.message);
+  }
+
   return {
     total_users,
     vip_users,
     vip_ratio,
     new_users_7d,
     new_users_30d,
+    new_users_today,
+    total_anon_visitors,
+    share_attributed_emails,
+    total_inquiries,
+    replied_inquiries,
+    inquiries_today,
     _source: 'auth_admin_fallback',
   };
 }

@@ -45,15 +45,40 @@ as $$
       (v.user_id is not null) as is_vip
     from base_users b
     left join vip_users v on v.user_id = b.id
+  ),
+  -- Today in Shanghai timezone (UTC+8)
+  today_bounds as (
+    select date_trunc('day', now() at time zone 'Asia/Shanghai') at time zone 'Asia/Shanghai' as today_start
+  ),
+  -- Share anonymous visitors
+  anon_visitors as (
+    select count(*)::int as cnt from public.share_link_visits where visitor_is_anonymous = true
+  ),
+  -- Share attributed emails (OAuth attributions)
+  share_attr as (
+    select count(*)::int as cnt from public.share_link_oauth_attributions
+  ),
+  -- Inquiry stats
+  inquiry_stats as (
+    select
+      count(*)::int as total,
+      count(*) filter (where status = 'replied')::int as replied,
+      count(*) filter (where created_at >= (select today_start from today_bounds))::int as today_count
+    from public.product_inquiries
   )
   select jsonb_build_object(
-    'total_users', count(*)::int,
-    'vip_users', count(*) filter (where is_vip)::int,
-    'vip_ratio', case when count(*) = 0 then 0 else round((count(*) filter (where is_vip)::numeric / count(*)::numeric) * 100, 2) end,
-    'new_users_7d', count(*) filter (where created_at >= now() - interval '7 days')::int,
-    'new_users_30d', count(*) filter (where created_at >= now() - interval '30 days')::int
-  )
-  from merged;
+    'total_users', (select count(*)::int from merged),
+    'vip_users', (select count(*)::int from merged where is_vip),
+    'vip_ratio', (select case when count(*) = 0 then 0 else round((count(*) filter (where is_vip)::numeric / count(*)::numeric) * 100, 2) end from merged),
+    'new_users_7d', (select count(*)::int from merged where created_at >= now() - interval '7 days'),
+    'new_users_30d', (select count(*)::int from merged where created_at >= now() - interval '30 days'),
+    'new_users_today', (select count(*)::int from merged where created_at >= (select today_start from today_bounds)),
+    'total_anon_visitors', (select cnt from anon_visitors),
+    'share_attributed_emails', (select cnt from share_attr),
+    'total_inquiries', (select total from inquiry_stats),
+    'replied_inquiries', (select replied from inquiry_stats),
+    'inquiries_today', (select today_count from inquiry_stats)
+  );
 $$;
 
 -- =========================================================

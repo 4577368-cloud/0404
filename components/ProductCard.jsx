@@ -4,6 +4,7 @@ import { logTangbuyClick } from '../utils/supabaseUsage.js';
 import { fmtUsd, listPriceUsdForCard } from '../utils/catalogPriceDisplay.js';
 import { tangbuySearchUrlForTrendCategory } from '../utils/tangbuyKnowledge.js';
 import { CompactRetailProductCard } from './CompactRetailProductCard.jsx';
+import { ProductSchema } from './ProductSchema.jsx';
 
 const TREND_LABELS = {
   zh: {
@@ -84,6 +85,8 @@ export function ProductCard({
 
   return (
     <div className="group w-36 sm:w-40 flex-shrink-0 rounded-lg overflow-hidden transition-[transform,box-shadow] duration-300 hover:shadow-lg border border-gray-100 shadow-sm bg-white">
+      {/* Product Schema for SEO/GEO */}
+      <ProductSchema product={p} url={p.tangbuyUrl || p.url} />
       <div className="relative h-28 overflow-hidden">
         <img src={displayUrl} alt={p.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" referrerPolicy="no-referrer"
           onError={(e) => { e.target.onerror = null; e.target.src = 'https://via.placeholder.com/300?text=No+Image'; }} />
@@ -134,6 +137,8 @@ function ChatTrendWideCard({ p, uiLang, displayUrl, onAskAi, onSendInquiry, gues
 
   return (
     <div className="w-full rounded-xl overflow-hidden" style={{ background: 'var(--theme-card-bg)', border: '1px solid color-mix(in srgb, var(--theme-border) 82%, transparent)' }}>
+      {/* Product Schema for SEO/GEO */}
+      <ProductSchema product={p} url={tangbuyCategorySearchHref} />
       <div className="p-2.5 sm:p-3">
         <div className="flex gap-2 items-stretch">
           <div className="w-[172px] sm:w-[188px] flex-shrink-0 self-stretch rounded-lg overflow-hidden" style={{ background: 'var(--theme-surface)', border: '1px solid var(--theme-border)' }}>

@@ -7,9 +7,17 @@
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; background: #0b1020; color: #e6eaf2; }
     .wrap { max-width: 1200px; margin: 0 auto; padding: 24px; }
+    .layout { display: flex; gap: 20px; }
+    .sidebar { width: 180px; flex-shrink: 0; position: sticky; top: 20px; height: fit-content; }
+    .sidebar-title { font-size: 14px; font-weight: 700; color: #9fb0d4; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .sidebar-nav { display: flex; flex-direction: column; gap: 2px; }
+    .sidebar-nav a { display: block; padding: 8px 12px; border-radius: 8px; font-size: 13px; color: #c8d4ee; text-decoration: none; transition: all 0.15s; }
+    .sidebar-nav a:hover { background: #1e293b; color: #fff; }
+    .sidebar-nav a.active { background: #3b82f6; color: #fff; }
+    .main { flex: 1; min-width: 0; }
     .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
     button { background: #3b82f6; color: white; border: 0; border-radius: 8px; padding: 8px 12px; cursor: pointer; }
-    .cards { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin-bottom: 14px; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 14px; }
     .card { background: #11182d; border: 1px solid #1f2a44; border-radius: 10px; padding: 12px; }
     .k { color: #9fb0d4; font-size: 12px; }
     .v { font-size: 26px; font-weight: 700; margin-top: 6px; }
@@ -88,16 +96,39 @@
       </div>
     </div>
 
-    <div class="cards">
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="sidebar-title">导航</div>
+        <nav class="sidebar-nav" id="sidebarNav">
+          <a href="#overview">总览</a>
+          <a href="#trends">趋势分析</a>
+          <a href="#users">用户管理</a>
+          <a href="#shares">分享裂变</a>
+          <a href="#conversations">对话与模型</a>
+          <a href="#links">链接明细</a>
+          <a href="#inquiries">询盘管理</a>
+          <a href="#nlq">自然语言查询</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+    <!-- 总览 -->
+    <div id="overview" class="cards" style="scroll-margin-top: 20px;">
       <div class="card"><div class="k">总用户</div><div class="v" id="mTotal">-</div></div>
       <div class="card"><div class="k">VIP 用户</div><div class="v" id="mVip">-</div></div>
       <div class="card"><div class="k">VIP 占比</div><div class="v" id="mVipRatio">-</div></div>
+      <div class="card"><div class="k">今日新增用户</div><div class="v" id="mTodayNew">-</div></div>
+      <div class="card"><div class="k">分享归因邮箱</div><div class="v" id="mShareAttr">-</div></div>
+      <div class="card"><div class="k">总匿名访客</div><div class="v" id="mAnonVisits">-</div></div>
+      <div class="card"><div class="k">总询盘数</div><div class="v" id="mTotalInq">-</div></div>
+      <div class="card"><div class="k">询盘已回复</div><div class="v" id="mRepliedInq">-</div></div>
+      <div class="card"><div class="k">今日新增询盘</div><div class="v" id="mTodayInq">-</div></div>
       <div class="card"><div class="k">近 30 天新增</div><div class="v" id="m30d">-</div></div>
     </div>
     <div class="err" id="errOverview" style="margin-bottom:12px;"></div>
 
     <div class="row" style="margin-bottom: 14px; flex-wrap: wrap;">
-      <span class="muted">对话用量 / 分享裂变 统计天数</span>
+      <span class="muted">全局统计天数</span>
       <select id="usageDays" style="padding:6px 10px;">
         <option value="14">14 天</option>
         <option value="30" selected>30 天</option>
@@ -105,29 +136,56 @@
       </select>
     </div>
 
-    <div class="panel">
-      <h3 class="panel-title">数据看板</h3>
-      <div class="nlq-presets" id="nlqPresets"></div>
-      <div class="row" style="align-items:flex-start;">
-        <textarea id="nlqInput" rows="3" placeholder="请输入你要查询的数据问题"></textarea>
+    <!-- 趋势分析 -->
+    <div id="trends" class="panel" style="scroll-margin-top: 20px;">
+      <h3 class="panel-title">趋势分析</h3>
+      <div class="row" style="justify-content: space-between; flex-wrap: wrap; margin-bottom: 14px;">
+        <div class="k">新增用户与 VIP 趋势</div>
+        <div class="row" style="margin-bottom:0;">
+          <label class="muted">天数</label>
+          <select id="trendDays" style="padding:6px 10px;">
+            <option value="14">14 天</option>
+            <option value="30" selected>30 天</option>
+            <option value="90">90 天</option>
+          </select>
+        </div>
       </div>
-      <div class="row">
-        <button type="button" id="nlqRunBtn">发送</button>
-        <button type="button" id="nlqResetBtn" style="background:#475569;">新建会话</button>
-      </div>
-      <div class="err" id="errNlq"></div>
-      <div class="nlq-chat" id="nlqChat"></div>
-    </div>
-
-    <div class="panel">
-      <h3 class="panel-title">对话用量（按日）</h3>
-      <div class="err" id="errConv"></div>
+      <div class="err" id="errTrends"></div>
       <div class="chart-wrap">
-        <canvas id="convChart" aria-label="对话用量趋势"></canvas>
+        <canvas id="trendsChart" aria-label="新增用户与 VIP 趋势"></canvas>
+      </div>
+      <details>
+        <summary>查看原始 JSON</summary>
+        <pre id="trendsJson">[]</pre>
+      </details>
+
+      <div style="margin-top: 20px; border-top: 1px solid #1f2a44; padding-top: 16px;">
+        <h3 class="panel-title" style="margin-bottom: 10px;">对话用量（按日）</h3>
+        <div class="err" id="errConv"></div>
+        <div class="chart-wrap">
+          <canvas id="convChart" aria-label="对话用量趋势"></canvas>
+        </div>
       </div>
     </div>
 
-    <div class="panel">
+    <!-- 用户管理 -->
+    <div id="users" class="panel" style="scroll-margin-top: 20px;">
+      <h3 class="panel-title">用户管理</h3>
+      <div class="row">
+        <input id="kw" placeholder="邮箱关键词" />
+        <label><input type="checkbox" id="vipOnly" /> 仅 VIP</label>
+        <button id="queryUsersBtn">查询用户</button>
+      </div>
+      <div class="err" id="errUsers"></div>
+      <table>
+        <thead><tr><th>Email</th><th>VIP</th><th>注册时间</th><th>最后登录</th></tr></thead>
+        <tbody id="usersTbody"></tbody>
+      </table>
+      <div class="muted" id="usersMeta" style="margin-top:8px;"></div>
+    </div>
+
+    <!-- 分享裂变 -->
+    <div id="shares" class="panel" style="scroll-margin-top: 20px;">
       <h3 class="panel-title">分享裂变</h3>
       <div class="err" id="errShare"></div>
       <div class="mini-cards" id="shareSummaryCards"></div>
@@ -140,36 +198,78 @@
       <div class="chart-wrap">
         <canvas id="shareDailyChart" aria-label="分享按日趋势"></canvas>
       </div>
+
+      <div style="margin-top: 20px; border-top: 1px solid #1f2a44; padding-top: 16px;">
+        <h3 class="panel-title" style="margin-bottom: 10px;">分享列表（人 / 链 / 访问 / 访客 / 邮箱 / 对话）</h3>
+        <div class="row">
+          <input id="shareListKw" type="text" placeholder="筛选：分享人邮箱或短码" style="min-width:220px;flex:1;" />
+          <button type="button" id="queryShareListBtn">查询</button>
+        </div>
+        <div class="err" id="errShareList"></div>
+        <div class="muted" id="shareListMeta" style="margin:6px 0;"></div>
+        <table>
+          <thead>
+            <tr>
+              <th>分享人</th>
+              <th>短链 ref</th>
+              <th>访问次数</th>
+              <th>独立访客</th>
+              <th>带来邮箱</th>
+              <th>访客与对话</th>
+            </tr>
+          </thead>
+          <tbody id="shareListTbody"></tbody>
+        </table>
+        <div class="row" style="margin-top:10px;">
+          <button type="button" id="shareListPrev">上一页</button>
+          <button type="button" id="shareListNext">下一页</button>
+        </div>
+      </div>
     </div>
 
-    <div class="panel">
-      <h3 class="panel-title">分享列表（人 / 链 / 访问 / 访客 / 邮箱 / 对话）</h3>
-      <div class="row">
-        <input id="shareListKw" type="text" placeholder="筛选：分享人邮箱或短码" style="min-width:220px;flex:1;" />
-        <button type="button" id="queryShareListBtn">查询</button>
+    <!-- 对话与模型 -->
+    <div id="conversations" class="panel" style="scroll-margin-top: 20px;">
+      <h3 class="panel-title">对话与模型统计</h3>
+      <div class="row" style="flex-wrap:wrap; margin-bottom: 14px;">
+        <span class="muted">统计天数</span>
+        <select id="modelUsageDays" style="padding:6px 10px;">
+          <option value="14">14 天</option>
+          <option value="30" selected>30 天</option>
+          <option value="90">90 天</option>
+        </select>
       </div>
-      <div class="err" id="errShareList"></div>
-      <div class="muted" id="shareListMeta" style="margin:6px 0;"></div>
-      <table>
+      <div class="err" id="errModelUsage"></div>
+      <table style="margin-bottom:12px;">
         <thead>
-          <tr>
-            <th>分享人</th>
-            <th>短链 ref</th>
-            <th>访问次数</th>
-            <th>独立访客</th>
-            <th>带来邮箱</th>
-            <th>访客与对话</th>
-          </tr>
+          <tr><th>模型</th><th>路由</th><th>回复数</th><th>图片回复</th><th>用户数</th><th>会话数</th><th>最近出现</th></tr>
         </thead>
-        <tbody id="shareListTbody"></tbody>
+        <tbody id="modelUsageTbody"></tbody>
       </table>
-      <div class="row" style="margin-top:10px;">
-        <button type="button" id="shareListPrev">上一页</button>
-        <button type="button" id="shareListNext">下一页</button>
+
+      <div style="margin-top: 20px; border-top: 1px solid #1f2a44; padding-top: 16px;">
+        <h3 class="panel-title" style="margin-bottom: 10px;">模型回复记录（含用户提问）</h3>
+        <div class="row">
+          <input id="modelRepliesKw" type="text" placeholder="筛选：会话ID / 用户问题 / 模型回答" style="min-width:220px;flex:1;" />
+          <input id="modelRepliesModel" type="text" placeholder="按模型ID筛选（可选）" style="min-width:160px;" />
+          <button type="button" id="queryModelRepliesBtn">查询</button>
+        </div>
+        <div class="muted" id="modelRepliesMeta" style="margin:6px 0;"></div>
+        <p class="muted" style="margin:0 0 8px;">每条记录默认折叠，摘要含<strong style="color:#c4b5fd;">提问用户</strong>（邮箱或匿名标识），点击展开完整「用户提问 / 模型回答」。</p>
+        <table>
+          <thead>
+            <tr><th colspan="5">模型回复记录（摘要 · 点击展开）</th></tr>
+          </thead>
+          <tbody id="modelRepliesTbody"></tbody>
+        </table>
+        <div class="row" style="margin-top:10px;">
+          <button type="button" id="modelRepliesPrev">上一页</button>
+          <button type="button" id="modelRepliesNext">下一页</button>
+        </div>
       </div>
     </div>
 
-    <div class="panel">
+    <!-- 链接明细 -->
+    <div id="links" class="panel" style="scroll-margin-top: 20px;">
       <h3 class="panel-title">链接网站 / 商品链接输入明细</h3>
       <div class="row">
         <input id="urlInputsKw" type="text" placeholder="筛选：链接、邮箱或用户ID" style="min-width:240px;flex:1;" />
@@ -196,63 +296,8 @@
       </div>
     </div>
 
-    <div class="panel">
-      <h3 class="panel-title">按邮箱查对话明细</h3>
-      <div class="row">
-        <input id="promptEmail" type="text" placeholder="邮箱或关键词（最多匹配 10 个用户）" style="min-width:240px;flex:1;" />
-        <button id="queryPromptsBtn">查询</button>
-      </div>
-      <div class="err" id="errPrompts"></div>
-      <div class="muted" id="promptsMeta" style="margin:6px 0;"></div>
-      <table>
-        <thead>
-          <tr><th>时间</th><th>邮箱</th><th>会话 ID</th><th>内容预览</th><th>提取 URL</th></tr>
-        </thead>
-        <tbody id="promptsTbody"></tbody>
-      </table>
-      <div class="row" style="margin-top:10px;">
-        <button type="button" id="promptPrev">上一页</button>
-        <button type="button" id="promptNext">下一页</button>
-      </div>
-    </div>
-
-    <div class="panel">
-      <h3 class="panel-title">模型使用统计与上下文</h3>
-      <div class="row" style="flex-wrap:wrap;">
-        <span class="muted">统计天数</span>
-        <select id="modelUsageDays" style="padding:6px 10px;">
-          <option value="14">14 天</option>
-          <option value="30" selected>30 天</option>
-          <option value="90">90 天</option>
-        </select>
-      </div>
-      <div class="err" id="errModelUsage"></div>
-      <table style="margin-bottom:12px;">
-        <thead>
-          <tr><th>模型</th><th>路由</th><th>回复数</th><th>图片回复</th><th>用户数</th><th>会话数</th><th>最近出现</th></tr>
-        </thead>
-        <tbody id="modelUsageTbody"></tbody>
-      </table>
-      <div class="row">
-        <input id="modelRepliesKw" type="text" placeholder="筛选：会话ID / 用户问题 / 模型回答" style="min-width:240px;flex:1;" />
-        <input id="modelRepliesModel" type="text" placeholder="按模型ID筛选（可选）" style="min-width:180px;" />
-        <button type="button" id="queryModelRepliesBtn">查询</button>
-      </div>
-      <div class="muted" id="modelRepliesMeta" style="margin:6px 0;"></div>
-      <p class="muted" style="margin:0 0 8px;">每条记录默认折叠，摘要含<strong style="color:#c4b5fd;">提问用户</strong>（邮箱或匿名标识），点击展开完整「用户提问 / 模型回答」。</p>
-      <table>
-        <thead>
-          <tr><th colspan="5">模型回复记录（摘要 · 点击展开）</th></tr>
-        </thead>
-        <tbody id="modelRepliesTbody"></tbody>
-      </table>
-      <div class="row" style="margin-top:10px;">
-        <button type="button" id="modelRepliesPrev">上一页</button>
-        <button type="button" id="modelRepliesNext">下一页</button>
-      </div>
-    </div>
-
-    <div class="panel">
+    <!-- 询盘管理 -->
+    <div id="inquiries" class="panel" style="scroll-margin-top: 20px;">
       <h3 class="panel-title">询盘管理</h3>
       <div class="row" style="flex-wrap:wrap;">
         <select id="inquiryStatusFilter" style="padding:6px 10px;">
@@ -286,7 +331,23 @@
       </div>
     </div>
 
-    <div id="inquiryReplyOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.55);display:none;align-items:center;justify-content:center;">
+    <!-- 自然语言查询 -->
+    <div id="nlq" class="panel" style="scroll-margin-top: 20px;">
+      <h3 class="panel-title">自然语言查询</h3>
+      <div class="nlq-presets" id="nlqPresets"></div>
+      <div class="row" style="align-items:flex-start;">
+        <textarea id="nlqInput" rows="3" placeholder="请输入你要查询的数据问题"></textarea>
+      </div>
+      <div class="row">
+        <button type="button" id="nlqRunBtn">发送</button>
+        <button type="button" id="nlqResetBtn" style="background:#475569;">新建会话</button>
+      </div>
+      <div class="err" id="errNlq"></div>
+      <div class="nlq-chat" id="nlqChat"></div>
+    </div>
+
+    <!-- 回复询盘弹窗 -->
+    <div id="inquiryReplyOverlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.55);align-items:center;justify-content:center;">
       <div style="background:#11182d;border:1px solid #1f2a44;border-radius:14px;padding:20px 24px;max-width:520px;width:92%;">
         <h3 style="margin:0 0 10px;font-size:16px;color:#e2e8f0;">回复询盘</h3>
         <div class="muted" id="replyInquiryInfo" style="margin-bottom:10px;line-height:1.5;"></div>
@@ -299,40 +360,7 @@
       </div>
     </div>
 
-    <div class="panel">
-      <div class="row">
-        <input id="kw" placeholder="邮箱关键词" />
-        <label><input type="checkbox" id="vipOnly" /> 仅 VIP</label>
-        <button id="queryUsersBtn">查询用户</button>
-      </div>
-      <div class="err" id="errUsers"></div>
-      <table>
-        <thead><tr><th>Email</th><th>VIP</th><th>注册时间</th><th>最后登录</th></tr></thead>
-        <tbody id="usersTbody"></tbody>
-      </table>
-      <div class="muted" id="usersMeta" style="margin-top:8px;"></div>
-    </div>
-
-    <div class="panel">
-      <div class="row" style="justify-content: space-between; flex-wrap: wrap;">
-        <div class="k">新增用户趋势（<code>admin_trends</code>）</div>
-        <div class="row" style="margin-bottom:0;">
-          <label class="muted">天数</label>
-          <select id="trendDays" style="padding:6px 10px;">
-            <option value="14">14 天</option>
-            <option value="30" selected>30 天</option>
-            <option value="90">90 天</option>
-          </select>
-        </div>
-      </div>
-      <div class="err" id="errTrends"></div>
-      <div class="chart-wrap">
-        <canvas id="trendsChart" aria-label="新增用户与 VIP 趋势"></canvas>
-      </div>
-      <details>
-        <summary>查看原始 JSON</summary>
-        <pre id="trendsJson">[]</pre>
-      </details>
+      </main>
     </div>
   </div>
 
@@ -435,6 +463,12 @@
       el('mVip').textContent = fmt(d.vip_users);
       el('mVipRatio').textContent = d.vip_ratio == null ? '-' : `${d.vip_ratio}%`;
       el('m30d').textContent = fmt(d.new_users_30d);
+      el('mTodayNew').textContent = fmt(d.new_users_today);
+      el('mShareAttr').textContent = fmt(d.share_attributed_emails);
+      el('mAnonVisits').textContent = fmt(d.total_anon_visitors);
+      el('mTotalInq').textContent = fmt(d.total_inquiries);
+      el('mRepliedInq').textContent = fmt(d.replied_inquiries);
+      el('mTodayInq').textContent = fmt(d.inquiries_today);
     }
 
     async function loadUsers(page = 1) {
@@ -1206,7 +1240,7 @@
         loadModelReplies(1),
         loadInquiries(1),
       ]);
-      const labels = ['NLQ结构同步', '总览', '用户列表', '趋势', '对话用量', '分享裂变', '分享列表', '链接网站维度', '模型使用统计', '模型上下文列表', '询盘列表'];
+      const labels = ['NLQ结构同步', '总览', '用户列表', '趋势', '对话用量', '分享裂变', '分享列表', '链接网站维度', '模型使用统计', '模型回复记录', '询盘列表'];
       const errIds = ['errNlq', 'errOverview', 'errUsers', 'errTrends', 'errConv', 'errShare', 'errShareList', 'errUrlInputs', 'errModelUsage', 'errModelUsage', 'errInquiries'];
       results.forEach((r, i) => {
         if (r.status === 'rejected') {
@@ -1242,13 +1276,6 @@
         el('errUsers').textContent = e?.message || String(e);
       }
     });
-    el('queryPromptsBtn').addEventListener('click', async () => {
-      try {
-        await loadPromptLogs(1);
-      } catch (e) {
-        el('errPrompts').textContent = e?.message || String(e);
-      }
-    });
     el('nlqRunBtn').addEventListener('click', async () => {
       try {
         await runNlq();
@@ -1281,23 +1308,6 @@
         const collapsed = body.style.display === 'none';
         body.style.display = collapsed ? '' : 'none';
         btn.textContent = collapsed ? '折叠' : '展开';
-      }
-    });
-    el('promptPrev').addEventListener('click', async () => {
-      if (promptLogsPage <= 1) return;
-      el('promptEmail').value = promptLogsEmail;
-      try {
-        await loadPromptLogs(promptLogsPage - 1);
-      } catch (e) {
-        el('errPrompts').textContent = e?.message || String(e);
-      }
-    });
-    el('promptNext').addEventListener('click', async () => {
-      el('promptEmail').value = promptLogsEmail;
-      try {
-        await loadPromptLogs(promptLogsPage + 1);
-      } catch (e) {
-        el('errPrompts').textContent = e?.message || String(e);
       }
     });
     el('modelUsageDays').addEventListener('change', async () => {
@@ -1381,6 +1391,56 @@
         el('errUrlInputs').textContent = e?.message || String(e);
       }
     });
+    // ── 侧边栏导航高亮与平滑滚动 ──
+    (function initSidebarNav() {
+      const nav = el('sidebarNav');
+      if (!nav) return;
+      const links = nav.querySelectorAll('a[href^="#"]');
+
+      // 点击平滑滚动并更新 active 状态
+      links.forEach((a) => {
+        a.addEventListener('click', (e) => {
+          e.preventDefault();
+          const targetId = a.getAttribute('href').slice(1);
+          const target = document.getElementById(targetId);
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            history.replaceState(null, '', `#${targetId}`);
+          }
+          links.forEach((l) => l.classList.remove('active'));
+          a.classList.add('active');
+        });
+      });
+
+      // 滚动时自动高亮对应章节
+      const sections = Array.from(links).map((a) => {
+        const id = a.getAttribute('href').slice(1);
+        return { id, el: document.getElementById(id), a };
+      }).filter((s) => s.el);
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            links.forEach((l) => l.classList.remove('active'));
+            const sec = sections.find((s) => s.id === entry.target.id);
+            if (sec) sec.a.classList.add('active');
+          }
+        });
+      }, { rootMargin: '-20% 0px -60% 0px', threshold: 0 });
+
+      sections.forEach((s) => observer.observe(s.el));
+
+      // 初始高亮 hash 对应的章节
+      const initialHash = location.hash.slice(1);
+      if (initialHash) {
+        const sec = sections.find((s) => s.id === initialHash);
+        if (sec) {
+          sec.a.classList.add('active');
+          setTimeout(() => sec.el?.scrollIntoView({ block: 'start' }), 100);
+        }
+      }
+    })();
+
     renderNlqPresets();
     refreshAll();
   </script>

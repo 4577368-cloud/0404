@@ -74,7 +74,9 @@ mdRenderer.link = function ({ href, title, text }) {
     /^https?:\/\/dropshipping\.tangbuy\.com\/zh-CN\/search\?/i.test(hrefStr);
   let displayText = t;
   if (isTangbuySearch && (!displayText || displayText === hrefStr)) {
-    displayText = 'Tangbuy 产品池搜索';
+    // Detect language from URL path
+    const isZh = /\/zh-CN\//i.test(hrefStr);
+    displayText = isZh ? 'Tangbuy 产品池搜索' : 'Tangbuy Product Search';
   }
   if (/^image$/i.test(t)) {
     const safeHref = escapeHtmlText(href || '');
@@ -343,9 +345,13 @@ function sanitizeTangbuyReplyArtifacts(text) {
     // Remove "code-copy shell" wrappers sometimes emitted by upstream model UIs.
     .replace(/(^|\n)\s*代码\s*\n\s*复制代码\s*(\n|$)/gi, '\n')
     // Turn raw Tangbuy search links into labeled Markdown links (hide long URL text).
+    // Use English text as safe default; renderer will adjust based on URL locale if needed.
     .replace(
-      /\b(https?:\/\/dropshipping\.tangbuy\.com\/en-US\/search\?keyword=[^\s)]+&type=text)\b/gi,
-      '[Tangbuy 产品池搜索]($1)'
+      /\b(https?:\/\/dropshipping\.tangbuy\.com\/(en-US|zh-CN)\/search\?keyword=[^\s)]+&type=text)\b/gi,
+      (_, url, locale) => {
+        const label = locale === 'zh-CN' ? 'Tangbuy 产品池搜索' : 'Tangbuy Product Search';
+        return `[${label}](${url})`;
+      }
     )
     // Suppress fixed warehouse disclaimer in generic answers unless user explicitly asked.
     .replace(/^\s*(?:注意|Note)[:：]\s*Tangbuy.*(?:没有|无).*?(?:欧洲仓|EU(?:\s+local)?\s+stock).*$/gim, '')

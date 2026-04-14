@@ -29,6 +29,7 @@ import { ModuleAIChat } from '../modules/AIChatVite.jsx';
 import ProductInquiryModal from '../components/ProductInquiryModal.jsx';
 import InquiryMessagesPanel from '../components/InquiryMessagesPanel.jsx';
 import { fetchMyInquiryUnreadCount, markMyInquiryRepliesSeen } from '../utils/productInquiries.js';
+import { OrganizationSchema } from '../components/ProductSchema.jsx';
 
 /** 是否本次文档已是刷新结果（避免 chunk 404 时无限 reload） */
 function isDocumentLoadAfterReload() {
@@ -802,6 +803,9 @@ export default function App() {
       <div style={{ position: 'absolute', bottom: '-30%', left: '-15%', width: 900, height: 900, borderRadius: '50%', background: 'var(--theme-glow-1)', filter: 'blur(180px)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', bottom: '-25%', right: '-10%', width: 800, height: 800, borderRadius: '50%', background: 'var(--theme-glow-2)', filter: 'blur(160px)', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', top: '-20%', left: '30%', width: 600, height: 600, borderRadius: '50%', background: 'var(--theme-glow-2)', filter: 'blur(200px)', pointerEvents: 'none', opacity: 0.5 }} />
+
+      {/* SEO/GEO: Organization Schema */}
+      <OrganizationSchema />
 
       {/* Sidebar */}
       <Sidebar

@@ -173,6 +173,70 @@ export function translateZhToEn(text) {
   return [...new Set(result)];
 }
 
+// ── Specific product → category mapping for intelligent matching ──
+// Maps specific product names/styles to their parent category labels
+export const PRODUCT_TO_CATEGORY_MAP = [
+  // 太阳镜细分
+  { patterns: ['y2k', 'narrow', 'rectangular', 'slim', 'tiny', 'small frame', '窄框', '窄边', '小框', 'Y2K', '复古小框', '窄矩形'], category: 'accessories', subCategory: 'sunglasses' },
+  { patterns: ['cat.?eye', '猫眼', '复古猫眼', 'cat-eye', 'cateye'], category: 'accessories', subCategory: 'sunglasses' },
+  { patterns: ['aviator', '飞行员', '蛤蟆镜', '蛤蟆'], category: 'accessories', subCategory: 'sunglasses' },
+  { patterns: ['oversized', '大框', '超大', '复古大框'], category: 'accessories', subCategory: 'sunglasses' },
+  { patterns: ['polarized', '偏光', '偏振'], category: 'accessories', subCategory: 'sunglasses' },
+  { patterns: ['sport.*sunglass', '运动.*太阳镜', '运动.*墨镜', 'wraparound'], category: 'accessories', subCategory: 'sunglasses' },
+  { patterns: ['metal.*sunglass', '金属.*太阳镜', '金属.*墨镜', 'rimless', '无框'], category: 'accessories', subCategory: 'sunglasses' },
+  // 发饰细分
+  { patterns: ['scrunchie', '大肠发圈', '发圈', '头绳'], category: 'accessories', subCategory: 'hair' },
+  { patterns: ['claw.?clip', '抓夹', '鲨鱼夹', '发抓', '大发夹'], category: 'accessories', subCategory: 'hair' },
+  { patterns: ['headband', '发箍', '头箍', '发带'], category: 'accessories', subCategory: 'hair' },
+  { patterns: ['hair.?clip', '发夹', '发卡', '边夹', '刘海夹', '一字夹'], category: 'accessories', subCategory: 'hair' },
+  // 帽子细分
+  { patterns: ['baseball.?cap', '棒球帽', '鸭舌帽'], category: 'accessories', subCategory: 'hat' },
+  { patterns: ['bucket.?hat', '渔夫帽', '盆帽'], category: 'accessories', subCategory: 'hat' },
+  { patterns: ['straw.?hat', '草帽', '草编帽', '沙滩帽'], category: 'accessories', subCategory: 'hat' },
+  { patterns: ['sun.?hat', '遮阳帽', '太阳帽', '防晒帽', '空顶帽'], category: 'accessories', subCategory: 'hat' },
+  { patterns: ['beanie', '针织帽', '毛线帽', '冷帽'], category: 'accessories', subCategory: 'hat' },
+  // 首饰细分
+  { patterns: ['hoop.?earring', '圈形耳环', '大圈耳环', 'hoop'], category: 'accessories', subCategory: 'jewelry' },
+  { patterns: ['pendant', '吊坠', '项链坠'], category: 'accessories', subCategory: 'jewelry' },
+  { patterns: ['chain', '链条', '链', '项链'], category: 'accessories', subCategory: 'jewelry' },
+  { patterns: ['ring', '戒指', '指环'], category: 'accessories', subCategory: 'jewelry' },
+  { patterns: ['bracelet', '手链', '手镯', '手环'], category: 'accessories', subCategory: 'jewelry' },
+  // 包包细分
+  { patterns: ['tote', '托特包', '手提袋', '购物袋'], category: 'bags', subCategory: 'tote' },
+  { patterns: ['crossbody', '斜挎包', '单肩包'], category: 'bags', subCategory: 'crossbody' },
+  { patterns: ['backpack', '双肩包', '背包'], category: 'bags', subCategory: 'backpack' },
+  { patterns: ['clutch', '手拿包', '手包'], category: 'bags', subCategory: 'clutch' },
+  { patterns: ['fanny.?pack', '腰包', '胸包'], category: 'bags', subCategory: 'fanny_pack' },
+  // 鞋类细分
+  { patterns: ['sneaker', '运动鞋', '球鞋', '跑鞋', '老爹鞋'], category: 'shoes', subCategory: 'sneakers' },
+  { patterns: ['sandal', '凉鞋', '拖鞋', '凉拖', '人字拖'], category: 'shoes', subCategory: 'sandals' },
+  { patterns: ['boot', '靴', '短靴', '长靴', '马丁靴', '切尔西靴'], category: 'shoes', subCategory: 'boots' },
+  { patterns: ['heel', '高跟鞋', '细高跟', '粗跟'], category: 'shoes', subCategory: 'heels' },
+  { patterns: ['flat', '平底鞋', '芭蕾舞鞋', '乐福鞋', '豆豆鞋'], category: 'shoes', subCategory: 'flats' },
+  // 服装细分
+  { patterns: ['crop.?top', 'crop', '露脐', '短上衣', '抹胸', '背心'], category: 'tops', subCategory: 'crop_top' },
+  { patterns: ['blazer', '西装外套', '小西装', '西服'], category: 'outerwear', subCategory: 'blazer' },
+  { patterns: ['cardigan', '开衫', '针织开衫', '毛衣外套'], category: 'outerwear', subCategory: 'cardigan' },
+  { patterns: ['wide.?leg', '阔腿裤', '喇叭裤', '直筒裤'], category: 'bottoms', subCategory: 'wide_leg' },
+  { patterns: ['mini.?skirt', '短裙', '迷你裙', '超短裙'], category: 'dress', subCategory: 'mini_skirt' },
+  // 美妆细分
+  { patterns: ['lipstick', '口红', '唇釉', '唇彩', '唇膏'], category: 'beauty', subCategory: 'lipstick' },
+  { patterns: ['foundation', '粉底液', '粉底', '气垫'], category: 'beauty', subCategory: 'foundation' },
+  { patterns: ['eyeshadow', '眼影', '眼影盘'], category: 'beauty', subCategory: 'eyeshadow' },
+  { patterns: ['mascara', '睫毛膏', '睫毛增长液'], category: 'beauty', subCategory: 'mascara' },
+  { patterns: ['skincare', '护肤品', '精华', '乳液', '面霜'], category: 'beauty', subCategory: 'skincare' },
+  // 户外细分
+  { patterns: ['tent', '帐篷', '露营帐篷', '天幕'], category: 'sports', subCategory: 'camping' },
+  { patterns: ['sleeping.?bag', '睡袋', '露营睡袋'], category: 'sports', subCategory: 'camping' },
+  { patterns: ['yoga.?mat', '瑜伽垫', '健身垫'], category: 'sports', subCategory: 'yoga' },
+  { patterns: ['resistance.?band', '弹力带', '拉力带', '阻力带'], category: 'sports', subCategory: 'fitness' },
+  // 家居细分
+  { patterns: ['air.?fryer', '空气炸锅'], category: 'home', subCategory: 'kitchen' },
+  { patterns: ['pillow', '枕头', '抱枕', '靠枕'], category: 'home', subCategory: 'bedding' },
+  { patterns: ['blanket', '毯子', '毛毯', '盖毯'], category: 'home', subCategory: 'bedding' },
+  { patterns: ['storage', '收纳', '收纳盒', '收纳箱'], category: 'home', subCategory: 'storage' },
+];
+
 // ── Category keywords for product intent ──
 export const CATEGORY_MAP = [
   { keywords: ['coat', 'jacket', 'puffer', 'hoodie', 'sweater', 'cardigan', 'blazer', 'vest', 'overcoat', 'trench', 'padded', '外套', '夹克', '羽绒', '卫衣', '毛衣', '风衣', '棉服', '马甲', '开衫', '大衣'], label: 'outerwear' },
@@ -293,6 +357,63 @@ export function detectCategories(text) {
   return CATEGORY_MAP.filter((cat) => cat.keywords.some((kw) => lower.includes(kw)));
 }
 
+/**
+ * 智能识别具体商品名称并映射到所属品类
+ * 例如："Y2K窄框太阳镜" → accessories (太阳镜)
+ *       "老爹鞋" → shoes (sneakers)
+ *       "鲨鱼夹" → accessories (hair)
+ */
+export function detectProductCategories(text) {
+  const s = String(text || '').trim();
+  if (!s) return [];
+  
+  const lower = s.toLowerCase();
+  const matched = [];
+  
+  for (const mapping of PRODUCT_TO_CATEGORY_MAP) {
+    for (const pattern of mapping.patterns) {
+      const regex = new RegExp(pattern, 'i');
+      if (regex.test(lower)) {
+        matched.push({
+          category: mapping.category,
+          subCategory: mapping.subCategory,
+          matchedPattern: pattern,
+        });
+        break; // Found a match for this mapping, move to next
+      }
+    }
+  }
+  
+  // Remove duplicates based on category+subCategory
+  const unique = [];
+  const seen = new Set();
+  for (const m of matched) {
+    const key = `${m.category}:${m.subCategory}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      unique.push(m);
+    }
+  }
+  
+  return unique;
+}
+
+/**
+ * 综合品类检测：结合通用品类和具体商品映射
+ * 优先返回具体商品映射的品类，如果没有则返回通用品类
+ */
+export function detectAllCategories(text) {
+  // First try specific product mapping
+  const productCats = detectProductCategories(text);
+  if (productCats.length > 0) {
+    return productCats.map((p) => ({ label: p.category, subCategory: p.subCategory, source: 'product' }));
+  }
+  
+  // Fall back to general category detection
+  const generalCats = detectCategories(text);
+  return generalCats.map((c) => ({ label: c.label, source: 'general' }));
+}
+
 /** 与 smartSearch 一致的轻量分词（用于判断“是否只有人口统计学词命中”） */
 function extractFreeSearchTermsForIntent(combined) {
   return String(combined || '')
@@ -404,12 +525,16 @@ const TRAVEL_GEAR_INTENT_RE =
   /(旅行|旅游|出行|行李箱|拉杆箱|登机箱|收纳包|洗漱包|化妆包|护照夹|证件包|u型枕|颈枕|眼罩|耳塞|旅行用品|luggage|suitcase|carry-on|toiletry\s*bag|travel\s*kit|passport\s*holder|neck\s*pillow|sleep\s*mask)/i;
 
 /**
- * 用户是否表达了**可落地的品类/场景**（而非仅“女性/男性”等宽泛人群词）。
+ * 用户是否表达了**可落地的品类/场景**（而非仅“女性/男性"等宽泛人群词）。
+ * 现在也能识别具体商品名称（如"Y2K窄框太阳镜"）并映射到所属品类。
  */
 export function queryHasConcreteProductIntent(text) {
   const s = String(text || '').trim();
   if (!s) return false;
+  // Check general categories
   if (detectCategories(s).length > 0) return true;
+  // Check specific product-to-category mappings
+  if (detectProductCategories(s).length > 0) return true;
   if (HEAD_ACCESSORY_INTENT_RE.test(s)) return true;
   if (NICHE_INTENT_RE.test(s)) return true;
   // 夏季高频类目意图检测
@@ -501,7 +626,9 @@ export function filterTrendMatchesForPreciseDisplay(query, matched, opts = {}) {
   const arr = Array.isArray(matched) ? matched : [];
   const q = opts.userAnchorOnly ? String(opts.userText ?? '').trim() : String(query || '');
   if (!queryHasConcreteProductIntent(q)) return [];
+  // Detect both general categories and product-specific mappings
   const cats = detectCategories(q);
+  const productCats = detectProductCategories(q);
   const nonDemo = getNonDemographicSearchTerms(q);
   const nicheInQuery = NICHE_INTENT_RE.test(q);
   const headAccessoryQuery = HEAD_ACCESSORY_INTENT_RE.test(q);
@@ -515,6 +642,15 @@ export function filterTrendMatchesForPreciseDisplay(query, matched, opts = {}) {
     const low = String(p.searchLower || p.nameLower || '').toLowerCase();
     if (!low) return false;
     const catHit = cats.some((c) => c.keywords.some((kw) => low.includes(String(kw).toLowerCase())));
+    // Product-specific category matching: if user searches for "Y2K sunglasses",
+    // match any product in the "accessories" category (parent of sunglasses)
+    const productCatHit = productCats.length > 0 && productCats.some((pc) => {
+      // Match by parent category in product data
+      const categoryMatch = p.category && String(p.category).toLowerCase().includes(pc.category);
+      // Or match by sub-category keywords
+      const subMatch = pc.subCategory && low.includes(pc.subCategory.toLowerCase());
+      return categoryMatch || subMatch;
+    });
     const termHit = nonDemo.some((t) => low.includes(String(t).toLowerCase()));
     const headHit = headAccessoryQuery && HEAD_ACCESSORY_INTENT_RE.test(low);
     const nicheHit = !nicheInQuery || NICHE_INTENT_RE.test(low);
@@ -525,7 +661,7 @@ export function filterTrendMatchesForPreciseDisplay(query, matched, opts = {}) {
                       CAMPING_INTENT_RE.test(low) || DRINKWARE_INTENT_RE.test(low) ||
                       RAIN_GEAR_INTENT_RE.test(low) || MOSQUITO_INTENT_RE.test(low) ||
                       SUMMER_SPORT_INTENT_RE.test(low) || TRAVEL_GEAR_INTENT_RE.test(low));
-    return nicheHit && (catHit || termHit || headHit || summerHit);
+    return nicheHit && (catHit || productCatHit || termHit || headHit || summerHit);
   });
 }
 
@@ -1071,9 +1207,9 @@ export function userAsksTrendOrCategoryMarketOutlook(userText) {
   const u = String(userText || '').trim();
   if (u.length < 4) return false;
 
-  /** 短句以「…趋势」结尾：任意 2～20 个汉字主题 + 趋势，排除宏观黑名单 */
+  /** 短句含「趋势」：任意 2～20 个汉字主题 + 趋势，或 趋势 + 2～20 个汉字主题 */
   const shortTailCategoryTrend =
-    /[\u4e00-\u9fff]{2,20}趋势$/.test(u) && !USER_MACRO_TREND_BLACKLIST_ZH.test(u);
+    (/[\u4e00-\u9fff]{2,20}趋势$/.test(u) || /趋势[\u4e00-\u9fff]{2,20}/.test(u)) && !USER_MACRO_TREND_BLACKLIST_ZH.test(u);
 
   /** 显式市场/选品/品类分析用语（中英） */
   const explicitOutlook =

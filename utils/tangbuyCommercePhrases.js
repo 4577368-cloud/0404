@@ -182,6 +182,17 @@ const RAW_ZH_EN = [
   ['双肩包', 'backpack laptop'],
   ['行李箱', 'carry on luggage suitcase'],
   ['防晒衣', 'upf sun protection jacket'],
+
+  // ── 眼镜配饰 ──
+  ['太阳镜', 'sunglasses'],
+  ['墨镜', 'sunglasses'],
+  ['偏光太阳镜', 'polarized sunglasses'],
+  ['复古太阳镜', 'vintage sunglasses'],
+  [' oversized 太阳镜', 'oversized sunglasses'],
+  ['猫眼太阳镜', 'cat eye sunglasses'],
+  ['飞行员太阳镜', 'aviator sunglasses'],
+  ['眼镜框', 'eyeglasses frames'],
+  ['蓝光眼镜', 'blue light glasses'],
 ];
 
 export const TANGBUY_ZH_EN_PRODUCT_PHRASES = sortPhrasesLongestZhFirst(RAW_ZH_EN);
@@ -273,6 +284,16 @@ export const TANGBUY_INDUSTRY_DEFAULT_KEYWORDS = [
   {
     test: /(服装|服饰|包包|行李箱|鞋|牛仔裤|背包|tote|backpack|luggage|sneakers|jeans)/i,
     keywords: ['canvas tote bag', 'laptop backpack', 'carry on luggage', 'sneakers women men', 'high waist jeans'],
+  },
+  {
+    test: /(太阳镜|墨镜|眼镜|镜框|sunglasses|shades|eyewear|glasses|frames)/i,
+    keywords: [
+      'sunglasses women',
+      'sunglasses men',
+      'polarized sunglasses',
+      'vintage sunglasses',
+      'oversized sunglasses',
+    ],
   },
 ];
 
