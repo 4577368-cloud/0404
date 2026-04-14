@@ -1,3 +1,7 @@
+/**
+ * 勿改名为 server.mjs：Vercel Express 检测器会同时匹配根目录 index.mjs 与 server.mjs，
+ * 导致双入口构建并触发 CLI 报错（如 reading 'fsPath'）。
+ */
 import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
