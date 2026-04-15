@@ -32,7 +32,7 @@ Admin page: `http://localhost:8787/admin`
    - 若使用自然语言查询（NLQ）：`VLLM_BASE_URL`、`VLLM_API_KEY`、`VLLM_MODEL_ID`。
 3. Vercel 使用官方 **Express** 模式：根目录 `index.mjs` **默认导出** `app`（见 [Express on Vercel](https://vercel.com/docs/frameworks/backend/express)）。业务代码放在 **`admin-server.mjs`**（勿使用 `server.mjs` 文件名）。**`index.mjs` 内需保留 `import express from 'express'`** 以便框架检测。
 4. **`vercel.json` 请保持为 `{}`**。不要自行写 `version: 2` + `routes` 且**不配** `builds`：那样会把请求指到未构建的 `index.mjs`，CLI 常报 `Cannot read properties of undefined (reading 'fsPath')`。
-5. 部署完成后访问：`https://<你的域名>/admin`。
+5. 部署完成后访问：`https://<你的域名>/admin`（或 `/admin/index.html`）。管理端静态页位于 **`public/admin/index.html`**，由 Vercel **CDN** 提供；线上 **不要** 依赖 `sendFile` 读 `public/index.html`（Serverless 包内常无该文件，易 404）。
 6. **注意**：
    - Serverless 文件系统除 `/tmp` 外只读；NLQ schema 刷新会写入 `/tmp`（见 `admin-server.mjs`），冷启动后仍以仓库内 `admin_nlq_schema.md` 为准。
    - Hobby 套餐单函数默认 **10s** 超时，长耗时 NLQ 可能超时；若需更长可在 `vercel.json` 配置 `functions` 的 `maxDuration`（高阶套餐才生效）。

@@ -36,6 +36,13 @@ const app = express();
 app.use(cors({ origin: allowOrigin, credentials: true }));
 app.use(express.json({ limit: '1mb' }));
 
+// Vercel：HTML 放在 public/admin/ 由 CDN 提供；函数内无物理文件，sendFile 会 404。用 302 指到静态 URL。
+if (process.env.VERCEL === '1') {
+  app.get('/', (_req, res) => res.redirect(302, '/admin/index.html'));
+  app.get('/admin', (_req, res) => res.redirect(302, '/admin/index.html'));
+  app.get('/admin/', (_req, res) => res.redirect(302, '/admin/index.html'));
+}
+
 function normalizeTrendsPayload(data) {
   if (Array.isArray(data)) return data;
   if (data == null) return [];
@@ -1925,13 +1932,9 @@ app.get('/admin/api/users', async (req, res) => {
   }
 });
 
-// 本地：静态目录；Vercel 上 express.static 不生效，改用 sendFile（官方文档说明）
-if (process.env.VERCEL === '1') {
-  const adminIndex = path.join(__dirname, 'public', 'index.html');
-  app.get('/admin', (_req, res) => res.sendFile(adminIndex));
-  app.get('/admin/', (_req, res) => res.sendFile(adminIndex));
-} else {
-  app.use('/admin', express.static(path.join(__dirname, 'public')));
+// 本地：public/admin 作为 /admin；线上由 Vercel CDN 提供 public/**（见上方重定向）
+if (process.env.VERCEL !== '1') {
+  app.use('/admin', express.static(path.join(__dirname, 'public', 'admin')));
 }
 
 /**
