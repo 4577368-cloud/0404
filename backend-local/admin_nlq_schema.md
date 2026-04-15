@@ -1,6 +1,6 @@
 # Admin NLQ Schema (auto-generated)
 
-Updated at: 2026-04-15T02:53:51.725Z
+Updated at: 2026-04-15T05:57:26.369Z
 
 Use this schema to answer admin natural-language questions by generating SELECT SQL only.
 
