@@ -1,15 +1,14 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "index.mjs",
-      "use": "@vercel/node"
+  "functions": {
+    "index.mjs": {
+      "maxDuration": 30
     }
-  ],
+  },
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "index.mjs"
+      "dest": "/index.mjs"
     }
   ]
 }
