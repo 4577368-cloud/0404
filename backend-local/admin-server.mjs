@@ -2136,7 +2136,7 @@ app.post('/supabase/upsert', async (req, res) => {
   return res.json({ ok: true, data });
 });
 
-export { app };
+export default app;
 
 if (process.env.VERCEL !== '1') {
   app.listen(port, () => {
