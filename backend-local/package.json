@@ -4,7 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "node --watch admin-server.mjs"
+    "dev": "node --watch admin-server.mjs",
+    "start": "node admin-server.mjs",
+    "build": "echo 'Build completed'"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
