@@ -22,10 +22,24 @@ const serviceRoleKey = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim(
 const llmBaseUrl = String(process.env.VLLM_BASE_URL || '').trim().replace(/\/+$/, '');
 const llmApiKey = String(process.env.VLLM_API_KEY || '').trim();
 const llmModelId = String(process.env.VLLM_MODEL_ID || '').trim();
+const ANALYTICS_START_AT_ISO = String(process.env.ADMIN_ANALYTICS_START_AT || '2026-04-14T00:00:00+08:00').trim();
+const INTERNAL_TEST_EMAILS = new Set([
+  'liumengyu594@gmail.com',
+  'service@tangbuy.net',
+  'eriahhhhh@gmail.com',
+  'sinslust@163.com',
+  'arhuhibegu08666@gmail.com',
+  'leocarnon@gmail.com',
+  'dorammamazing@gmail.com',
+  'g31jess@gmail.com',
+  'llinweiran@gmail.com',
+  'doravm9413@gmail.com',
+  '4577368@gmail.com',
+]);
 
 if (!supabaseUrl || !serviceRoleKey) {
   console.error('[backend-local] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
-  process.exit(1);
+
 }
 
 const supabase = createClient(supabaseUrl, serviceRoleKey, {
@@ -35,6 +49,114 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
 const app = express();
 app.use(cors({ origin: allowOrigin, credentials: true }));
 app.use(express.json({ limit: '1mb' }));
+
+const ADMIN_SESSION_COOKIE = 'tb_admin_session';
+const ADMIN_SESSION_TTL_MS = 12 * 60 * 60 * 1000;
+const ADMIN_SESSION_REMEMBER_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const ADMIN_SESSION_SECRET = String(
+  process.env.ADMIN_SESSION_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+).trim();
+
+function parseCookies(req) {
+  const raw = String(req.headers?.cookie || '');
+  const out = {};
+  if (!raw) return out;
+  for (const token of raw.split(';')) {
+    const idx = token.indexOf('=');
+    if (idx <= 0) continue;
+    const k = token.slice(0, idx).trim();
+    const v = token.slice(idx + 1).trim();
+    if (!k) continue;
+    out[k] = decodeURIComponent(v || '');
+  }
+  return out;
+}
+
+function toBase64Url(input) {
+  return Buffer.from(input).toString('base64url');
+}
+
+function fromBase64Url(input) {
+  return Buffer.from(input, 'base64url').toString('utf8');
+}
+
+function signAdminSession(payload) {
+  const body = toBase64Url(JSON.stringify(payload));
+  const sig = crypto.createHmac('sha256', ADMIN_SESSION_SECRET).update(body).digest('base64url');
+  return `${body}.${sig}`;
+}
+
+function verifyAdminSession(token) {
+  const [body, sig] = String(token || '').split('.');
+  if (!body || !sig) return null;
+  const expected = crypto.createHmac('sha256', ADMIN_SESSION_SECRET).update(body).digest('base64url');
+  const a = Buffer.from(sig);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+  let payload = null;
+  try {
+    payload = JSON.parse(fromBase64Url(body));
+  } catch {
+    return null;
+  }
+  if (!payload || typeof payload !== 'object') return null;
+  if (!payload.exp || Date.now() > Number(payload.exp)) return null;
+  if (!payload.u) return null;
+  return payload;
+}
+
+function makeSessionCookieValue(token, maxAgeMs) {
+  const attrs = [
+    `${ADMIN_SESSION_COOKIE}=${encodeURIComponent(token)}`,
+    'Path=/',
+    'HttpOnly',
+    'SameSite=Lax',
+  ];
+  if (process.env.VERCEL === '1') attrs.push('Secure');
+  if (maxAgeMs > 0) attrs.push(`Max-Age=${Math.floor(maxAgeMs / 1000)}`);
+  return attrs.join('; ');
+}
+
+function clearSessionCookieValue() {
+  const attrs = [`${ADMIN_SESSION_COOKIE}=`, 'Path=/', 'HttpOnly', 'SameSite=Lax', 'Max-Age=0'];
+  if (process.env.VERCEL === '1') attrs.push('Secure');
+  return attrs.join('; ');
+}
+
+function verifyScryptPassword(rawPassword, storedHash) {
+  const password = String(rawPassword || '');
+  const hashText = String(storedHash || '');
+  const [algo, salt, digest] = hashText.split('$');
+  if (algo !== 'scrypt' || !salt || !digest) return false;
+  const derived = crypto.scryptSync(password, salt, 64).toString('hex');
+  const a = Buffer.from(derived, 'hex');
+  const b = Buffer.from(digest, 'hex');
+  if (a.length !== b.length) return false;
+  return crypto.timingSafeEqual(a, b);
+}
+
+async function requireAdminAuth(req, res, next) {
+  try {
+    const cookies = parseCookies(req);
+    const token = cookies[ADMIN_SESSION_COOKIE];
+    const payload = verifyAdminSession(token);
+    if (!payload) return res.status(401).json({ ok: false, error: 'Admin auth required', code: 'ADMIN_AUTH_REQUIRED' });
+    const username = String(payload.u || '').trim();
+    const { data, error } = await supabase
+      .from('admin_accounts')
+      .select('username, is_active')
+      .eq('username', username)
+      .limit(1)
+      .maybeSingle();
+    if (error || !data?.username || data.is_active === false) {
+      return res.status(401).json({ ok: false, error: 'Admin auth required', code: 'ADMIN_AUTH_REQUIRED' });
+    }
+    req.adminUser = { username: data.username };
+    return next();
+  } catch (e) {
+    return res.status(401).json({ ok: false, error: 'Admin auth required', code: 'ADMIN_AUTH_REQUIRED' });
+  }
+}
 
 // Vercel：HTML 放在 public/admin/ 由 CDN 提供；函数内无物理文件，sendFile 会 404。用 302 指到静态 URL。
 if (process.env.VERCEL === '1') {
@@ -55,6 +177,14 @@ function normalizeTrendsPayload(data) {
     }
   }
   return [];
+}
+
+function normalizeEmail(email) {
+  return String(email || '').trim().toLowerCase();
+}
+
+function isInternalTestEmail(email) {
+  return INTERNAL_TEST_EMAILS.has(normalizeEmail(email));
 }
 
 /** 随仓库打包的只读 schema；Vercel 上不可写盘，刷新时写入 /tmp（仅当次实例有效） */
@@ -950,6 +1080,65 @@ async function buildConversationUsageFallback(days) {
 app.get('/health', (_req, res) => {
   res.json({ ok: true, service: 'backend-local' });
 });
+
+app.post('/admin/auth/login', async (req, res) => {
+  try {
+    const username = String(req.body?.username || '').trim().toLowerCase();
+    const password = String(req.body?.password || '');
+    const remember = !!req.body?.remember;
+    if (!username || !password) {
+      return res.status(400).json({ ok: false, error: 'username and password are required' });
+    }
+    const { data, error } = await supabase
+      .from('admin_accounts')
+      .select('username, password_hash, is_active')
+      .eq('username', username)
+      .limit(1)
+      .maybeSingle();
+    if (error || !data?.username || data.is_active === false) {
+      return res.status(401).json({ ok: false, error: 'Invalid username or password' });
+    }
+    const ok = verifyScryptPassword(password, data.password_hash);
+    if (!ok) return res.status(401).json({ ok: false, error: 'Invalid username or password' });
+    const maxAgeMs = remember ? ADMIN_SESSION_REMEMBER_TTL_MS : ADMIN_SESSION_TTL_MS;
+    const payload = {
+      u: data.username,
+      iat: Date.now(),
+      exp: Date.now() + maxAgeMs,
+      r: remember ? 1 : 0,
+    };
+    const token = signAdminSession(payload);
+    res.setHeader('Set-Cookie', makeSessionCookieValue(token, maxAgeMs));
+    return res.json({ ok: true, data: { username: data.username, remember } });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e?.message || String(e) });
+  }
+});
+
+app.post('/admin/auth/logout', (_req, res) => {
+  res.setHeader('Set-Cookie', clearSessionCookieValue());
+  return res.json({ ok: true });
+});
+
+app.get('/admin/auth/session', async (req, res) => {
+  const cookies = parseCookies(req);
+  const token = cookies[ADMIN_SESSION_COOKIE];
+  const payload = verifyAdminSession(token);
+  if (!payload) return res.status(401).json({ ok: false, error: 'Not logged in' });
+  const username = String(payload.u || '').trim().toLowerCase();
+  const { data, error } = await supabase
+    .from('admin_accounts')
+    .select('username, is_active')
+    .eq('username', username)
+    .limit(1)
+    .maybeSingle();
+  if (error || !data?.username || data.is_active === false) {
+    return res.status(401).json({ ok: false, error: 'Not logged in' });
+  }
+  return res.json({ ok: true, data: { username: data.username } });
+});
+
+app.use('/admin/api', requireAdminAuth);
 
 app.get('/admin/api/overview', async (_req, res) => {
   try {

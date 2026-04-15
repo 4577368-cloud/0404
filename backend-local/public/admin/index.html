@@ -96,16 +96,26 @@
     .user360-turns { max-height: 480px; overflow: auto; padding: 10px 12px; background: #0f172a; font-size: 13px; }
     .inq-mini { font-size: 12px; line-height: 1.45; border-bottom: 1px solid #1f2a44; padding: 8px 0; }
     .user360-pick:hover { background: #1e293b; }
+    .auth-ops { display: flex; align-items: center; gap: 8px; }
+    .auth-user { font-size: 12px; color: #c8d4ee; }
+    .login-overlay { position: fixed; inset: 0; z-index: 10000; background: rgba(3, 8, 20, 0.82); display: none; align-items: center; justify-content: center; }
+    .login-card { width: min(420px, 92vw); background: #11182d; border: 1px solid #1f2a44; border-radius: 14px; padding: 22px; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35); }
+    .login-title { margin: 0 0 14px; font-size: 18px; color: #e2e8f0; }
+    .login-card input[type="text"], .login-card input[type="password"] { width: 100%; box-sizing: border-box; margin-bottom: 10px; }
+    .login-remember { display: flex; align-items: center; gap: 6px; margin: 4px 0 12px; font-size: 12px; color: #9fb0d4; }
+    .app-shell.app-locked { filter: blur(1.5px); pointer-events: none; user-select: none; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
 </head>
 <body>
-  <div class="wrap">
+  <div class="wrap app-shell" id="appShell">
     <div class="top">
       <h2 style="margin:0;">Tangbuy Agent 管理后台</h2>
-      <div>
+      <div class="auth-ops">
+        <span id="authUserText" class="auth-user">未登录</span>
+        <button id="logoutBtn" style="display:none;background:#475569;">退出登录</button>
         <button id="refreshBtn">刷新</button>
       </div>
     </div>
@@ -406,6 +416,19 @@
     </div>
   </div>
 
+  <div id="loginOverlay" class="login-overlay">
+    <div class="login-card">
+      <h3 class="login-title">管理员登录</h3>
+      <input id="loginUsername" type="text" placeholder="用户名（如：admin-1）" autocomplete="username" />
+      <input id="loginPassword" type="password" placeholder="密码" autocomplete="current-password" />
+      <label class="login-remember"><input id="loginRemember" type="checkbox" /> 记住密码（保持登录 30 天）</label>
+      <div class="row" style="margin:0;">
+        <button id="loginBtn" type="button">登录</button>
+      </div>
+      <div class="err" id="errLogin" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
   <script>
     const el = (id) => document.getElementById(id);
     const fmt = (v) => (v == null ? '-' : String(v));
@@ -479,6 +502,16 @@
     }
 
     const user360State = { data: null, convIdx: 0 };
+    let currentAdminUser = '';
+
+    function setLoginUi(loggedIn, username) {
+      const who = String(username || '').trim();
+      currentAdminUser = loggedIn ? who : '';
+      el('authUserText').textContent = loggedIn ? `已登录：${who}` : '未登录';
+      el('logoutBtn').style.display = loggedIn ? '' : 'none';
+      el('loginOverlay').style.display = loggedIn ? 'none' : 'flex';
+      el('appShell').classList.toggle('app-locked', !loggedIn);
+    }
 
     function renderUser360Conversations() {
       const d = user360State.data;
@@ -679,7 +712,7 @@
     async function api(url) {
       let r;
       try {
-        r = await fetch(url);
+        r = await fetch(url, { credentials: 'include' });
       } catch (e) {
         throw new Error(e?.message || '网络请求失败（请确认本地后端已启动）');
       }
@@ -689,6 +722,10 @@
         j = text ? JSON.parse(text) : {};
       } catch {
         throw new Error(`HTTP ${r.status}，响应不是 JSON：${text.slice(0, 160)}`);
+      }
+      if (r.status === 401) {
+        setLoginUi(false, '');
+        throw new Error('登录已失效，请重新登录');
       }
       if (!r.ok || !j.ok) throw new Error(j.error || `HTTP ${r.status}`);
       return j.data;
@@ -700,6 +737,7 @@
         r = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify(body || {}),
         });
       } catch (e) {
@@ -712,8 +750,61 @@
       } catch {
         throw new Error(`HTTP ${r.status}，响应不是 JSON：${text.slice(0, 160)}`);
       }
+      if (r.status === 401) {
+        setLoginUi(false, '');
+        throw new Error('登录已失效，请重新登录');
+      }
       if (!r.ok || !j.ok) throw new Error(j.error || `HTTP ${r.status}`);
       return j.data;
+    }
+
+    async function ensureAdminAuth() {
+      try {
+        const r = await fetch('/admin/auth/session', { credentials: 'include' });
+        const text = await r.text();
+        let j = {};
+        try { j = text ? JSON.parse(text) : {}; } catch {}
+        if (!r.ok || !j.ok) return false;
+        setLoginUi(true, j?.data?.username || '');
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    async function handleLogin() {
+      el('errLogin').textContent = '';
+      const username = String(el('loginUsername').value || '').trim().toLowerCase();
+      const password = String(el('loginPassword').value || '');
+      const remember = !!el('loginRemember').checked;
+      if (!username || !password) {
+        el('errLogin').textContent = '请输入用户名和密码';
+        return;
+      }
+      try {
+        const r = await fetch('/admin/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ username, password, remember }),
+        });
+        const text = await r.text();
+        let j = {};
+        try { j = text ? JSON.parse(text) : {}; } catch {}
+        if (!r.ok || !j.ok) throw new Error(j.error || `HTTP ${r.status}`);
+        setLoginUi(true, j?.data?.username || username);
+        el('loginPassword').value = '';
+        await refreshAll();
+      } catch (e) {
+        el('errLogin').textContent = e?.message || String(e);
+      }
+    }
+
+    async function handleLogout() {
+      try {
+        await fetch('/admin/auth/logout', { method: 'POST', credentials: 'include' });
+      } catch (_) {}
+      setLoginUi(false, '');
     }
 
     async function loadOverview() {
@@ -1478,6 +1569,11 @@
     });
 
     async function refreshAll() {
+      const authed = await ensureAdminAuth();
+      if (!authed) {
+        setLoginUi(false, '');
+        return;
+      }
       el('errOverview').textContent = '';
       el('errUsers').textContent = '';
       el('errTrends').textContent = '';
@@ -1511,6 +1607,14 @@
     }
 
     el('refreshBtn').addEventListener('click', refreshAll);
+    el('loginBtn').addEventListener('click', handleLogin);
+    el('logoutBtn').addEventListener('click', handleLogout);
+    el('loginPassword').addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') handleLogin();
+    });
+    el('loginUsername').addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') handleLogin();
+    });
     el('usageDays').addEventListener('change', async () => {
       el('errConv').textContent = '';
       el('errShare').textContent = '';
@@ -1732,7 +1836,10 @@
     })();
 
     renderNlqPresets();
-    refreshAll();
+    ensureAdminAuth().then((ok) => {
+      if (ok) refreshAll();
+      else setLoginUi(false, '');
+    });
   </script>
 </body>
 </html>
