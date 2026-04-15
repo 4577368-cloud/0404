@@ -1,18 +1,14 @@
 /**
- * Vercel 官方 Express 模式：根目录默认导出 `app`。
+ * Vercel Serverless Function 入口
  *
- * 重要：CLI 用正则匹配「入口文件里是否出现 import express」。
- * 若只从 admin-server 间接引用、本文件不出现 express，框架可能检测失败，
- * 构建会走错管线并出现 Cannot read properties of undefined (reading 'fsPath')。
+ * 1. 使用静态 import 替代顶层 await import，避免 Vercel 运行时不支持顶层 await 的问题。
+ * 2. 显式写出 import express，触发 Vercel CLI 的 Express 框架检测正则。
+ * 3. 不再引用 createServer（Vercel 不需要，删除避免误导构建器）。
  */
 
-// Vercel Serverless Function entry
-import { createServer } from 'http';
+import express from 'express';           // ← 必须保留，Vercel CLI 靠这行识别 Express 框架
+import app from '../admin-server.mjs';   // 静态导入，拿到已注册完所有路由的 app
 
-// Import the Express app
-const { default: app } = await import('./admin-server.mjs');
-
-// Vercel Serverless Function handler
 export default function handler(req, res) {
   return app(req, res);
 }
