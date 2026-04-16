@@ -2165,6 +2165,9 @@ export function ModuleAIChat({
       const hasAiHotProducts = !!(
         parseCatalogProductJsonFromMarkdown(streamResult?.finalText || '')?.products?.length > 0
       );
+      const finalForKeyword = String(streamResult?.textPart || streamResult?.finalText || '').slice(0, 1800);
+      const userForKeyword = String(txt || '').slice(0, 300);
+      const extractedKws = extractTangbuyKeywordsWithInference(finalForKeyword, userForKeyword);
 
       const userWantsProductRecommendations = shouldRecommendProducts(txt, messages, streamResult?.finalText);
       let trendListAppended = false;
@@ -2281,9 +2284,6 @@ export function ModuleAIChat({
         }
       }
 
-      const finalForKeyword = String(streamResult?.textPart || streamResult?.finalText || '').slice(0, 1800);
-      const userForKeyword = String(txt || '').slice(0, 300);
-      const extractedKws = extractTangbuyKeywordsWithInference(finalForKeyword, userForKeyword);
       const showTangbuySearchPicks =
         !hasAiHotProducts &&
         !trendListAppended &&

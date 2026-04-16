@@ -6,7 +6,7 @@
   <title>Local Admin Dashboard</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; background: #0b1020; color: #e6eaf2; }
-    .wrap { max-width: 1200px; margin: 0 auto; padding: 24px; }
+    .wrap { max-width: 1460px; margin: 0 auto; padding: 24px; }
     .layout { display: flex; gap: 20px; }
     .sidebar { width: 180px; flex-shrink: 0; position: sticky; top: 20px; height: fit-content; }
     .sidebar-title { font-size: 14px; font-weight: 700; color: #9fb0d4; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
@@ -85,17 +85,27 @@
     .btn-mini { background: #1e293b; color: #dbeafe; border: 1px solid #334155; border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
     .btn-mini:hover { background: #334155; }
     .uid-cell code { font-size: 11px; color: #7fe7ff; word-break: break-all; }
-    .user360-grid { display: grid; grid-template-columns: minmax(300px, 380px) 1fr; gap: 16px; align-items: start; margin-top: 12px; }
+    .user360-grid { display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); gap: 14px; align-items: start; margin-top: 12px; }
     @media (max-width: 960px) { .user360-grid { grid-template-columns: 1fr; } }
-    .user360-chat-split { display: grid; grid-template-columns: 240px 1fr; gap: 0; border: 1px solid #1f2a44; border-radius: 10px; overflow: hidden; min-height: 280px; }
+    .user360-chat-split { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 0; border: 1px solid #1f2a44; border-radius: 10px; overflow: hidden; min-height: 320px; }
     @media (max-width: 700px) { .user360-chat-split { grid-template-columns: 1fr; } }
-    .user360-conv-list { max-height: 480px; overflow: auto; background: #0b1020; border-right: 1px solid #1f2a44; }
+    .user360-conv-list { max-height: 620px; overflow: auto; background: #0b1020; border-right: 1px solid #1f2a44; }
     .user360-conv-item { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #1f2a44; }
     .user360-conv-item:hover { background: #11182d; }
     .user360-conv-item.active { background: #1e3a5f; border-left: 3px solid #3b82f6; padding-left: 9px; }
-    .user360-turns { max-height: 480px; overflow: auto; padding: 10px 12px; background: #0f172a; font-size: 13px; }
+    .user360-turns { max-height: 620px; overflow: auto; padding: 10px 12px; background: #0f172a; font-size: 13px; }
+    .qa-pairs { display: grid; gap: 10px; }
+    .qa-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: stretch; }
+    @media (max-width: 880px) { .qa-row { grid-template-columns: 1fr; } }
+    .qa-cell { border: 1px solid #1f2a44; border-radius: 8px; padding: 10px; background: #0b1020; min-height: 88px; }
+    .qa-label { font-size: 11px; color: #9fb0d4; margin-bottom: 6px; }
+    .qa-label.ai { color: #86efac; }
+    .qa-meta { font-size: 11px; color: #94a3b8; margin-bottom: 6px; }
+    .qa-text { white-space: pre-wrap; word-break: break-word; line-height: 1.45; }
     .inq-mini { font-size: 12px; line-height: 1.45; border-bottom: 1px solid #1f2a44; padding: 8px 0; }
     .user360-pick:hover { background: #1e293b; }
+    .email-internal { color: #f59e0b; font-weight: 600; }
+    .email-external { color: #93c5fd; }
     .auth-ops { display: flex; align-items: center; gap: 8px; }
     .auth-user { font-size: 12px; color: #c8d4ee; }
     .login-overlay { position: fixed; inset: 0; z-index: 10000; background: rgba(3, 8, 20, 0.82); display: none; align-items: center; justify-content: center; }
@@ -103,6 +113,7 @@
     .login-title { margin: 0 0 14px; font-size: 18px; color: #e2e8f0; }
     .login-card input[type="text"], .login-card input[type="password"] { width: 100%; box-sizing: border-box; margin-bottom: 10px; }
     .login-remember { display: flex; align-items: center; gap: 6px; margin: 4px 0 12px; font-size: 12px; color: #9fb0d4; }
+    .app-shell { display: none; }
     .app-shell.app-locked { filter: blur(1.5px); pointer-events: none; user-select: none; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -143,12 +154,12 @@
       <div class="card"><div class="k">VIP 用户</div><div class="v" id="mVip">-</div></div>
       <div class="card"><div class="k">VIP 占比</div><div class="v" id="mVipRatio">-</div></div>
       <div class="card"><div class="k">今日新增用户</div><div class="v" id="mTodayNew">-</div></div>
+      <div class="card"><div class="k">昨日新增用户</div><div class="v" id="mYesterdayNew">-</div></div>
       <div class="card"><div class="k">分享归因邮箱</div><div class="v" id="mShareAttr">-</div></div>
       <div class="card"><div class="k">总匿名访客</div><div class="v" id="mAnonVisits">-</div></div>
       <div class="card"><div class="k">总询盘数</div><div class="v" id="mTotalInq">-</div></div>
       <div class="card"><div class="k">询盘已回复</div><div class="v" id="mRepliedInq">-</div></div>
       <div class="card"><div class="k">今日新增询盘</div><div class="v" id="mTodayInq">-</div></div>
-      <div class="card"><div class="k">近 30 天新增</div><div class="v" id="m30d">-</div></div>
     </div>
     <div class="err" id="errOverview" style="margin-bottom:12px;"></div>
 
@@ -207,6 +218,7 @@
         <tbody id="usersTbody"></tbody>
       </table>
       <div class="muted" id="usersMeta" style="margin-top:8px;"></div>
+      <div class="muted" style="margin-top:4px;">邮箱颜色：<span class="email-internal">内部测试</span> / <span class="email-external">外部用户</span></div>
     </div>
 
     <!-- 用户画像 360 -->
@@ -301,7 +313,7 @@
       <div style="margin-top: 20px; border-top: 1px solid #1f2a44; padding-top: 16px;">
         <h3 class="panel-title" style="margin-bottom: 10px;">模型回复记录（含用户提问）</h3>
         <div class="row">
-          <input id="modelRepliesKw" type="text" placeholder="筛选：会话ID / 用户问题 / 模型回答" style="min-width:220px;flex:1;" />
+          <input id="modelRepliesKw" type="text" placeholder="筛选：邮箱 / 用户ID / 会话ID / 用户问题 / 模型回答" style="min-width:220px;flex:1;" />
           <input id="modelRepliesModel" type="text" placeholder="按模型ID筛选（可选）" style="min-width:160px;" />
           <button type="button" id="queryModelRepliesBtn">查询</button>
         </div>
@@ -416,7 +428,7 @@
     </div>
   </div>
 
-  <div id="loginOverlay" class="login-overlay">
+  <div id="loginOverlay" class="login-overlay" style="display:flex;">
     <div class="login-card">
       <h3 class="login-title">管理员登录</h3>
       <input id="loginUsername" type="text" placeholder="用户名（如：admin-1）" autocomplete="username" />
@@ -504,12 +516,61 @@
     const user360State = { data: null, convIdx: 0 };
     let currentAdminUser = '';
 
+    function buildQaPairs(turns, replies) {
+      const q = Array.isArray(turns) ? turns : [];
+      const a = Array.isArray(replies) ? replies : [];
+      const used = new Set();
+      const pairs = [];
+      const tryScore = (qt, ar) => {
+        const qTs = new Date(qt?.created_at || 0).getTime();
+        const aTs = new Date(ar?.created_at || 0).getTime();
+        if (Number.isNaN(qTs) || Number.isNaN(aTs)) return -1e9;
+        const delta = aTs - qTs;
+        if (delta < -180000) return -1e9;
+        const qText = String(qt?.content_preview || '').trim();
+        const promptText = String(ar?.user_prompt_preview || '').trim();
+        let score = 1000000 - Math.abs(delta);
+        if (qText && promptText) {
+          if (promptText.includes(qText.slice(0, Math.min(24, qText.length)))) score += 500000;
+          if (qText.includes(promptText.slice(0, Math.min(24, promptText.length)))) score += 400000;
+        }
+        return score;
+      };
+      for (const turn of q) {
+        let bestIdx = -1;
+        let bestScore = -1e12;
+        for (let i = 0; i < a.length; i += 1) {
+          if (used.has(i)) continue;
+          const s = tryScore(turn, a[i]);
+          if (s > bestScore) {
+            bestScore = s;
+            bestIdx = i;
+          }
+        }
+        if (bestIdx >= 0 && bestScore > -1e9) {
+          used.add(bestIdx);
+          pairs.push({ q: turn, a: a[bestIdx] });
+        } else {
+          pairs.push({ q: turn, a: null });
+        }
+      }
+      for (let i = 0; i < a.length; i += 1) {
+        if (!used.has(i)) pairs.push({ q: null, a: a[i] });
+      }
+      return pairs.sort((x, y) => {
+        const tx = new Date((x.q?.created_at || x.a?.created_at || 0)).getTime();
+        const ty = new Date((y.q?.created_at || y.a?.created_at || 0)).getTime();
+        return tx - ty;
+      });
+    }
+
     function setLoginUi(loggedIn, username) {
       const who = String(username || '').trim();
       currentAdminUser = loggedIn ? who : '';
       el('authUserText').textContent = loggedIn ? `已登录：${who}` : '未登录';
       el('logoutBtn').style.display = loggedIn ? '' : 'none';
       el('loginOverlay').style.display = loggedIn ? 'none' : 'flex';
+      el('appShell').style.display = loggedIn ? 'block' : 'none';
       el('appShell').classList.toggle('app-locked', !loggedIn);
     }
 
@@ -527,30 +588,47 @@
                 (c, i) => `
         <div class="user360-conv-item ${i === idx ? 'active' : ''}" data-idx="${i}">
           <div style="font-size:12px;font-weight:600;color:#dbeafe;word-break:break-all;">${escapeHtml(c.conversation_id)}</div>
-          <div class="muted" style="font-size:11px;">${c.turn_count} 条 · 最近 ${fmtCst(c.last_at)}</div>
+          <div class="muted" style="font-size:11px;">用户输入 ${c.turn_count} 条 · AI 输出 ${fmt(c.ai_reply_count || 0)} 条 · 最近 ${fmtCst(c.last_at)}</div>
         </div>`,
               )
               .join('');
       const cur = convs[idx];
       el('user360Turns').innerHTML = !cur
         ? ''
-        : cur.turns
-            .map((t) => {
-              let urls = '';
-              try {
-                const u = t.extracted_urls;
-                if (u != null && (Array.isArray(u) ? u.length : Object.keys(u).length)) {
-                  urls = `<div class="muted" style="margin-top:6px;font-size:11px;word-break:break-all;">URLs: ${escapeHtml(typeof u === 'string' ? u : JSON.stringify(u))}</div>`;
-                }
-              } catch (_) {}
-              return `
-        <div style="border-bottom:1px solid #1f2a44;padding:10px 0;">
-          <div class="muted" style="font-size:11px;">${fmtCst(t.created_at)} · #${fmt(t.id)}</div>
-          <div style="margin-top:6px;white-space:pre-wrap;word-break:break-word;">${escapeHtml(t.content_preview || '')}</div>
-          ${urls}
-        </div>`;
-            })
-            .join('');
+        : (() => {
+            const pairs = buildQaPairs(cur.turns || [], cur.ai_replies || []);
+            if (pairs.length === 0) return '<div class="muted">该会话暂无问答记录</div>';
+            return `
+              <div class="muted" style="margin-bottom:8px;">共 ${pairs.length} 轮问答（按时间配对展示）</div>
+              <div class="qa-pairs">
+                ${pairs
+                  .map((p, i) => {
+                    let qUrls = '';
+                    try {
+                      const u = p.q?.extracted_urls;
+                      if (u != null && (Array.isArray(u) ? u.length : Object.keys(u).length)) {
+                        qUrls = `<div class="muted" style="margin-top:6px;font-size:11px;word-break:break-all;">URLs: ${escapeHtml(typeof u === 'string' ? u : JSON.stringify(u))}</div>`;
+                      }
+                    } catch (_) {}
+                    return `
+                    <div class="qa-row">
+                      <div class="qa-cell">
+                        <div class="qa-label">用户输入 · 第 ${i + 1} 轮</div>
+                        <div class="qa-meta">${p.q ? `${fmtCst(p.q.created_at)} · #${fmt(p.q.id)}` : '—'}</div>
+                        <div class="qa-text">${escapeHtml(p.q?.content_preview || '（无对应用户输入）')}</div>
+                        ${qUrls}
+                      </div>
+                      <div class="qa-cell">
+                        <div class="qa-label ai">AI 输出</div>
+                        <div class="qa-meta">${p.a ? `${fmtCst(p.a.created_at)} · ${escapeHtml(p.a.model_id || '')}${p.a.model_route ? ` · ${escapeHtml(p.a.model_route)}` : ''}` : '—'}</div>
+                        <div class="qa-text">${escapeHtml(p.a?.assistant_reply_preview || '（无对应 AI 输出）')}</div>
+                      </div>
+                    </div>`;
+                  })
+                  .join('')}
+              </div>
+            `;
+          })();
     }
 
     function renderUser360(d) {
@@ -573,7 +651,8 @@
         </div>
         <div class="mini-cards">
           <div class="card"><div class="k">VIP</div><div class="v" style="font-size:20px;">${d.stats && d.stats.is_vip ? '是' : '否'}</div></div>
-          <div class="card"><div class="k">对话条数</div><div class="v" style="font-size:20px;">${fmt(d.prompt_log_count)}</div></div>
+          <div class="card"><div class="k">用户输入条数</div><div class="v" style="font-size:20px;">${fmt(d.prompt_log_count)}</div></div>
+          <div class="card"><div class="k">AI 输出条数</div><div class="v" style="font-size:20px;">${fmt(d.ai_reply_count)}</div></div>
           <div class="card"><div class="k">会话数</div><div class="v" style="font-size:20px;">${fmt(d.conversation_count)}</div></div>
           <div class="card"><div class="k">免费已用</div><div class="v" style="font-size:18px;">${d.stats ? fmt(d.stats.free_quota_used) : '—'}</div></div>
         </div>`;
@@ -813,8 +892,8 @@
       el('mTotal').textContent = fmt(d.total_users);
       el('mVip').textContent = fmt(d.vip_users);
       el('mVipRatio').textContent = d.vip_ratio == null ? '-' : `${d.vip_ratio}%`;
-      el('m30d').textContent = fmt(d.new_users_30d);
       el('mTodayNew').textContent = fmt(d.new_users_today);
+      el('mYesterdayNew').textContent = fmt(d.yesterday_new_users);
       el('mShareAttr').textContent = fmt(d.share_attributed_emails);
       el('mAnonVisits').textContent = fmt(d.total_anon_visitors);
       el('mTotalInq').textContent = fmt(d.total_inquiries);
@@ -831,7 +910,7 @@
       el('usersTbody').innerHTML = rows.map((r) => `
         <tr>
           <td class="uid-cell"><code>${escapeHtml(r.id)}</code><br /><button type="button" class="btn-mini" data-copy="${escapeHtml(r.id)}">复制</button></td>
-          <td>${r.email || ''}</td>
+          <td><span class="${r.is_internal ? 'email-internal' : 'email-external'}">${escapeHtml(r.email || '')}</span></td>
           <td>${r.is_vip ? 'Yes' : 'No'}</td>
           <td>${fmtCst(r.created_at)}</td>
           <td>${fmtCst(r.last_sign_in_at)}</td>
@@ -1803,6 +1882,11 @@
           }
           links.forEach((l) => l.classList.remove('active'));
           a.classList.add('active');
+          if (targetId === 'inquiries' && !el('inquiriesTbody').innerHTML.trim()) {
+            loadInquiries(1).catch((err) => {
+              el('errInquiries').textContent = err?.message || String(err);
+            });
+          }
         });
       });
 

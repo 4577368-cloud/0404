@@ -873,7 +873,8 @@ export async function tryFetchJson(paths) {
       const sanitized = trimmed.replace(/\bNaN\b/g, 'null');
       try {
         const v = JSON.parse(sanitized);
-        if (Array.isArray(v)) return v;
+        // Support both array catalogs and object-based knowledge-base JSON.
+        if (v != null) return v;
         throw new Error('invalid JSON');
       } catch {
         const mergedArrays = parseConcatenatedTopLevelJsonArrays(sanitized);
